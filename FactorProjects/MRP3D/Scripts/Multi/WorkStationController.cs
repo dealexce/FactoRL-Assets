@@ -27,6 +27,32 @@ namespace Multi
         private List<Item> InputItemBuffer = new List<Item>();
         private List<Item> OutputItemBuffer = new List<Item>();
 
+        public float getInputCapacityRatio()
+        {
+            return (float)InputItemBuffer.Count/inputBufferCapacity;
+        }
+
+        public float getOutputCapacityRatio()
+        {
+            return (float)OutputItemBuffer.Count/outputBufferCapacity;
+        }
+
+        public void ResetStation()
+        {
+            processingItem = null;
+            onProcessTime = 0f;
+            foreach (var item in InputItemBuffer)
+            {
+                GameObject.Destroy(item.gameObject);
+            }
+            InputItemBuffer.Clear();
+            foreach (var item in OutputItemBuffer)
+            {
+                GameObject.Destroy(item.gameObject);
+            }
+            OutputItemBuffer.Clear();
+        }
+
         private void Start()
         {
             _planeController = _plane.GetComponent<PlaneController>();
@@ -50,10 +76,24 @@ namespace Multi
                 onProcessTime += Time.deltaTime;
                 if (onProcessTime > processTime && OutputItemBuffer.Count<outputBufferCapacity)
                 {
+                    Destroy(processingItem.gameObject);
                     processingItem = null;
                     onProcessTime = 0f;
                     GenerateOutputItem();
                 }
+            }
+            int tempCount = 1;
+            foreach (var item in InputItemBuffer)
+            {
+                item.gameObject.transform.position = inputPlate.transform.position + Vector3.up * .5f * tempCount++;
+            }
+            if (processingItem != null)
+            {
+                processingItem.gameObject.transform.position = transform.position + Vector3.up;
+            }
+            foreach (var item in OutputItemBuffer)
+            {
+                item.gameObject.transform.position = outputPlate.transform.position + Vector3.up * .5f * tempCount++;
             }
         }
 
@@ -63,7 +103,6 @@ namespace Multi
         private void GenerateOutputItem()
         {
             GameObject outputObject = Instantiate(outputPrefab);
-            outputObject.transform.position = outputPlate.transform.position + Vector3.up * .5f * OutputItemBuffer.Count;
             
             Item item = new Item(outputType, outputObject);
             OutputItemBuffer.Add(item);
@@ -113,9 +152,10 @@ namespace Multi
             }
         }
 
-        protected override void Remove(Item item)
+        protected override bool Remove(Item item)
         {
-            OutputItemBuffer.Remove(item);
+            return OutputItemBuffer.Remove(item);
+            
         }
 
         protected override void OnReceived(ExchangeMessage exchangeMessage)
@@ -123,6 +163,10 @@ namespace Multi
             if (exchangeMessage==ExchangeMessage.WrongType)
             {
                 _planeController.OnRewardEvent(Event.InputTypeError);
+            }
+            if (exchangeMessage == ExchangeMessage.OK)
+            {
+                _planeController.OnRewardEvent(Event.CorrectItemDelivered);
             }
         }
 

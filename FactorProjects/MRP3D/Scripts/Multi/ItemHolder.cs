@@ -45,7 +45,7 @@ namespace Multi
             Item item = GetItem();
             if (item == null)
             {
-                return ExchangeMessage.NullItemGot;
+                return ExchangeMessage.NullItem;
             }
             return Give(receiver, item);
         }
@@ -95,7 +95,7 @@ namespace Multi
         public abstract ExchangeMessage CheckOfferable(ItemHolder receiver, Item item);
 
         protected abstract bool Store(Item item);
-        protected abstract void Remove(Item item);
+        protected abstract bool Remove(Item item);
         
     }
 }
