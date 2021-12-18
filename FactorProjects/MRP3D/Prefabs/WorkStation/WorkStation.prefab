@@ -312,7 +312,7 @@ GameObject:
   - component: {fileID: 8534912662726428119}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: machine
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -402,7 +402,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8226008536298596179}
-  - component: {fileID: 8341365979636710217}
   m_Layer: 0
   m_Name: WorkStation
   m_TagString: Untagged
@@ -429,23 +428,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8341365979636710217
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7673559348499345306}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2791a67a6fa49089f3a6fb80b1d5a01, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inputType: 0
-  outputType: 0
-  inputBufferCapacity: 20
-  outputBufferCapacity: 20
-  processTime: 0
-  _plane: {fileID: 0}
-  inputPlate: {fileID: 4892446612999201693}
-  outputPlate: {fileID: 43473383139441176}

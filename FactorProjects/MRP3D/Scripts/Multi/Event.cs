@@ -2,12 +2,12 @@
 {
     public enum Event
     {
-        InputTypeError,Collision,CorrectItemDelivered,ProductDelivered
+        InputTypeError,Collision
     }
 
     public enum ExchangeMessage
     {
-        OK,Fail,ItemNotFound,NullItem,WrongType,Overload,StoreFail,
+        OK,Fail,ItemNotFound,NullItemGot,WrongType,Overload,StoreFail,
         RequestDenied,GiverRequired,Ungivable,Unreceivable
     }
 }

@@ -42,9 +42,8 @@ namespace Multi
             return false;
         }
 
-        protected override bool Remove(Item item)
+        protected override void Remove(Item item)
         {
-            return true;
         }
         
 
