@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using Unity.MLAgents;
 using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
@@ -66,7 +67,14 @@ namespace Multi
                     exchangeMessage = ExchangeMessage.StoreFail;
                 }
             }
-            OnReceived(exchangeMessage);
+            try
+            {
+                OnReceived(exchangeMessage);
+            }
+            catch(Exception e)
+            {
+                Debug.LogError(e);
+            }
             return exchangeMessage;
         }
         
@@ -81,9 +89,21 @@ namespace Multi
             return Receive(null, item);
         }
 
+        private IEnumerator CallOnReceived(ExchangeMessage exchangeMessage)
+        {
+            yield return null;
+            OnReceived(exchangeMessage);
+        }
+        
         protected virtual void OnReceived(ExchangeMessage exchangeMessage)
         {
             
+        }
+
+        private IEnumerator CallOnRequest(ExchangeMessage exchangeMessage)
+        {
+            yield return null;
+            OnRequest(exchangeMessage);
         }
 
         protected virtual void OnRequest(ExchangeMessage exchangeMessage)

@@ -39,6 +39,10 @@ namespace Multi
 
         public void ResetStation()
         {
+            if (processingItem != null)
+            {
+                Destroy(processingItem.gameObject);
+            }
             processingItem = null;
             onProcessTime = 0f;
             foreach (var item in InputItemBuffer)
@@ -166,7 +170,7 @@ namespace Multi
             }
             if (exchangeMessage == ExchangeMessage.OK)
             {
-                _planeController.OnRewardEvent(Event.CorrectItemDelivered);
+                _planeController.OnRewardEvent(Event.CorrectItemDelivered,(int)inputType+1.0f);
             }
         }
 

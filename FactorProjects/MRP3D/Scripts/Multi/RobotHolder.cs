@@ -42,7 +42,6 @@ namespace Multi
 
         protected override bool Remove(Item item)
         {
-            Debug.Log("item removed");
             this.item = null;
             return true;
         }
@@ -67,12 +66,12 @@ namespace Multi
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("input_plate"))
+            if (other.tag.Contains("input"))
             {
                 ItemHolder receiver = (ItemHolder) other.GetComponentInParent<WorkStationController>();
                 Give(receiver);
             }
-            if (other.CompareTag("output_plate"))
+            if (other.tag.Contains("output"))
             {
                 other.GetComponentInParent<WorkStationController>().Give(this);
             }
@@ -89,6 +88,10 @@ namespace Multi
 
         public void ResetHolder()
         {
+            if (item != null)
+            {
+                Destroy(item.gameObject);
+            }
             this.item = null;
         }
 

@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using UnityEditorInternal.Profiling.Memory.Experimental;
 using UnityEngine;
 
 namespace Multi
 {
-    public class RobotAgent : Agent
+    public class RobotAgent : ResetableAgent
     {
         private Rigidbody _rigidbody;
         public GameObject _plane;
@@ -47,11 +49,6 @@ namespace Multi
             initPosition = transform.position;
         }
 
-        // Update is called once per frame
-        void FixedUpdate()
-        {
-        }
-        
         /// <summary>
         /// This override method handles the action decisions made by neural network
         /// or gameplay actions and use the actions to operate in the game
@@ -69,15 +66,62 @@ namespace Multi
             _rigidbody.AddForce(movement * moveSpeed * (1-_rigidbody.velocity.magnitude/maxSpeed), ForceMode.VelocityChange);
             transform.Rotate(rotation*rotateSpeed);
         }
+
+        // /// <summary>
+        // /// SIMPLE INPUT-OUTPUT-DELIVER VERSION OBSERVATION
+        // /// 
+        // /// Total Observation:
+        // /// 2 (position x,z)
+        // /// 2 (rotation x,z)
+        // /// 1 (whether holding item, 1 for holding null)
+        // /// 4*3 (2(relative position x,z)+1(input count/capacity)+1(output count/capacity))*5 workstation
+        // /// 2 (raw stack relative position x,z)
+        // /// 2 (export plate relative position x,z)
+        // /// = 21 continuous
+        // /// </summary>
+        // /// <param name="sensor"></param>
+        // public override void CollectObservations(VectorSensor sensor)
+        // {
+        //     Vector3 position = transform.position;
+        //     sensor.AddObservation((position.x - _plane.transform.position.x) / scale);
+        //     sensor.AddObservation((position.z - _plane.transform.position.z) / scale);
+        //     sensor.AddObservation(transform.forward.x);
+        //     sensor.AddObservation(transform.forward.z);
+        //     float itemObservation = 0f;
+        //     Item item = _robotHolder.GetItem();
+        //     if (item == null)
+        //     {
+        //         itemObservation = 1.0f;
+        //     }
+        //     sensor.AddObservation(itemObservation);
+        //     int tempCount = 0;
+        //     foreach (var workstation in _workstationList)
+        //     {
+        //         float[] inputObservation = new float[4];
+        //         Vector3 inputPos = (position - workstation.transform.position)/scale;
+        //         inputObservation[0] = inputPos.x;
+        //         inputObservation[1] = inputPos.y;
+        //         inputObservation[2] = 1 - _workstationControllerDict[workstation].getInputCapacityRatio() < 1 ? 1f : 0f;
+        //         inputObservation[3] = _workstationControllerDict[workstation].getOutputCapacityRatio() > 0 ? 1f : 0f;
+        //         sensor.AddObservation(inputObservation);
+        //     }
+        //     Vector3 rawStackPos = (position - rawStack.transform.position) / scale;
+        //     sensor.AddObservation(new Vector2(rawStackPos.x,rawStackPos.z));
+        //     Vector3 exportPlatePos = (position - exportPlate.transform.position) / scale;
+        //     sensor.AddObservation(new Vector2(exportPlatePos.x,exportPlatePos.z));
+        // }
+
         /// <summary>
+        /// FLOW SHOP VERSION OBSERVATION
+        /// 
         /// Total Observation:
         /// 2 (position x,z)
         /// 2 (rotation x,z)
-        /// 1 (whether holding item)
+        /// 7 (one-hot for holding item type, [0]=1 for holding null)
         /// 9*2*5 (5(workstation one-hot)+1(input/output)+2(relative position x,z)+1(buffer count/capacity))*2 buffer*5 workstation
         /// 2 (raw stack relative position x,z)
         /// 2 (export plate relative position x,z)
-        /// = 99 continuous
+        /// = 105 continuous
         /// </summary>
         /// <param name="sensor"></param>
         public override void CollectObservations(VectorSensor sensor)
@@ -85,11 +129,21 @@ namespace Multi
             Vector3 position = transform.position;
             sensor.AddObservation((position.x - _plane.transform.position.x) / scale);
             sensor.AddObservation((position.z - _plane.transform.position.z) / scale);
-
+            
             sensor.AddObservation(transform.forward.x);
             sensor.AddObservation(transform.forward.z);
+            float[] itemObservation = new float[7];
+            Item item = _robotHolder.GetItem();
+            if (item == null)
+            {
+                itemObservation[0] = 1.0f;
+            }
+            else
+            {
+                itemObservation[(int) item.itemType + 1] = 1.0f;
+            }
             
-            sensor.AddObservation(_robotHolder.GetItem() != null ? 1.0f : 0.0f);
+            sensor.AddObservation(itemObservation);
             
             int tempCount = 0;
             foreach (var workstation in _workstationList)
@@ -100,7 +154,7 @@ namespace Multi
                 Vector3 inputPos = (position - workstation.transform.Find("InputPlate").position)/scale;
                 inputObservation[workstationNum + 1] = inputPos.x;
                 inputObservation[workstationNum + 2] = inputPos.y;
-                inputObservation[workstationNum + 3] = _workstationControllerDict[workstation].getInputCapacityRatio();
+                inputObservation[workstationNum + 3] = 1 - _workstationControllerDict[workstation].getInputCapacityRatio() < 1 ? 1f : 0f;
                 sensor.AddObservation(inputObservation);
                 
                 float[] outputObservation = new float[workstationNum + 4];
@@ -109,10 +163,10 @@ namespace Multi
                 Vector3 outputPos = (position - workstation.transform.Find("OutputPlate").position)/scale;
                 outputObservation[workstationNum + 1] = outputPos.x;
                 outputObservation[workstationNum + 2] = outputPos.y;
-                outputObservation[workstationNum + 3] = _workstationControllerDict[workstation].getOutputCapacityRatio();
+                outputObservation[workstationNum + 3] = _workstationControllerDict[workstation].getOutputCapacityRatio() > 0 ? 1f : 0f;
                 sensor.AddObservation(outputObservation);
             }
-
+            
             Vector3 rawStackPos = (position - rawStack.transform.position) / scale;
             sensor.AddObservation(new Vector2(rawStackPos.x,rawStackPos.z));
             Vector3 exportPlatePos = (position - exportPlate.transform.position) / scale;
@@ -120,14 +174,11 @@ namespace Multi
             
         }
         
-        public override void OnEpisodeBegin()
-        {
-            ResetRobot();
-            _planeController.ResetPlane();
-        }
 
-        private void ResetRobot()
+        override public void ResetRobot()
         {
+            transform.position = initPosition;
+            transform.rotation = Quaternion.identity;
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
             _robotHolder.ResetHolder();
@@ -142,9 +193,9 @@ namespace Multi
         
         private void OnCollisionEnter(Collision other)
         {
-            if (other.collider.CompareTag("wall")||other.collider.CompareTag("machine"))
+            if (other.collider.CompareTag("wall"))
             {
-                AddReward(-1f);
+                AddReward(-.5f);
             }
         }
     }

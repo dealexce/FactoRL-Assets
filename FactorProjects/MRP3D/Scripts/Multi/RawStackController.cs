@@ -10,17 +10,18 @@ namespace Multi
         public ItemType rawItemType = ItemType.Raw;
         private GameObject rawPrefab;
         private PlaneController _planeController;
+        private Item bufferItem;
 
         private void Start()
         {
             _planeController = GetComponentInParent<PlaneController>();
             rawPrefab = _planeController.GetTypePrefab(rawItemType);
+            bufferItem = new Item(rawItemType,Instantiate(rawPrefab, transform.position,Quaternion.identity));
         }
 
         public override Item GetItem()
         {
-            GameObject gameObject = Instantiate(rawPrefab);
-            return new Item(ItemType.Raw, gameObject);
+            return bufferItem;
         }
 
         public override ExchangeMessage CheckOfferable(ItemHolder receiver, Item item)
@@ -44,6 +45,7 @@ namespace Multi
 
         protected override bool Remove(Item item)
         {
+            bufferItem = new Item(rawItemType,Instantiate(rawPrefab, transform.position,Quaternion.identity));
             return true;
         }
         

@@ -37,6 +37,7 @@ namespace Multi
 
         protected override bool Store(Item item)
         {
+            Destroy(item.gameObject);
             return true;
         }
 
@@ -50,7 +51,10 @@ namespace Multi
             if (exchangeMessage == ExchangeMessage.OK)
             {
                 _planeController.OnRewardEvent(Event.ProductDelivered);
+                
             }
         }
+        
+
     }
 }

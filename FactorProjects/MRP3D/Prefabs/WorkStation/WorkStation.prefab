@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 8880771327398523920}
   - component: {fileID: 2184029728577611676}
   - component: {fileID: 8917815737796422134}
-  - component: {fileID: 5786414090739157863}
   m_Layer: 0
   m_Name: OutputPlate
   m_TagString: Untagged
@@ -82,20 +81,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5786414090739157863
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 43473383139441176}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &543334563860458008
 GameObject:
   m_ObjectHideFlags: 0
@@ -109,7 +94,7 @@ GameObject:
   - component: {fileID: 8159385073560216360}
   m_Layer: 0
   m_Name: InputTrigger
-  m_TagString: input_plate
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -147,7 +132,7 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 1.5, y: 1, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &3161701877338347408
 GameObject:
@@ -162,7 +147,7 @@ GameObject:
   - component: {fileID: 2071324734039538375}
   m_Layer: 0
   m_Name: OutputTrigger
-  m_TagString: output_plate
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -200,7 +185,7 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 1.5, y: 1, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4892446612999201693
 GameObject:
@@ -213,7 +198,6 @@ GameObject:
   - component: {fileID: 3007031877633680302}
   - component: {fileID: 7394553663996973476}
   - component: {fileID: 7974875137949499399}
-  - component: {fileID: 9134983842004669034}
   m_Layer: 0
   m_Name: InputPlate
   m_TagString: Untagged
@@ -284,20 +268,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &9134983842004669034
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4892446612999201693}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 0
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &6594192605129897744
 GameObject:
   m_ObjectHideFlags: 0
@@ -312,7 +282,7 @@ GameObject:
   - component: {fileID: 8534912662726428119}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: machine
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -447,5 +417,5 @@ MonoBehaviour:
   outputBufferCapacity: 20
   processTime: 0
   _plane: {fileID: 0}
-  inputPlate: {fileID: 4892446612999201693}
-  outputPlate: {fileID: 43473383139441176}
+  inputPlate: {fileID: 543334563860458008}
+  outputPlate: {fileID: 3161701877338347408}
