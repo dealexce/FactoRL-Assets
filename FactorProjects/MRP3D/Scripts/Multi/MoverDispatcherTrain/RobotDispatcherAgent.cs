@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -8,6 +11,11 @@ using Random = UnityEngine.Random;
 
 namespace Multi
 {
+    public struct TravelStatus
+    {
+        public int CollisionCount;
+        public int WrongTriggerCount;
+    }
     public class RobotDispatcherAgent : Agent
     {
         BufferSensorComponent _bufferSensor;
@@ -18,10 +26,8 @@ namespace Multi
         private GameObject _plane;
         private PlaneController _planeController;
         
-        private List<GameObject> _agentList = new List<GameObject>();
-        private Dictionary<GameObject, ResetableAgent> _agentDict = new Dictionary<GameObject, ResetableAgent>();
+        private Dictionary<GameObject, ResetableAgent> _robotMoveAgentDict = new Dictionary<GameObject, ResetableAgent>();
 
-        private List<GameObject> _workstationList = new List<GameObject>();
         private Dictionary<GameObject, WorkStationController> _workstationControllerDict =
             new Dictionary<GameObject, WorkStationController>();
 
@@ -29,17 +35,23 @@ namespace Multi
         private GameObject exportPlate;
 
         private float scale;
+        private int maxEnvSteps;
 
         public GameObject _robot;
         private List<GameObject> possibleTargets;
 
         private int testAllocationCount = 0;
 
-        public struct RobotStatus
-        {
-            private ItemType holdingItemType;
-            private Transform transform;
-        }
+        public float wrongTargetAllocatedReward = -0.1f;
+        public float correctTargetAllocatedReward = 0.5f;
+
+        public float travelCollisionRewardFactor = -.005f;
+        public float travelWrongTriggerEnterRewardFactor = -.005f;
+        public float existanceRewardFactor = -1f;
+
+        public bool isTraining = true;
+
+
 
         private void Awake()
         {
@@ -56,15 +68,36 @@ namespace Multi
             
             _plane = _robotMoveAgent._plane;
             _planeController = _plane.GetComponent<PlaneController>();
-            _agentList = _planeController._agentList;
-            _agentDict = _planeController._agentDict;
-            _workstationList = _planeController._workstationList;
+            _robotMoveAgentDict = _planeController._robotMoveAgentDict;
             _workstationControllerDict = _planeController._workstationControllerDict;
             rawStack = _planeController.rawStack;
             exportPlate = _planeController.exportPlate;
             possibleTargets = _planeController.possibleTargets;
 
             scale = _robotMoveAgent.scale;
+            maxEnvSteps = _planeController.MaxEnvSteps;
+        }
+
+        private void FixedUpdate()
+        {
+            // if (!isTraining)
+            // {
+            //     PrintDebugInfo();
+            // }
+        }
+
+
+
+        public void OnMoveAgentEnterTarget(ExchangeMessage exchangeMessage)
+        {
+            if (exchangeMessage == ExchangeMessage.OK)
+            {
+                AddReward(correctTargetAllocatedReward);
+            }
+            else
+            {
+                AddReward(wrongTargetAllocatedReward);
+            }
         }
 
         public override void OnActionReceived(ActionBuffers actions)
@@ -76,50 +109,65 @@ namespace Multi
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             var act = actionsOut.DiscreteActions;
-            act[0] = testAllocationCount++;
-            if (testAllocationCount >= possibleTargets.Count)
-            {
-                testAllocationCount = 0;
-            }
-            Debug.Log(act[0]);
+            act[0] = Random.Range(0, possibleTargets.Count);
+            // act[0] = testAllocationCount++;
+            // if (testAllocationCount >= possibleTargets.Count)
+            // {
+            //     testAllocationCount = 0;
+            // }
         }
 
-        private Vector2 rect2polar(Vector3 rect)
+        private Vector2 rect2polar(Vector3 rect, Vector3 forward)
         {
-            Vector3 inputCross = Vector3.Cross(rect, transform.forward);
-            float inputAngle = Vector3.Angle(rect, transform.forward) / 180f;
+            Vector3 inputCross = Vector3.Cross(rect, forward);
+            float inputAngle = Vector3.Angle(rect, forward) / 180f;
             Vector2 polar = new Vector2(inputCross.y > 0 ? -inputAngle : inputAngle, rect.magnitude);
             return polar;
         }
 
+        private void PrintDebugInfo()
+        {
+            // StringBuilder stringBuilder = new StringBuilder();
+            // Vector3 position = _robot.transform.position;
+            // Vector3 forward = _robot.transform.forward;
+            // var workstationController = _workstationControllerDict.Values.FirstOrDefault();
+            // stringBuilder.Append(workstationController.getInputCapacityRatio());
+            // stringBuilder.Append(workstationController.getOutputCapacityRatio());
+            // Debug.Log(stringBuilder);
+        }
+        
         /// <summary>
-        /// 20 = 5*2*2 : 5 workstations (5) * 2 triggers (2) * polar relative position (2)
+        /// 30 = 5*2*(2+1) : 5 workstations (5) * 2 triggers (2) * (polar relative position (2) + buffer capacity ratio (1))
         /// 2 : polar relative position to raw stack
         /// 2 : polar relative position to export plate
         /// 2 : self polar velocity
         /// ----------
-        /// = 26
+        /// = 36
         /// </summary>
         /// <param name="sensor"></param>
         public override void CollectObservations(VectorSensor sensor)
         {
-            Vector3 position = transform.position;
+
+            Vector3 position = _robot.transform.position;
+            Vector3 forward = _robot.transform.forward;
             foreach (var workstationController in _workstationControllerDict.Values)
             {
                 GameObject input = workstationController.inputPlate;
                 Vector3 inputPos = (input.transform.position - position) / scale;
-                sensor.AddObservation(rect2polar(inputPos));
-                
+                sensor.AddObservation(rect2polar(inputPos,forward));
+                sensor.AddObservation(workstationController.getInputCapacityRatio());
+
                 GameObject output = workstationController.outputPlate;
                 Vector3 outputPos = (output.transform.position - position) / scale;
-                sensor.AddObservation(rect2polar(outputPos));
+                sensor.AddObservation(rect2polar(outputPos,forward));
+                sensor.AddObservation(workstationController.getOutputCapacityRatio());
             }
             
             Vector3 rawStackPos = (rawStack.transform.position - position) / scale;
-            sensor.AddObservation(rect2polar(rawStackPos));
+            sensor.AddObservation(rect2polar(rawStackPos,forward));
 
             Vector3 exportPos = (exportPlate.transform.position - position) / scale;
-            sensor.AddObservation(rect2polar(exportPos));
+            sensor.AddObservation(rect2polar(exportPos,forward));
             
             sensor.AddObservation(_robotMoveAgent.polarVelocity);
             
@@ -130,7 +178,7 @@ namespace Multi
             // agent polar relative position(2)
             // = 11 for each agent
             int enumLength = Enum.GetNames(typeof(ItemType)).Length;
-            foreach (var a in _agentDict.Values)
+            foreach (var a in _robotMoveAgentDict.Values)
             {
                 RobotMoveAgent agent = (RobotMoveAgent) a;
                 if (agent == this._robotMoveAgent)
@@ -153,14 +201,14 @@ namespace Multi
 
                 Vector3 targetPos = Vector3.zero;
                 targetPos = (agent.transform.position - position) / scale;
-                Vector3 cross = Vector3.Cross(targetPos, transform.forward);
-                float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
+                Vector3 cross = Vector3.Cross(targetPos, forward);
+                float angle = Vector3.Angle(targetPos, forward) / 180f;
                 agentInfo[enumLength + 3] = cross.y > 0 ? -angle : angle;
                 agentInfo[enumLength + 4] = targetPos.magnitude;
                 
                 _bufferSensor.AppendObservation(agentInfo);
             }
-            
+
             // Goal Signal: One-hot for item type holding
             // Size = 7
             float[] selfItemOneHot = new float[enumLength + 1];
@@ -176,9 +224,16 @@ namespace Multi
             _goalSensor.GetSensor().AddObservation(selfItemOneHot);
         }
 
-        public void RequestNewTarget()
+        public void RequestNewTarget(TravelStatus lastTravelStatus)
         {
+            AddReward(lastTravelStatus.CollisionCount * travelCollisionRewardFactor +
+                      lastTravelStatus.WrongTriggerCount * travelWrongTriggerEnterRewardFactor);
             RequestDecision();
+        }
+
+        public void UnallocatedCorrectTargetEntered()
+        {
+            AddReward(wrongTargetAllocatedReward);
         }
     }
 }

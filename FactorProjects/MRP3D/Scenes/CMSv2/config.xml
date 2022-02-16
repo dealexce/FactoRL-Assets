@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<env>
+    <itemtypes>
+        <itemtype>A0</itemtype>
+        <itemtype>A1</itemtype>
+        <itemtype>AP</itemtype>
+        <itemtype>B0</itemtype>
+        <itemtype>B1</itemtype>
+        <itemtype>BP</itemtype>
+        <itemtype>C0</itemtype>
+        <itemtype>C1</itemtype>
+    </itemtypes>
+    <raws>
+        <itemtype>A0</itemtype>
+        <itemtype>B0</itemtype>
+        <itemtype>C0</itemtype>
+    </raws>
+    <products>
+        <itemtype>AP</itemtype>
+        <itemtype>BP</itemtype>
+    </products>
+    <workflow>
+        <process id="1" input="A0" output="A1" duration="10"/>
+        <process id="2" input="B0" output="B1" duration="10"/>
+        <process id="3" input="C0" output="C1" duration="3"/>
+        <process id="4" input="A1" output="AP" duration="5"/>
+        <process id="5" input="B1" output="BP" duration="5"/>
+        <process id="6" input="C1" output="A1" duration="3"/>
+        <process id="7" input="C1" output="B1" duration="5"/>
+    </workflow>
+    <workstations>
+        <mfws id="1" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="1"/>
+                <process id="2"/>
+                <process id="3"/>
+            </processes>
+        </mfws>
+        <mfws id="2" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="4"/>
+                <process id="5"/>
+            </processes>
+        </mfws>
+        <mfws id="3" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="6"/>
+                <process id="7"/>
+            </processes>
+        </mfws>
+    </workstations>
+</env>

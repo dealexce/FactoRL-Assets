@@ -29,6 +29,7 @@ namespace Multi
         private float ypos = 0f;
 
         public float collisionReward = -.5f;
+        public float wrongTriggerEnterReward = -.5f;
         public float collisionStayReward = -.005f;
         public float arrivalReward = 1.0f;
 
@@ -37,6 +38,8 @@ namespace Multi
 
 
         public GameObject target { get; set; }
+
+        private TravelStatus _travelStatus = new TravelStatus();
 
         // Start is called before the first frame update
         void Start()
@@ -48,8 +51,7 @@ namespace Multi
             _robotDispatcher = _dispatcher.GetComponent<RobotDispatcherAgent>();
 
             ypos = transform.localPosition.y;
-            target = null;
-            _robotDispatcher.RequestNewTarget();
+            RequestNewTarget();
             SafeResetRandomPosition();
         }
 
@@ -74,7 +76,7 @@ namespace Multi
             }
             else
             {
-                _robotDispatcher.RequestNewTarget();
+                RequestNewTarget();
             }
             // if (!trainingMode)
             // {
@@ -130,11 +132,6 @@ namespace Multi
             
             sensor.AddObservation(polarVelocity);
             sensor.AddObservation(polarTargetPos);
-            
-            if (!trainingMode)
-            {
-                Debug.Log(polarVelocity);
-            }
 
         }
         
@@ -146,8 +143,7 @@ namespace Multi
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
             _robotHolder.ResetHolder();
-            target = null;
-            _robotDispatcher.RequestNewTarget();
+            RequestNewTarget();
             if (!trainingMode)
             {
                 Debug.Log(GetCumulativeReward());
@@ -202,24 +198,39 @@ namespace Multi
             continuousAction[1] = Input.GetAxis("Horizontal");
         }
 
-        private void OnTriggerEnter(Collider other)
+        public void OnRobotHolderTriggerEnter(Collider other, ExchangeMessage exchangeMessage)
         {
             if (other.gameObject == target)
             {
                 AddReward(arrivalReward);
-                target = null;
-                _robotDispatcher.RequestNewTarget();
-                Debug.Log("Arrived at Target");
+                _robotDispatcher.OnMoveAgentEnterTarget(exchangeMessage);
+                RequestNewTarget();
             }
-            // else
-            // {
-            //     AddReward(wrongTriggerEnterReward);
-            // }
+            else
+            {
+                _travelStatus.WrongTriggerCount++;
+                AddReward(wrongTriggerEnterReward);
+                if (exchangeMessage == ExchangeMessage.OK)
+                {
+                    _robotDispatcher.UnallocatedCorrectTargetEntered();
+                    RequestNewTarget();
+                }
+            }
+        }
+
+        private void RequestNewTarget()
+        {
+            target = null;
+            _robotDispatcher.RequestNewTarget(_travelStatus);
+            _travelStatus = new TravelStatus();
+            _travelStatus.CollisionCount = 0;
+            _travelStatus.WrongTriggerCount = 0;
         }
 
         private void OnCollisionEnter(Collision other)
         {
             AddReward(collisionReward);
+            _travelStatus.CollisionCount++;
         }
 
         private void OnCollisionStay(Collision other)

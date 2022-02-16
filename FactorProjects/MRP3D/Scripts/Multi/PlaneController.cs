@@ -14,15 +14,16 @@ namespace Multi
         public int MaxEnvSteps = 25000;
         private int resetTimer = 0;
         
-        public float inputTypeErrorReward = -1f;
-        public float collisionReward = -1f;
-        public float correctItemDeliveredReward = 1f;
-        public float productDeliveredReward = 10f;
+        // public float inputTypeErrorReward = -1f;
+        // public float collisionReward = -1f;
+        // public float correctItemDeliveredReward = 1f;
+        public float productDeliveredReward = 1f;
 
-        // private SimpleMultiAgentGroup _simpleMultiAgentGroup;
+        private SimpleMultiAgentGroup _simpleMultiAgentGroup;
 
         public List<GameObject> _agentList = new List<GameObject>();
-        public Dictionary<GameObject, ResetableAgent> _agentDict = new Dictionary<GameObject, ResetableAgent>();
+        public Dictionary<GameObject, ResetableAgent> _robotMoveAgentDict = new Dictionary<GameObject, ResetableAgent>();
+        public Dictionary<GameObject, RobotDispatcherAgent> _robotDispatcherDict = new Dictionary<GameObject, RobotDispatcherAgent>();
 
         public List<GameObject> _workstationList = new List<GameObject>();
         public Dictionary<GameObject, WorkStationController> _workstationControllerDict =
@@ -52,12 +53,13 @@ namespace Multi
         {
             resetTimer = 0;
             
-            // _simpleMultiAgentGroup = new SimpleMultiAgentGroup();
+            _simpleMultiAgentGroup = new SimpleMultiAgentGroup();
             foreach (var agent in _agentList)
             {
-                RobotMoveAgent robotAgent = agent.GetComponent<RobotMoveAgent>();
-                _agentDict[agent] = robotAgent;
-                //_simpleMultiAgentGroup.RegisterAgent(robotAgent);
+                _robotMoveAgentDict[agent] = agent.GetComponentInChildren<RobotMoveAgent>();
+                RobotDispatcherAgent robotDispatcherAgent = agent.GetComponentInChildren<RobotDispatcherAgent>();
+                _robotDispatcherDict[agent] = robotDispatcherAgent;
+                _simpleMultiAgentGroup.RegisterAgent(robotDispatcherAgent);
             }
 
             foreach (var typePrefab in _typePrefabs)
@@ -83,23 +85,22 @@ namespace Multi
 
         public void OnRewardEvent(Event eventType, float factor=1.0f)
         {
-            //TODO 设置MA Group
-            // switch (eventType)
-            // {
-            //     case Event.InputTypeError:
-            //         _simpleMultiAgentGroup.AddGroupReward(InputTypeErrorReward);
-            //         break;
-            //     case Event.Collision:
-            //         _simpleMultiAgentGroup.AddGroupReward(CollisionReward);
-            //         break;
-            //     case Event.CorrectItemDelivered:
-            //         _simpleMultiAgentGroup.AddGroupReward(CorrectItemDeliveredReward*factor);
-            //         break;
-            //     case Event.ProductDelivered:
-            //         _simpleMultiAgentGroup.AddGroupReward(ProductDeliveredReward);
-            //         StartCoroutine(ProductReceivedSwapMaterial(ProductDeliverdSuccessMaterial, 1f));
-            //         break;
-            // }
+             switch (eventType)
+             {
+                 // case Event.InputTypeError:
+                 //     _simpleMultiAgentGroup.AddGroupReward(InputTypeErrorReward);
+                 //     break;
+                 // case Event.Collision:
+                 //     _simpleMultiAgentGroup.AddGroupReward(CollisionReward);
+                 //     break;
+                 // case Event.CorrectItemDelivered:
+                 //     _simpleMultiAgentGroup.AddGroupReward(CorrectItemDeliveredReward*factor);
+                 //     break;
+                 case Event.ProductDelivered:
+                     _simpleMultiAgentGroup.AddGroupReward(productDeliveredReward);
+                     StartCoroutine(ProductReceivedSwapMaterial(ProductDeliverdSuccessMaterial, 1f));
+                     break;
+             }
         }
 
         public GameObject GetTypePrefab(ItemType type)
@@ -113,7 +114,7 @@ namespace Multi
 
         public void ResetPlane()
         {
-            foreach (var item in _agentDict.Values)
+            foreach (var item in _robotMoveAgentDict.Values)
             {
                 item.ResetRobot();
             }
@@ -129,12 +130,11 @@ namespace Multi
             resetTimer += 1;
             if (resetTimer >= MaxEnvSteps && MaxEnvSteps > 0)
             {
-                //_simpleMultiAgentGroup.GroupEpisodeInterrupted();
+                _simpleMultiAgentGroup.GroupEpisodeInterrupted();
                 ResetPlane();
                 resetTimer = 0;
             }
 
-            //Hurry Up Penalty
             //_simpleMultiAgentGroup.AddGroupReward(-0.5f / MaxEnvSteps);
         }
         

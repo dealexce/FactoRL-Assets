@@ -9,6 +9,7 @@ namespace Multi
     public class RobotHolder : ItemHolder
     {
         private Item item;
+        private RobotMoveAgent _robotMoveAgent;
 
         public override Item GetItem()
         {
@@ -18,7 +19,7 @@ namespace Multi
         // Start is called before the first frame update
         void Start()
         {
-        
+            _robotMoveAgent = GetComponent<RobotMoveAgent>();
         }
 
         // Update is called once per frame
@@ -66,24 +67,27 @@ namespace Multi
 
         private void OnTriggerEnter(Collider other)
         {
+            ExchangeMessage exchangeMessage = ExchangeMessage.Fail;
             if (other.tag.Contains("input"))
             {
                 ItemHolder receiver = (ItemHolder) other.GetComponentInParent<WorkStationController>();
-                Give(receiver);
+                exchangeMessage=Give(receiver);
             }
             if (other.tag.Contains("output"))
             {
-                other.GetComponentInParent<WorkStationController>().Give(this);
+                exchangeMessage=other.GetComponentInParent<WorkStationController>().Give(this);
             }
             if (other.CompareTag("raw_stack"))
             {
-                other.GetComponent<RawStackController>().Give(this);
+                exchangeMessage=other.GetComponent<RawStackController>().Give(this);
             }
             if (other.CompareTag("export_plate"))
             {
                 ItemHolder receiver = (ItemHolder) other.GetComponentInParent<ExportPlateController>();
-                Give(receiver);
+                exchangeMessage=Give(receiver);
             }
+            _robotMoveAgent.OnRobotHolderTriggerEnter(other, exchangeMessage);
+            
         }
 
         public void ResetHolder()

@@ -29,7 +29,7 @@ namespace Multi
 
         public float getInputCapacityRatio()
         {
-            return (float)InputItemBuffer.Count/inputBufferCapacity;
+            return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
         }
 
         public float getOutputCapacityRatio()
