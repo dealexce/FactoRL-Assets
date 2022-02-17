@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <env>
+    <ground minX="20" maxX="60" minZ="20" maxZ="60"/>
     <itemtypes>
         <itemtype>A0</itemtype>
         <itemtype>A1</itemtype>
@@ -34,6 +35,44 @@
                 <process id="1"/>
                 <process id="2"/>
                 <process id="3"/>
+            </processes>
+        </mfws>
+        <mfws id="4" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="1"/>
+                <process id="2"/>
+                <process id="3"/>
+            </processes>
+        </mfws>
+        <mfws id="5" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="1"/>
+                <process id="2"/>
+                <process id="3"/>
+            </processes>
+        </mfws>
+        <mfws id="2" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="4"/>
+                <process id="5"/>
+            </processes>
+        </mfws>
+        <mfws id="3" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="6"/>
+                <process id="7"/>
+            </processes>
+        </mfws>
+        <mfws id="2" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="4"/>
+                <process id="5"/>
+            </processes>
+        </mfws>
+        <mfws id="3" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="6"/>
+                <process id="7"/>
             </processes>
         </mfws>
         <mfws id="2" inputcapacity="3" outputcapacity="3">
