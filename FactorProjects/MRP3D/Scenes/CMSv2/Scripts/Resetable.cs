@@ -2,6 +2,6 @@
 {
     public interface Resetable
     {
-        public void Reset();
+        public void EpisodeReset();
     }
 }

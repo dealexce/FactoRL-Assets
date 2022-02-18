@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2791733022000664604}
-  - component: {fileID: 706339775496303110}
   - component: {fileID: 3876532165463257340}
   m_Layer: 0
   m_Name: Plane
@@ -33,63 +32,6 @@ Transform:
   m_Father: {fileID: 3361853402934223141}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &706339775496303110
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 787543741443618258}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc8b99cded0f493aba0e632eea70575b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MaxEnvSteps: 12500
-  productDeliveredReward: 2
-  _agentList:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  _workstationList:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  rawStack: {fileID: 0}
-  exportPlate: {fileID: 0}
-  possibleTargets:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  ground: {fileID: 0}
-  ProductDeliverdSuccessMaterial: {fileID: 2100000, guid: 49c7fe9660715914eb835102572cb7d2, type: 2}
-  _typePrefabs:
-  - itemType: 0
-    prefab: {fileID: 4944340304364305632, guid: 5957d40aafdc63544927dbced314b219, type: 3}
-  - itemType: 1
-    prefab: {fileID: 8599378669131868563, guid: b73c082370d548547bb5546fe3370639, type: 3}
-  - itemType: 2
-    prefab: {fileID: 1716947056943582249, guid: 0ba7f5df936b67f4ebbc887fec819d39, type: 3}
-  - itemType: 3
-    prefab: {fileID: 8383474408206447695, guid: 18c8a366e5e4ff644b37449079f1ff6e, type: 3}
-  - itemType: 4
-    prefab: {fileID: 5892817616574142008, guid: d4a3a87301464e142a486b0820014945, type: 3}
-  - itemType: 5
-    prefab: {fileID: 7578319518817268301, guid: 90ea263c4b6c6c64c9876814bcd47448, type: 3}
 --- !u!114 &3876532165463257340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,17 +44,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d657808f24674d179ef1e63e51abcf05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  configPath: Assets/FactorProjects/MRP3D/Scenes/CMSv2/config.xml
   prefabPath: 
-  ground: {fileID: 0}
+  ground: {fileID: 6615889485304135894}
   groundController: {fileID: 0}
   importPrefab: {fileID: 7451406427367902720, guid: bf518c0d82009b14e9989e42e00bf7b7, type: 3}
   exportPrefab: {fileID: 6420293301762786809, guid: 0276c4a8774f54b4aa66add50856349e, type: 3}
   MFWMPrefab: {fileID: 8412221806419059806, guid: 18f687276b8036144abfb5fb417b0a0e, type: 3}
-  testModel: {fileID: 0}
-  testBound:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0, y: 0, z: 0}
+  itemPrefab: {fileID: 7580886048584861730, guid: 3a225a1d60423884487f4c48a37722b2, type: 3}
   curX: 30
   curZ: 20
   randomGroundSize: 0
@@ -204,6 +142,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 34e6fecf098b5c344bf14760ae0686dc, type: 3}
+--- !u!1 &6615889485304135894 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6623291110514311090, guid: 34e6fecf098b5c344bf14760ae0686dc, type: 3}
+  m_PrefabInstance: {fileID: 16594119044284260}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6791616295999900290 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6807858561631827430, guid: 34e6fecf098b5c344bf14760ae0686dc, type: 3}

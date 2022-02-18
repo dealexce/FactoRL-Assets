@@ -231,6 +231,10 @@ PrefabInstance:
       propertyPath: z
       value: 40
       objectReference: {fileID: 0}
+    - target: {fileID: 510464353885051303, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
+      propertyPath: m_Layer
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 1342626240838426125, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: m_Name
       value: CMSv2Env
@@ -253,7 +257,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3361853402934223141, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.21
+      value: 16.16
       objectReference: {fileID: 0}
     - target: {fileID: 3361853402934223141, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -291,6 +295,10 @@ PrefabInstance:
       propertyPath: ground
       value: 
       objectReference: {fileID: 1846830764}
+    - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
+      propertyPath: AGVPrefab
+      value: 
+      objectReference: {fileID: 3138914704657889545, guid: 1324955814674cf4f9b4da27561061a0, type: 3}
     - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: testModel
       value: 

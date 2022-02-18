@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class MFWS : MonoBehaviour
+    public class MFWS : MonoBehaviour, Resetable
     {
         //记录这个机器可以执行的process：k:input类型 v:process
         public Dictionary<int,Tuple<string,string,int>> supportProcesses = new Dictionary<int,Tuple<string,string,int>>();
@@ -25,6 +25,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         private List<Item> InputItemBuffer = new List<Item>();
         private List<Item> OutputItemBuffer = new List<Item>();
+
+        public void EpisodeReset()
+        {
+            throw new NotImplementedException();
+        }
 
         // public float getInputCapacityRatio()
         // {
@@ -131,7 +136,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //     return ExchangeMessage.OK;
         // }
         //
-        // public override ExchangeMessage CheckOfferable(ItemHolder receiver, Item item)
+        // public override ExchangeMessage CheckGivable(ItemHolder receiver, Item item)
         // {
         //     if (OutputItemBuffer.Contains(item))
         //     {
