@@ -9,6 +9,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
     public class PlaneController : MonoBehaviour
     {
+        public int maxEnvSteps = 25000;
+        [SerializeField]
+        [InspectorUtil.DisplayOnly]
+        private int resetTimerStep = 0;
         public static string configPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv2/config.xml";
         //XML Config Element
         public static XmlNode envNode { get; private set; }
@@ -27,10 +31,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public Dictionary<int, Tuple<string, string, int>> ProcessSet { get; private set; }
         public Dictionary<GameObject,ItemHolder> AvailableTargets { get; private set; }
 
+        public List<AGVController> AgentList { get; private set; } = new List<AGVController>();
+
         //Ground paras
         private float minX, maxX, minZ, maxZ;
-        public float curX=30f, curZ=20f;
+        [HideInInspector]
+        public float maxDiameter;
         public bool randomGroundSize = false;
+        public float curX=30f, curZ=20f;
 
         static PlaneController()
         {
@@ -52,7 +60,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             minX = float.Parse(groundElement.GetAttribute("minX")); 
             maxX = float.Parse(groundElement.GetAttribute("maxX")); 
             minZ = float.Parse(groundElement.GetAttribute("minZ")); 
-            maxZ = float.Parse(groundElement.GetAttribute("maxZ")); 
+            maxZ = float.Parse(groundElement.GetAttribute("maxZ"));
+            //计算场地内最长对角线距离，用于归一化
+            maxDiameter = (float)Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxZ, 2));
             
             //随机本episode的ground尺寸
             if (randomGroundSize)
@@ -82,6 +92,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     Int32.Parse(e.GetAttribute("duration")));
                 ProcessSet.Add(Int32.Parse(e.GetAttribute("id")), p);
             }
+            
             
             //根据XML配置的raws和products生成原料口和交付口
             foreach (XmlNode node in envNode.SelectSingleNode("raws").ChildNodes)
@@ -126,13 +137,28 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
                 controller.supportProcesses = processes;
                 EpisodeObjects.Add(g,controller);
-                //AvailableTargets.Add(g, controller);
+                AvailableTargets.Add(controller.inputPlate,controller);
+                AvailableTargets.Add(controller.outputPlate, controller);
+                //AvailableTargetsItemHolderDict.Add(g, controller);
             }
             
-            GameObject AGV = Instantiate(AGVPrefab, transform);
-            AGVDispatcherAgent da = AGV.GetComponentInChildren<AGVDispatcherAgent>();
-            da._planeController = this;
-            ResetGround();
+            //根据XML配置的agvs生成场景中的AGV
+            foreach (XmlNode node in envNode.SelectSingleNode("agvs").ChildNodes)
+            {
+                XmlElement e = (XmlElement) node;
+                GameObject AGV = Instantiate(AGVPrefab, transform);
+                AGVController da = AGV.GetComponentInChildren<AGVController>();
+                da.planeController = this;
+                EpisodeObjects.Add(AGV,da);
+                AgentList.Add(da);
+            }
+
+            ResetGround(true);
+
+            foreach (var a in AgentList)
+            {
+                a.activateAward = true;
+            }
         }
 
         private void OnDrawGizmos()
@@ -146,17 +172,33 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             // }
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
-            
+            resetTimerStep += 1;
+            if (resetTimerStep >= maxEnvSteps && maxEnvSteps > 0)
+            {
+                ResetGround(false);
+                resetTimerStep = 0;
+            }
         }
 
-        public void ResetGround()
+        public void ResetGround(bool init)
         {
+            if (!init)
+            {
+                //随机本episode的ground尺寸
+                if (randomGroundSize)
+                {
+                    curX = Random.Range(minX, maxX);
+                    curZ = Random.Range(minZ, maxZ);
+                }
+            
+                groundController.changeSize(curX,curZ);
+            }
             foreach (var kv in EpisodeObjects)
             {
                 ResetToSafeRandomPosition(kv.Key);
-                if (kv.Value.GetType().IsAssignableFrom(typeof(Resetable)))
+                if (!init && kv.Value is Resetable)
                 {
                     (kv.Value as Resetable).EpisodeReset();
                 }
@@ -237,7 +279,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
             if (safePositionFound)
             {
-                potentialPosition = new Vector3(potentialPosition.x, transform.position.y+g.transform.position.y - bounds.min.y, potentialPosition.z);
+                potentialPosition = new Vector3(potentialPosition.x, transform.position.y+g.transform.position.y - bounds.min.y+0.1f, potentialPosition.z);
                 g.transform.position = potentialPosition;
             }
             else

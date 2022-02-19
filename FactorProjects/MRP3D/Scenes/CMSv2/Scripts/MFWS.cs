@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class MFWS : MonoBehaviour, Resetable
+    public class MFWS : ItemHolder, Resetable
     {
         //记录这个机器可以执行的process：k:input类型 v:process
         public Dictionary<int,Tuple<string,string,int>> supportProcesses = new Dictionary<int,Tuple<string,string,int>>();
@@ -26,9 +26,79 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private List<Item> InputItemBuffer = new List<Item>();
         private List<Item> OutputItemBuffer = new List<Item>();
 
+        #region ItemHolder Implement
+        public override Item GetItem(string itemType)
+        {
+            foreach (var item in OutputItemBuffer)
+            {
+                if (itemType.Equals(item.itemType))
+                {
+                    return item;
+                }
+            }
+            return null;
+        }
+        public override ExchangeMessage CheckGivable(ItemHolder receiver, Item item)
+        {
+            if (item != null && OutputItemBuffer.Contains(item))
+            {
+                return ExchangeMessage.OK;
+            }
+            return ExchangeMessage.NullItem;
+        }
+
+        public override ExchangeMessage CheckReceivable(ItemHolder giver, Item item)
+        {
+            if (item!=null&&InputItemBuffer.Count<inputBufferCapacity&&supportInputs.Contains(item.itemType))
+            {
+                return ExchangeMessage.OK;
+            }
+            return ExchangeMessage.WrongType;
+        }
+
+        protected override bool Store(Item item)
+        {
+            if (item!=null&&InputItemBuffer.Count < inputBufferCapacity && supportInputs.Contains(item.itemType))
+            {
+                InputItemBuffer.Add(item);
+                return true;
+            }
+            return false;
+        }
+
+        protected override bool Remove(Item item)
+        {
+            if (item != null && OutputItemBuffer.Contains(item))
+            {
+                OutputItemBuffer.Remove(item);
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+
+
+
         public void EpisodeReset()
         {
-            throw new NotImplementedException();
+            if (processingItem != null)
+            {
+                Destroy(processingItem.gameObject);
+            }
+            processingItem = null;
+            onProcessTime = 0f;
+            foreach (var item in InputItemBuffer)
+            {
+                GameObject.Destroy(item.gameObject);
+            }
+            InputItemBuffer.Clear();
+            foreach (var item in OutputItemBuffer)
+            {
+                GameObject.Destroy(item.gameObject);
+            }
+            OutputItemBuffer.Clear();
         }
 
         // public float getInputCapacityRatio()

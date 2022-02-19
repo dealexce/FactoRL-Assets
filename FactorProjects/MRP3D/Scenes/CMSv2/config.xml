@@ -37,20 +37,6 @@
                 <process id="3"/>
             </processes>
         </mfws>
-        <mfws id="4" inputcapacity="3" outputcapacity="3">
-            <processes>
-                <process id="1"/>
-                <process id="2"/>
-                <process id="3"/>
-            </processes>
-        </mfws>
-        <mfws id="5" inputcapacity="3" outputcapacity="3">
-            <processes>
-                <process id="1"/>
-                <process id="2"/>
-                <process id="3"/>
-            </processes>
-        </mfws>
         <mfws id="2" inputcapacity="3" outputcapacity="3">
             <processes>
                 <process id="4"/>
@@ -63,16 +49,11 @@
                 <process id="7"/>
             </processes>
         </mfws>
-        <mfws id="2" inputcapacity="3" outputcapacity="3">
+        <mfws id="1" inputcapacity="3" outputcapacity="3">
             <processes>
-                <process id="4"/>
-                <process id="5"/>
-            </processes>
-        </mfws>
-        <mfws id="3" inputcapacity="3" outputcapacity="3">
-            <processes>
-                <process id="6"/>
-                <process id="7"/>
+                <process id="1"/>
+                <process id="2"/>
+                <process id="3"/>
             </processes>
         </mfws>
         <mfws id="2" inputcapacity="3" outputcapacity="3">
@@ -88,4 +69,12 @@
             </processes>
         </mfws>
     </workstations>
+    <agvs>
+        <agv/>
+        <agv/>
+        <agv/>
+        <agv/>
+        <agv/>
+        <agv/>
+    </agvs>
 </env>

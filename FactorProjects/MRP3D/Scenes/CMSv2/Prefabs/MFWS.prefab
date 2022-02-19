@@ -333,8 +333,8 @@ MonoBehaviour:
   inputBufferCapacity: 20
   outputBufferCapacity: 20
   _planeController: {fileID: 0}
-  inputPlate: {fileID: 0}
-  outputPlate: {fileID: 0}
+  inputPlate: {fileID: 4133336830233152977}
+  outputPlate: {fileID: 2254671324214478851}
 --- !u!1 &8967289009620138078
 GameObject:
   m_ObjectHideFlags: 0

@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6385131209887719093}
-  - component: {fileID: 6813816011840121189}
   - component: {fileID: 5513502317428926725}
   m_Layer: 0
   m_Name: Dispatcher
@@ -32,36 +31,6 @@ Transform:
   m_Father: {fileID: 7253112251610864799}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6813816011840121189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 361546378755540507}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_BrainParameters:
-    VectorObservationSize: 1
-    NumStackedVectorObservations: 1
-    m_ActionSpec:
-      m_NumContinuousActions: 0
-      BranchSizes: 01000000
-    VectorActionSize: 01000000
-    VectorActionDescriptions: []
-    VectorActionSpaceType: 0
-    hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
-  m_InferenceDevice: 0
-  m_BehaviorType: 0
-  m_BehaviorName: My Behavior
-  TeamId: 0
-  m_UseChildSensors: 1
-  m_UseChildActuators: 1
-  m_ObservableAttributeHandling: 0
 --- !u!114 &5513502317428926725
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,13 +43,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69354fd3730a453d93e54ec9972a0503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
-  robot: {fileID: 5828576488224440954}
-  _planeController: {fileID: 0}
-  availableTargetsObj: []
 --- !u!1 &3138914704657889545
 GameObject:
   m_ObjectHideFlags: 0
@@ -90,6 +52,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7253112251610864799}
+  - component: {fileID: 8510106561756024528}
+  - component: {fileID: 2426370500539605666}
   m_Layer: 0
   m_Name: AGV
   m_TagString: Untagged
@@ -113,13 +77,13 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2604122799906709620
+--- !u!54 &8510106561756024528
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5828576488224440954}
+  m_GameObject: {fileID: 3138914704657889545}
   serializedVersion: 2
   m_Mass: 1
   m_Drag: 0.02
@@ -129,7 +93,28 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 84
   m_CollisionDetection: 0
---- !u!65 &6859615242468279000
+--- !u!114 &2426370500539605666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3138914704657889545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de38293fb5284dababa1e3ea52e8e9c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  planeController: {fileID: 0}
+  agvMoveAgent: {fileID: 0}
+  activateAward: 0
+  agvDispatcherAgent: {fileID: 0}
+  moveSpeed: 5
+  maxSpeed: 8
+  rotateSpeed: 3
+  availableTargetsObj_forTest: []
+  holdingItem: {fileID: 0}
+--- !u!65 &6690259085508176467
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -159,25 +144,9 @@ MonoBehaviour:
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
   agvController: {fileID: 0}
-  planeController: {fileID: 0}
-  targetItemType: 
-  targetItemHolder: {fileID: 0}
-  moveSpeed: 5
-  maxSpeed: 8
-  rotateSpeed: 3
---- !u!114 &6256789444748753482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5828576488224440954}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: de38293fb5284dababa1e3ea52e8e9c9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  holdingItem: {fileID: 0}
+  trainingMode: 1
+  arriveReward: 1
+  collisionReward: -0.01
 --- !u!114 &6281846072439492313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,23 +160,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 1
+    VectorObservationSize: 4
     NumStackedVectorObservations: 1
     m_ActionSpec:
-      m_NumContinuousActions: 0
-      BranchSizes: 01000000
-    VectorActionSize: 01000000
+      m_NumContinuousActions: 2
+      BranchSizes: 
+    VectorActionSize: 02000000
     VectorActionDescriptions: []
-    VectorActionSpaceType: 0
+    VectorActionSpaceType: 1
     hasUpgradedBrainParametersWithActionSpec: 1
   m_Model: {fileID: 0}
   m_InferenceDevice: 0
   m_BehaviorType: 0
-  m_BehaviorName: My Behavior
+  m_BehaviorName: CMSv2AGVMove
   TeamId: 0
   m_UseChildSensors: 1
   m_UseChildActuators: 1
   m_ObservableAttributeHandling: 0
+--- !u!114 &9184449944905524206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5828576488224440954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DecisionPeriod: 5
+  TakeActionsBetweenDecisions: 1
 --- !u!1 &5982305529670172846
 GameObject:
   m_ObjectHideFlags: 0
