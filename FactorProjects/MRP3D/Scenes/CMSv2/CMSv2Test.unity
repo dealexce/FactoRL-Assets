@@ -292,14 +292,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
-      propertyPath: ground
-      value: 
-      objectReference: {fileID: 1846830764}
-    - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
-      propertyPath: AGVPrefab
-      value: 
-      objectReference: {fileID: 3138914704657889545, guid: 1324955814674cf4f9b4da27561061a0, type: 3}
-    - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: testModel
       value: 
       objectReference: {fileID: 0}
@@ -396,8 +388,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!1 &1846830764 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6615889485304135894, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
-  m_PrefabInstance: {fileID: 945221928}
-  m_PrefabAsset: {fileID: 0}

@@ -67,8 +67,28 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         /// <param name="actions"></param>
         public override void OnActionReceived(ActionBuffers actions)
         {
-            ActionSegment<float> act = actions.ContinuousActions;
-            agvController.Move(act[0],act[1]);
+            ActionSegment<int> act = actions.DiscreteActions;
+            float move = 0f;
+            switch (act[0])
+            {
+                case 1:
+                    move = 1f;
+                    break;
+                case 2:
+                    move = -1f;
+                    break;
+            }
+            float rot = 0f;
+            switch (act[1])
+            {
+                case 1:
+                    rot = 1f;
+                    break;
+                case 2:
+                    rot = -1f;
+                    break;
+            }
+            agvController.Move(move, rot);
         }
 
         /// <summary>
@@ -95,9 +115,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         {
             if (trainingMode)
                 return;
-            var continuousAction = actionsOut.ContinuousActions;
-            continuousAction[0] = Input.GetAxis("Vertical");
-            continuousAction[1] = Input.GetAxis("Horizontal");
+            var discreteActions = actionsOut.DiscreteActions;
+            float vert = Input.GetAxis("Vertical");
+            if (vert > 0)
+            {
+                discreteActions[0] = 1;
+            }else if (vert < 0)
+            {
+                discreteActions[0] = 2;
+            }
+            float hori = Input.GetAxis("Horizontal");
+            if (hori > 0)
+            {
+                discreteActions[1] = 1;
+            }else if (hori < 0)
+            {
+                discreteActions[1] = 2;
+            }
         }
         
 

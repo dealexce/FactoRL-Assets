@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <env>
-    <ground minX="20" maxX="60" minZ="20" maxZ="60"/>
+    <ground minX="20" maxX="40" minZ="20" maxZ="40"/>
     <itemtypes>
         <itemtype>A0</itemtype>
         <itemtype>A1</itemtype>

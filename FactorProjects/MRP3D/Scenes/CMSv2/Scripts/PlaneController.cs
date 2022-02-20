@@ -35,7 +35,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         //Ground paras
         private float minX, maxX, minZ, maxZ;
-        [HideInInspector]
+        [InspectorUtil.DisplayOnly]
         public float maxDiameter;
         public bool randomGroundSize = false;
         public float curX=30f, curZ=20f;
@@ -272,7 +272,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 potentialPosition = new Vector3(Random.Range(-curX/2f, curX/2f),bounds.extents.y,Random.Range(-curZ/2f, curZ/2f));
                 potentialPosition = transform.position + potentialPosition;
                 remainAttempts--;
-                LayerMask mask = LayerMask.GetMask("Default");    //添加遮罩：只检测Default层
+                LayerMask mask = LayerMask.GetMask("Default","Trigger");    //添加遮罩：只检测Default层
                 Collider[] colliders = Physics.OverlapBox(potentialPosition, bounds.extents,Quaternion.identity,mask);
 
                 safePositionFound = colliders.Length == 0;

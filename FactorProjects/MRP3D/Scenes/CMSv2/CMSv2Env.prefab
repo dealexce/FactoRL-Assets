@@ -52,7 +52,7 @@ MonoBehaviour:
   exportPrefab: {fileID: 6420293301762786809, guid: 0276c4a8774f54b4aa66add50856349e, type: 3}
   MFWMPrefab: {fileID: 8412221806419059806, guid: 18f687276b8036144abfb5fb417b0a0e, type: 3}
   itemPrefab: {fileID: 7580886048584861730, guid: 3a225a1d60423884487f4c48a37722b2, type: 3}
-  AGVPrefab: {fileID: 0}
+  AGVPrefab: {fileID: 3138914704657889545, guid: 1324955814674cf4f9b4da27561061a0, type: 3}
   maxDiameter: 0
   randomGroundSize: 1
   curX: 30
@@ -95,6 +95,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 2791733022000664604}
     m_Modifications:
+    - target: {fileID: 517769798603499203, guid: 34e6fecf098b5c344bf14760ae0686dc, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 6623291110514311090, guid: 34e6fecf098b5c344bf14760ae0686dc, type: 3}
       propertyPath: m_Name
       value: Ground

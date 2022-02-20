@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5843057077867102066}
   - component: {fileID: 1621763388914187190}
   - component: {fileID: 6138131316502712849}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: OutputTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -64,7 +64,7 @@ GameObject:
   - component: {fileID: 5731739604366273131}
   - component: {fileID: 735243902862483581}
   - component: {fileID: 3686455016135558706}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: InputTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
