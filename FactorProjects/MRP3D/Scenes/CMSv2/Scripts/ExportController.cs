@@ -36,6 +36,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         {
             if (productType.Equals(item.itemType))
             {
+                Destroy(item.gameObject);
+                _planeController.ProductFinished();
                 return true;
             }
             return false;

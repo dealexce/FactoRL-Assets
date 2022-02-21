@@ -4,24 +4,15 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public struct Target
-    {
-        public GameObject gameObject;
-        public string itemType;
 
-        public Target(GameObject gameObject, string itemType)
-        {
-            this.gameObject = gameObject;
-            this.itemType = itemType;
-        }
-    }
     public class AGVController : ItemHolder, Resetable
     {
         public PlaneController planeController;
         public AGVMoveAgent agvMoveAgent;
         public bool activateAward = false;
         public AGVDispatcherAgent agvDispatcherAgent;
-
+        public float noTargetHoldTime = 1f;
+        public float noTargetTime = 0f;
         public Target target;
         
         public float moveSpeed = 5;
@@ -47,7 +38,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         {
             if (item == holdingItem)
             {
-                item = null;
+                holdingItem = null;
                 return true;
             }
             return true;
@@ -58,8 +49,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             if (holdingItem == null)
             {
                 holdingItem = item;
-                item.transform.parent = transform;
-                item.transform.localPosition = new Vector3(0f,GetComponent<BoxCollider>().size.y,0f);
+                item.transform.SetParent(transform, true);
+                item.transform.position = transform.position + new Vector3(0f,GetComponentInChildren<BoxCollider>().size.y,0f);
                 return true;
             }
             return false;
@@ -96,7 +87,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             _rigidbody.angularVelocity = Vector3.zero;
             ResetHolder();
             agvMoveAgent.EpisodeInterrupted();
-            target = agvDispatcherAgent.RequestNewTarget();
+            agvDispatcherAgent.RequestTargetDecision();
         }
         public void ResetHolder()
         {
@@ -114,10 +105,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 return;
             }
+            //到达当前设定的target
             if (otherGameObject == target.gameObject)
             {
                 agvMoveAgent.arriveTargetTrain();
-                target = agvDispatcherAgent.RequestNewTarget();
+                arriveTarget();
+                agvDispatcherAgent.RequestTargetDecision();
             }
         }
         private void OnCollisionEnter(Collision other)
@@ -143,7 +136,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             planeController = GetComponentInParent<PlaneController>();
             AvailableTargetsItemHolderDict = planeController.AvailableTargets;
             availableTargetsObj_forTest = new List<GameObject>(AvailableTargetsItemHolderDict.Keys);
-            target = agvDispatcherAgent.RequestNewTarget();
+            agvDispatcherAgent.RequestTargetDecision();
         }
 
         private void Update()
@@ -160,11 +153,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
             }
             
-            //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
-            if (Input.GetKeyDown(KeyCode.R))
+            //如果没有指派任何目标且距离上一次分配目标已经超过闲置时间
+            if (target.gameObject == null)
             {
-                target = new Target(availableTargetsObj_forTest[cur++%availableTargetsObj_forTest.Count],"A0");
+                if (noTargetTime > noTargetHoldTime)
+                {
+                    agvDispatcherAgent.RequestTargetDecision();
+                }
+                else
+                {
+                    noTargetTime += Time.deltaTime;
+                }
             }
+
+            //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
+            // if (Input.GetKeyDown(KeyCode.R))
+            // {
+            //     agvDispatcherAgent.RequestTargetDecision();
+            // }
         }
 
         public void Move(float forward, float rotate)

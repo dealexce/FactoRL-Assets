@@ -6,18 +6,20 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class MFWS : ItemHolder, Resetable
+    public class MFWSController : ItemHolder, Resetable
     {
         //记录这个机器可以执行的process：k:input类型 v:process
-        public Dictionary<int,Tuple<string,string,int>> supportProcesses = new Dictionary<int,Tuple<string,string,int>>();
-        public HashSet<string> supportInputs = new HashSet<string>();
+        public List<int> supportProcessId = new List<int>();
         public int inputBufferCapacity = 20;
         public int outputBufferCapacity = 20;
-        public PlaneController _planeController;
+        public PlaneController _planeController;    //由PlaneController赋值
+        public MFWSAgent mfwsAgent;
 
         //processing variables and objects
+        private Process currentProcess = default;
         private Item processingItem = null;
         private float onProcessTime = 0f;
+        private bool outputReady = true;
         
         //input/output plate GameObjects
         public GameObject inputPlate;
@@ -61,6 +63,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             if (item!=null&&InputItemBuffer.Count < inputBufferCapacity && supportInputs.Contains(item.itemType))
             {
                 InputItemBuffer.Add(item);
+                item.transform.SetParent(transform,true);
+                item.transform.position = inputPlate.transform.position+Vector3.up*InputItemBuffer.Count;
                 return true;
             }
             return false;
@@ -71,24 +75,59 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             if (item != null && OutputItemBuffer.Contains(item))
             {
                 OutputItemBuffer.Remove(item);
+                if (OutputItemBuffer.Count < outputBufferCapacity)
+                {
+                    outputReady = true;
+                }
                 return true;
             }
             return false;
         }
 
         #endregion
+        
+        
 
+        private void Awake()
+        {
+            mfwsAgent = GetComponent<MFWSAgent>();
+        }
 
+        private void Update()
+        {
+            if (InputItemBuffer.Count>0&&outputReady&&processingItem == null)
+            {
+                DecideAndStartProcessItem();
+            }
+        }
 
+        //TODO:性能优化
+        public List<int> getCurrentAvailableProcessId()
+        {
+            List<int> res = new List<int>();
+            foreach (var id in supportProcessId)
+            {
+                foreach (var item in InputItemBuffer)
+                {
+                    if (item.itemType.Equals(_planeController.ProcessSet[id].inputType))
+                    {
+                        res.Add(id);
+                        break;
+                    }
+                }
+            }
+            return res;
+        }
 
         public void EpisodeReset()
         {
+            CancelInvoke();
             if (processingItem != null)
             {
                 Destroy(processingItem.gameObject);
             }
             processingItem = null;
-            onProcessTime = 0f;
+            currentProcess = default;
             foreach (var item in InputItemBuffer)
             {
                 GameObject.Destroy(item.gameObject);
@@ -99,17 +138,64 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 GameObject.Destroy(item.gameObject);
             }
             OutputItemBuffer.Clear();
+            outputReady = true;
         }
 
-        // public float getInputCapacityRatio()
-        // {
-        //     return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
-        // }
-        //
-        // public float getOutputCapacityRatio()
-        // {
-        //     return (float)OutputItemBuffer.Count/outputBufferCapacity;
-        // }
+        private void DecideAndStartProcessItem()
+        {
+            int todoPid = mfwsAgent.DecideProcess();
+            if (todoPid == -1)
+            {
+                return;
+            }
+            currentProcess = _planeController.ProcessSet[todoPid];
+            string inputType = currentProcess.inputType;
+            Item processItem = null;
+            foreach (var item in InputItemBuffer)
+            {
+                if (item.itemType.Equals(inputType))
+                {
+                    processItem = item;
+                    break;
+                }
+            }
+            if (processItem == null)
+            {
+                Debug.LogError("MFWS Agent have chosen an invalid process");
+                return;
+            }
+            InputItemBuffer.Remove(processItem);
+            this.processingItem = processItem;
+            processItem.transform.position = transform.position + Vector3.up;
+            Invoke("ProcessingItemToOutput",currentProcess.duration);
+        }
+
+        private void ProcessingItemToOutput()
+        {
+            if (processingItem != null)
+            {
+                //Add processingItem into OutputItemBuffer and move its position to outputPlate
+                processingItem.setItemType(currentProcess.outputType);
+                OutputItemBuffer.Add(processingItem);
+                processingItem.transform.position = outputPlate.transform.position + Vector3.up * OutputItemBuffer.Count;
+            }
+            if (OutputItemBuffer.Count >= outputBufferCapacity)
+            {
+                outputReady = false;
+            }
+            currentProcess = default;
+            processingItem = null;
+        }
+
+        public float getInputCapacityRatio()
+        {
+            return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
+        }
+        
+        public float getOutputCapacityRatio()
+        {
+            return (float)OutputItemBuffer.Count/outputBufferCapacity;
+        }
         //
         // public void ResetStation()
         // {

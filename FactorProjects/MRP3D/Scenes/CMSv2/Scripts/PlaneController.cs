@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Xml;
 using Multi;
+using Unity.MLAgents;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -13,6 +14,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         [SerializeField]
         [InspectorUtil.DisplayOnly]
         private int resetTimerStep = 0;
+
+        [SerializeField]
+        [InspectorUtil.DisplayOnly]
+        private int deliveredCounts = 0;
         public static string configPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv2/config.xml";
         //XML Config Element
         public static XmlNode envNode { get; private set; }
@@ -27,9 +32,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public GameObject itemPrefab;
         public GameObject AGVPrefab;
 
+        //Group
+        public float timePenalty = 3f;
+        private SimpleMultiAgentGroup _simpleMultiAgentGroup = new SimpleMultiAgentGroup();
+
         public HashSet<string> ItemSet { get; private set; }
-        public Dictionary<int, Tuple<string, string, int>> ProcessSet { get; private set; }
+        public Dictionary<int, Process> ProcessSet { get; private set; }
         public Dictionary<GameObject,ItemHolder> AvailableTargets { get; private set; }
+        public List<Target> AvailableTargetCombination { get; private set; } = new List<Target>();
+        public List<MFWSController> MfwsControllers { get; private set; } = new List<MFWSController>();
 
         public List<AGVController> AgentList { get; private set; } = new List<AGVController>();
 
@@ -82,15 +93,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
             
             //根据XML配置的processes用三元组数组记录所有的process
-            ProcessSet = new Dictionary<int, Tuple<string, string, int>>();
+            ProcessSet = new Dictionary<int, Process>();
             foreach (XmlNode node in envNode.SelectSingleNode("workflow").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
-                Tuple<string, string, int> p = new Tuple<string, string, int>(
+                Process p = new Process(
+                    Int32.Parse(e.GetAttribute("id")),
                     e.GetAttribute("input"),
                     e.GetAttribute("output"),
                     Int32.Parse(e.GetAttribute("duration")));
-                ProcessSet.Add(Int32.Parse(e.GetAttribute("id")), p);
+                ProcessSet.Add(p.pid, p);
             }
             
             
@@ -104,6 +116,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 ic._planeController = this;
                 EpisodeObjects.Add(g,ic);
                 AvailableTargets.Add(g, ic);
+                AvailableTargetCombination.Add(new Target(g,ic.rawType));
             }
             foreach (XmlNode node in envNode.SelectSingleNode("products").ChildNodes)
             {
@@ -112,8 +125,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 ExportController ec = g.GetComponent<ExportController>();
                 ec.productType = node.InnerText;
                 ec._planeController = this;
+                ec.supportInputs.Add(ec.productType);
                 EpisodeObjects.Add(g,ec);
                 AvailableTargets.Add(g, ec);
+                AvailableTargetCombination.Add(new Target(g,null));
             }
 
             //根据XML配置的workstations生成场景中的Workstation
@@ -121,24 +136,28 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(MFWMPrefab, transform);
-                MFWS controller = g.GetComponent<MFWS>();
+                MFWSController controller = g.GetComponent<MFWSController>();
                 controller._planeController = this;
                 //设置缓冲区容量
                 controller.inputBufferCapacity = Int32.Parse(e.GetAttribute("inputcapacity"));
                 controller.outputBufferCapacity = Int32.Parse(e.GetAttribute("outputcapacity"));
                 //设置可执行process集合
-                Dictionary<int, Tuple<string, string, int>> processes = new Dictionary<int, Tuple<string, string, int>>();
+                AvailableTargetCombination.Add(new Target(controller.inputPlate,null)); //代表把物体给这个WS的inputPlate
                 foreach (XmlNode processNode in e.SelectSingleNode("processes").ChildNodes)
                 {
                     XmlElement processElement = (XmlElement) processNode;
                     int pid = Int32.Parse(processElement.GetAttribute("id"));
-                    processes.Add(pid,ProcessSet[pid]);
-                    controller.supportInputs.Add(ProcessSet[pid].Item1);
+                    controller.supportProcessId.Add(pid);
+                    if (!controller.supportInputs.Contains(ProcessSet[pid].inputType))
+                    {
+                        controller.supportInputs.Add(ProcessSet[pid].inputType);
+                        AvailableTargetCombination.Add(new Target(controller.outputPlate,ProcessSet[pid].outputType));  //代表从这个WS的outputPlate拿outputType的物体
+                    }
                 }
-                controller.supportProcesses = processes;
                 EpisodeObjects.Add(g,controller);
                 AvailableTargets.Add(controller.inputPlate,controller);
                 AvailableTargets.Add(controller.outputPlate, controller);
+                MfwsControllers.Add(controller);
                 //AvailableTargetsItemHolderDict.Add(g, controller);
             }
             
@@ -147,18 +166,29 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 XmlElement e = (XmlElement) node;
                 GameObject AGV = Instantiate(AGVPrefab, transform);
-                AGVController da = AGV.GetComponentInChildren<AGVController>();
+                AGVController da = AGV.GetComponent<AGVController>();
+                AGVDispatcherAgent dpAgent = da.agvDispatcherAgent;
+                _simpleMultiAgentGroup.RegisterAgent(dpAgent);
                 da.planeController = this;
                 EpisodeObjects.Add(AGV,da);
                 AgentList.Add(da);
             }
-
+            PrintAgentSpaceInfo();
             ResetGround(true);
 
             foreach (var a in AgentList)
             {
                 a.activateAward = true;
             }
+        }
+        
+        //TODO:计算并打印当前XML配置下各个Agent的观测和动作空间大小
+        public void PrintAgentSpaceInfo()
+        {
+            Debug.Log("AGV Dispatcher Action Space: "+(AvailableTargetCombination.Count+1));
+            Debug.Log("AGV Dispatcher Observ Space: "+(AvailableTargets.Keys.Count*2+MfwsControllers.Count*2));
+            Debug.Log("MFWS Action Space: NOT IMPLEMENTED");
+            Debug.Log("MFWS Observ Space: NOT IMPLEMENTED");
         }
 
         private void OnDrawGizmos()
@@ -175,6 +205,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private void FixedUpdate()
         {
             resetTimerStep += 1;
+            _simpleMultiAgentGroup.AddGroupReward(timePenalty/(float)maxEnvSteps);
             if (resetTimerStep >= maxEnvSteps && maxEnvSteps > 0)
             {
                 ResetGround(false);
@@ -194,6 +225,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
             
                 groundController.changeSize(curX,curZ);
+                _simpleMultiAgentGroup.GroupEpisodeInterrupted();
             }
             foreach (var kv in EpisodeObjects)
             {
@@ -203,6 +235,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     (kv.Value as Resetable).EpisodeReset();
                 }
             }
+            deliveredCounts = 0;
         }
 
         /// <summary>
@@ -301,6 +334,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 return null;
             }
+        }
+
+        public void ProductFinished()
+        {
+            _simpleMultiAgentGroup.AddGroupReward(1f);
+            groundController.FlipGreen();
+            deliveredCounts++;
         }
     }
 }
