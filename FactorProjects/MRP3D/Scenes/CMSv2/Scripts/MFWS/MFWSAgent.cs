@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Multi;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
 using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
@@ -24,10 +25,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             //actionMask.SetActionEnabled();
         }
         
-        //动作空间：所有process的集合+1待机（什么也不做）
+        //动作空间：所有process的集合+1待机（0=什么也不做）
         public override void OnActionReceived(ActionBuffers actions)
         {
             base.OnActionReceived(actions);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sensor"></param>
+        public override void CollectObservations(VectorSensor sensor)
+        {
+            base.CollectObservations(sensor);
         }
 
         public int DecideProcess()

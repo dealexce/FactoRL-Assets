@@ -10,7 +10,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //获取一个类型为itemType的Item引用
         public abstract Item GetItem(string itemType);
         public HashSet<string> supportInputs = new HashSet<string>();
-        
+        public GameObject InputGameObject;
+        public GameObject OutputGameObject;
+
+
         /// <summary>
         /// 将指定的item给予指定的receiver，给予时先用giver的CheckOfferable检查是否
         /// 可以给予，如果不能给予返回对应的ExchangeMessage。然后调用receiver的

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml;
 using Multi;
 using Unity.MLAgents;
@@ -10,6 +12,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
     public class PlaneController : MonoBehaviour
     {
+        
         public int maxEnvSteps = 25000;
         [SerializeField]
         [InspectorUtil.DisplayOnly]
@@ -26,6 +29,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public GameObject ground;
         [HideInInspector]
         public Ground groundController;
+        
+        //Prefabs
         public GameObject importPrefab;
         public GameObject exportPrefab;
         public GameObject MFWMPrefab;
@@ -36,20 +41,54 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public float timePenalty = 3f;
         private SimpleMultiAgentGroup _simpleMultiAgentGroup = new SimpleMultiAgentGroup();
 
-        public HashSet<string> ItemSet { get; private set; }
-        public Dictionary<int, Process> ProcessSet { get; private set; }
-        public Dictionary<GameObject,ItemHolder> AvailableTargets { get; private set; }
-        public List<Target> AvailableTargetCombination { get; private set; } = new List<Target>();
-        public List<MFWSController> MfwsControllers { get; private set; } = new List<MFWSController>();
+        /// <summary>
+        /// XML中定义的物料类型, k=0 ~ NullItem
+        /// </summary>
+        public List<string> ItemTypeList { get; private set; } = new List<string>(){ProductionConstants.NullItem};
+        public Dictionary<string,int> ItemTypeIndexDict { get; private set; }
 
-        public List<AGVController> AgentList { get; private set; } = new List<AGVController>();
+        /// <summary>
+        /// XML中定义的Processes, k->pid, v->Process, pid=0 ~ NullProcess
+        /// </summary>
+        public List<Process> ProcessList { get; private set; } = new List<Process>(){ProductionConstants.NullProcess};
+        public Dictionary<Process,int> ProcessIndexDict { get; private set; }
 
-        //Ground paras
+        /// <summary>
+        /// 所有有效的[targetGameObject, targetItem]组合, k=0 ~ NullTarget
+        /// </summary>
+        public List<Target> TargetCombinationList { get; private set; } = new List<Target>(){ProductionConstants.NullTarget};
+        public Dictionary<Target,int> TargetCombinationIndexDict { get; private set; }
+
+        /// <summary>
+        /// 存放GameObject的ItemHolder组件
+        /// </summary>
+        public Dictionary<GameObject, ItemHolder> GameObjectItemHolderDict { get; private set; } = new Dictionary<GameObject, ItemHolder>();
+        public List<MFWSController> MFWSControllers { get; private set; } = new List<MFWSController>();
+        public List<AGVController> AGVControllers { get; private set; } = new List<AGVController>();
+
+        #region Ground parameters
+        /// <summary>
+        /// XML配置的场地随机尺寸的长宽随机范围
+        /// </summary>
         private float minX, maxX, minZ, maxZ;
-        [InspectorUtil.DisplayOnly]
-        public float maxDiameter;
+        /// <summary>
+        /// 是否在每次场地重置时随机场地尺寸
+        /// </summary>
         public bool randomGroundSize = false;
+        /// <summary>
+        /// 当前场地尺寸
+        /// </summary>
         public float curX=30f, curZ=20f;
+        #endregion
+
+        #region Normalization values
+        /// <summary>
+        /// 当前场地尺寸下的外接圆直径，场地中两物体距离最大不会超过该值，用于观测值归一化
+        /// </summary>
+        public float MAXDiameter { get; private set; }
+        public float MAXDuration { get; private set; }
+        public float MAXCapacity { get; private set; }
+        #endregion
 
         static PlaneController()
         {
@@ -61,10 +100,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
         
         //生产对象列表
-        private Dictionary<GameObject, MonoBehaviour> EpisodeObjects = new Dictionary<GameObject, MonoBehaviour>(); 
+        private Dictionary<GameObject, MonoBehaviour> EpisodeResetObjects = new Dictionary<GameObject, MonoBehaviour>(); 
         private void Start()
         {
-            AvailableTargets = new Dictionary<GameObject, ItemHolder>();
+
+            #region Ground Config
             groundController = ground.GetComponent<Ground>();
             //配置ground随机尺寸范围
             XmlElement groundElement = (XmlElement) envNode.SelectSingleNode("ground");
@@ -72,28 +112,35 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             maxX = float.Parse(groundElement.GetAttribute("maxX")); 
             minZ = float.Parse(groundElement.GetAttribute("minZ")); 
             maxZ = float.Parse(groundElement.GetAttribute("maxZ"));
-            //计算场地内最长对角线距离，用于归一化
-            maxDiameter = (float)Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxZ, 2));
-            
             //随机本episode的ground尺寸
             if (randomGroundSize)
             {
                 curX = Random.Range(minX, maxX);
                 curZ = Random.Range(minZ, maxZ);
             }
-            
             groundController.changeSize(curX,curZ);
+            #endregion
+
+            #region Normalization used values
+            //计算场地内最长对角线距离，用于归一化
+            MAXDiameter = (float)Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxZ, 2));
+            XmlElement normElement = (XmlElement) envNode.SelectSingleNode("norm");
+            MAXCapacity = Int32.Parse(normElement.GetAttribute("maxCapacity"));
+            MAXDuration = Int32.Parse(normElement.GetAttribute("maxDuration"));
+            #endregion
+
+            #region ItemTypeList config
             //根据XML配置生成ItemType集合，用于场景中的物体生成
-            ItemSet = new HashSet<string>();
             foreach (XmlNode node in envNode.SelectSingleNode("itemtypes").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 string type = node.InnerText;
-                ItemSet.Add(type);
+                ItemTypeList.Add(type);
             }
-            
+            #endregion
+
+            #region ProcessList config
             //根据XML配置的processes用三元组数组记录所有的process
-            ProcessSet = new Dictionary<int, Process>();
             foreach (XmlNode node in envNode.SelectSingleNode("workflow").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
@@ -102,35 +149,39 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     e.GetAttribute("input"),
                     e.GetAttribute("output"),
                     Int32.Parse(e.GetAttribute("duration")));
-                ProcessSet.Add(p.pid, p);
+                ProcessList.Add(p);
             }
-            
-            
-            //根据XML配置的raws和products生成原料口和交付口
+            #endregion
+
+            #region Import/Outport Config
+            //配置Import原料口
             foreach (XmlNode node in envNode.SelectSingleNode("raws").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(importPrefab, this.transform);
                 ImportController ic = g.GetComponent<ImportController>();
-                ic.rawType = node.InnerText;
                 ic._planeController = this;
-                EpisodeObjects.Add(g,ic);
-                AvailableTargets.Add(g, ic);
-                AvailableTargetCombination.Add(new Target(g,ic.rawType));
+                ic.rawType = node.InnerText;
+                EpisodeResetObjects.Add(g,ic);
+                GameObjectItemHolderDict.Add(g, ic);
+                TargetCombinationList.Add(new Target(g,TargetAction.Get,ic.rawType));
             }
+            //配置Export出货口
             foreach (XmlNode node in envNode.SelectSingleNode("products").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(exportPrefab, this.transform);
                 ExportController ec = g.GetComponent<ExportController>();
-                ec.productType = node.InnerText;
                 ec._planeController = this;
+                ec.productType = node.InnerText;
                 ec.supportInputs.Add(ec.productType);
-                EpisodeObjects.Add(g,ec);
-                AvailableTargets.Add(g, ec);
-                AvailableTargetCombination.Add(new Target(g,null));
+                EpisodeResetObjects.Add(g,ec);
+                GameObjectItemHolderDict.Add(g, ec);
+                TargetCombinationList.Add(new Target(g,TargetAction.Give,ec.productType));
             }
+            #endregion
 
+            #region MFWS Config
             //根据XML配置的workstations生成场景中的Workstation
             foreach (XmlNode node in envNode.SelectSingleNode("workstations").ChildNodes)
             {
@@ -142,58 +193,77 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 controller.inputBufferCapacity = Int32.Parse(e.GetAttribute("inputcapacity"));
                 controller.outputBufferCapacity = Int32.Parse(e.GetAttribute("outputcapacity"));
                 //设置可执行process集合
-                AvailableTargetCombination.Add(new Target(controller.inputPlate,null)); //代表把物体给这个WS的inputPlate
+                TargetCombinationList.Add(new Target(
+                    controller.inputPlate,
+                    TargetAction.Give,
+                    ProductionConstants.AnyItem));
                 foreach (XmlNode processNode in e.SelectSingleNode("processes").ChildNodes)
                 {
                     XmlElement processElement = (XmlElement) processNode;
                     int pid = Int32.Parse(processElement.GetAttribute("id"));
                     controller.supportProcessId.Add(pid);
-                    if (!controller.supportInputs.Contains(ProcessSet[pid].inputType))
+                    if (!controller.supportInputs.Contains(ProcessList[pid].inputType))
                     {
-                        controller.supportInputs.Add(ProcessSet[pid].inputType);
-                        AvailableTargetCombination.Add(new Target(controller.outputPlate,ProcessSet[pid].outputType));  //代表从这个WS的outputPlate拿outputType的物体
+                        controller.supportInputs.Add(ProcessList[pid].inputType);
+                        TargetCombinationList.Add(new Target(
+                            controller.outputPlate,
+                            TargetAction.Get,
+                            ProcessList[pid].outputType));  //代表从这个WS的outputPlate拿outputType的物体
                     }
                 }
-                EpisodeObjects.Add(g,controller);
-                AvailableTargets.Add(controller.inputPlate,controller);
-                AvailableTargets.Add(controller.outputPlate, controller);
-                MfwsControllers.Add(controller);
-                //AvailableTargetsItemHolderDict.Add(g, controller);
+                controller.isMultiFunctional = controller.supportProcessId.Count > 1;
+                EpisodeResetObjects.Add(g,controller);
+                GameObjectItemHolderDict.Add(controller.inputPlate,controller);
+                GameObjectItemHolderDict.Add(controller.outputPlate, controller);
+                MFWSControllers.Add(controller);
+                //TargetableGameObjectItemHolderDict.Add(g, controller);
             }
-            
+            #endregion
+
+            #region AGV config
             //根据XML配置的agvs生成场景中的AGV
             foreach (XmlNode node in envNode.SelectSingleNode("agvs").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject AGV = Instantiate(AGVPrefab, transform);
-                AGVController da = AGV.GetComponent<AGVController>();
-                AGVDispatcherAgent dpAgent = da.agvDispatcherAgent;
+                AGVController agvController = AGV.GetComponent<AGVController>();
+                agvController._planeController = this;
+                AGVDispatcherAgent dpAgent = agvController.agvDispatcherAgent;
                 _simpleMultiAgentGroup.RegisterAgent(dpAgent);
-                da.planeController = this;
-                EpisodeObjects.Add(AGV,da);
-                AgentList.Add(da);
+                EpisodeResetObjects.Add(AGV,agvController);
+                AGVControllers.Add(agvController);
             }
+            #endregion
+
+            #region Index Dictionary Generate
+
+            ItemTypeIndexDict = Utils.ToIndexDict(ItemTypeList);
+            ProcessIndexDict = Utils.ToIndexDict(ProcessList);
+            TargetCombinationIndexDict = Utils.ToIndexDict(TargetCombinationList);
+
+            #endregion
+            
             PrintAgentSpaceInfo();
             ResetGround(true);
 
-            foreach (var a in AgentList)
+            foreach (var a in AGVControllers)
             {
                 a.activateAward = true;
             }
         }
-        
+
         //TODO:计算并打印当前XML配置下各个Agent的观测和动作空间大小
         public void PrintAgentSpaceInfo()
         {
-            Debug.Log("AGV Dispatcher Action Space: "+(AvailableTargetCombination.Count+1));
-            Debug.Log("AGV Dispatcher Observ Space: "+(AvailableTargets.Keys.Count*2+MfwsControllers.Count*2));
-            Debug.Log("MFWS Action Space: NOT IMPLEMENTED");
-            Debug.Log("MFWS Observ Space: NOT IMPLEMENTED");
+            Debug.Log("AGV Dispatcher Act Size: "+(TargetCombinationList.Count+1));
+            Debug.Log("AGV Dispatcher Obs Size: "+(GameObjectItemHolderDict.Keys.Count*2+MFWSControllers.Count*2+AGVControllers.Count*TargetCombinationList.Count));
+            Debug.Log("MFWS Act Size: "+(ProcessList.Count+1));
+            Debug.Log("MFWS Obs Size: "+(ProcessList.Count+1));
         }
 
         private void OnDrawGizmos()
         {
-            // foreach (var obj in EpisodeObjects.Keys)
+            // foreach (var obj in EpisodeResetObjects.Keys)
             // {
             //     Bounds bounds = GetEncapsulateBoxColliderBounds(obj);
             //     if(Physics.OverlapBox(bounds.center, bounds.extents).Length>3)
@@ -227,7 +297,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 groundController.changeSize(curX,curZ);
                 _simpleMultiAgentGroup.GroupEpisodeInterrupted();
             }
-            foreach (var kv in EpisodeObjects)
+            foreach (var kv in EpisodeResetObjects)
             {
                 ResetToSafeRandomPosition(kv.Key);
                 if (!init && kv.Value is Resetable)
@@ -323,7 +393,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         public Item InstantiateItem(string itemType, GameObject parentObj)
         {
-            if (ItemSet.Contains(itemType))
+            if (ItemTypeList.Contains(itemType))
             {
                 GameObject obj = Instantiate(itemPrefab, parentObj.transform);
                 Item item = obj.GetComponent<Item>();

@@ -3,13 +3,20 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class ImportController : ItemHolder
+    public class ImportController : ItemHolder, LinkedToPlane
     {
         public string rawType;
-        public PlaneController _planeController;
+        public PlaneController _planeController { get; set; }
 
         public Item bufferItem;
-        //TODO:实现ImportController
+
+
+        private void Awake()
+        {
+            OutputGameObject = gameObject;
+            _planeController = GetComponentInParent<PlaneController>();
+        }
+
         private void Start()
         {
             bufferItem = _planeController.InstantiateItem(rawType, gameObject);

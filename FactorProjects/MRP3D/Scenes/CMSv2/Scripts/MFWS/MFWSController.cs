@@ -6,14 +6,15 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class MFWSController : ItemHolder, Resetable
+    public class MFWSController : ItemHolder, Resetable, LinkedToPlane, IHasStatus<MFWSStatus>
     {
         //记录这个机器可以执行的process：k:input类型 v:process
         public List<int> supportProcessId = new List<int>();
         public int inputBufferCapacity = 20;
         public int outputBufferCapacity = 20;
-        public PlaneController _planeController;    //由PlaneController赋值
+        public PlaneController _planeController { get; set; }    //由PlaneController赋值
         public MFWSAgent mfwsAgent;
+        public bool isMultiFunctional;
 
         //processing variables and objects
         private Process currentProcess = default;
@@ -27,6 +28,69 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         private List<Item> InputItemBuffer = new List<Item>();
         private List<Item> OutputItemBuffer = new List<Item>();
+
+        #region Status
+
+        public MFWSStatus GetStatus()
+        {
+            return new MFWSStatus(
+                getInputCapacityRatio(),
+                getItemQuantityArray(InputItemBuffer),
+                getOutputCapacityRatio(),
+                getItemQuantityArray(OutputItemBuffer),
+                _planeController.ProcessIndexDict[currentProcess]);
+        }
+        public float getInputCapacityRatio()
+        {
+            return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
+        }
+        
+        public float getOutputCapacityRatio()
+        {
+            return (float)OutputItemBuffer.Count/outputBufferCapacity;
+        }
+        private float[] getItemQuantityArray(List<Item> buffer)
+        {
+            int typeNum = _planeController.ItemTypeList.Count;
+            float[] res = new float[typeNum];
+            foreach (var item in InputItemBuffer)
+            {
+                int itemIndex = _planeController.ItemTypeIndexDict[item.itemType];
+                if (itemIndex < typeNum)
+                    res[itemIndex] += 1f / _planeController.MAXCapacity;
+                else
+                    Debug.LogError("INVALID ITEM INDEX");
+            }
+            return res;
+        }
+
+        #endregion
+
+
+        #region Monobehavior Methods
+
+        private void Awake()
+        {
+            InputGameObject = inputPlate;
+            OutputGameObject = outputPlate;
+            mfwsAgent = GetComponent<MFWSAgent>();
+            _planeController = GetComponentInParent<PlaneController>();
+        }
+
+        private void Start()
+        {
+            
+        }
+
+        private void Update()
+        {
+            if (InputItemBuffer.Count>0&&outputReady&&processingItem == null)
+            {
+                DecideAndStartProcessItem();
+            }
+        }
+
+        #endregion
 
         #region ItemHolder Implement
         public override Item GetItem(string itemType)
@@ -85,21 +149,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
 
         #endregion
-        
-        
-
-        private void Awake()
-        {
-            mfwsAgent = GetComponent<MFWSAgent>();
-        }
-
-        private void Update()
-        {
-            if (InputItemBuffer.Count>0&&outputReady&&processingItem == null)
-            {
-                DecideAndStartProcessItem();
-            }
-        }
 
         //TODO:性能优化
         public List<int> getCurrentAvailableProcessId()
@@ -109,7 +158,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 foreach (var item in InputItemBuffer)
                 {
-                    if (item.itemType.Equals(_planeController.ProcessSet[id].inputType))
+                    if (item.itemType.Equals(_planeController.ProcessList[id].inputType))
                     {
                         res.Add(id);
                         break;
@@ -148,7 +197,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 return;
             }
-            currentProcess = _planeController.ProcessSet[todoPid];
+            currentProcess = _planeController.ProcessList[todoPid];
             string inputType = currentProcess.inputType;
             Item processItem = null;
             foreach (var item in InputItemBuffer)
@@ -187,32 +236,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             processingItem = null;
         }
 
-        public float getInputCapacityRatio()
-        {
-            return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
-        }
-        
-        public float getOutputCapacityRatio()
-        {
-            return (float)OutputItemBuffer.Count/outputBufferCapacity;
-        }
+
         //
         // public void ResetStation()
         // {
         //     if (processingItem != null)
         //     {
-        //         Destroy(processingItem.gameObject);
+        //         Destroy(processingItem.GameObject);
         //     }
         //     processingItem = null;
         //     onProcessTime = 0f;
         //     foreach (var item in InputItemBuffer)
         //     {
-        //         GameObject.Destroy(item.gameObject);
+        //         GameObject.Destroy(item.GameObject);
         //     }
         //     InputItemBuffer.Clear();
         //     foreach (var item in OutputItemBuffer)
         //     {
-        //         GameObject.Destroy(item.gameObject);
+        //         GameObject.Destroy(item.GameObject);
         //     }
         //     OutputItemBuffer.Clear();
         // }
@@ -238,7 +279,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //         onProcessTime += Time.deltaTime;
         //         if (onProcessTime > processTime && OutputItemBuffer.Count<outputBufferCapacity)
         //         {
-        //             Destroy(processingItem.gameObject);
+        //             Destroy(processingItem.GameObject);
         //             processingItem = null;
         //             onProcessTime = 0f;
         //             GenerateOutputItem();
@@ -247,15 +288,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //     int tempCount = 1;
         //     foreach (var item in InputItemBuffer)
         //     {
-        //         item.gameObject.transform.position = inputPlate.transform.position + Vector3.up * .5f * tempCount++;
+        //         item.GameObject.transform.position = inputPlate.transform.position + Vector3.up * .5f * tempCount++;
         //     }
         //     if (processingItem != null)
         //     {
-        //         processingItem.gameObject.transform.position = transform.position + Vector3.up;
+        //         processingItem.GameObject.transform.position = transform.position + Vector3.up;
         //     }
         //     foreach (var item in OutputItemBuffer)
         //     {
-        //         item.gameObject.transform.position = outputPlate.transform.position + Vector3.up * .5f * tempCount++;
+        //         item.GameObject.transform.position = outputPlate.transform.position + Vector3.up * .5f * tempCount++;
         //     }
         // }
         //
@@ -281,7 +322,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //
         // public override ExchangeMessage CheckReceivable(ItemHolder giver, Item item)
         // {
-        //     if (item.itemType != inputType)
+        //     if (item.ItemType != inputType)
         //     {
         //         return ExchangeMessage.WrongType;
         //     }

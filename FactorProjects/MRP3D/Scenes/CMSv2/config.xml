@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <env>
     <ground minX="20" maxX="40" minZ="20" maxZ="40"/>
+    <norm maxDuration="20" maxCapacity="10"/>
     <itemtypes>
         <itemtype>A0</itemtype>
         <itemtype>A1</itemtype>
@@ -10,6 +11,8 @@
         <itemtype>BP</itemtype>
         <itemtype>C0</itemtype>
         <itemtype>C1</itemtype>
+        <itemtype>C2</itemtype>
+        <itemtype>CP</itemtype>
     </itemtypes>
     <raws>
         <itemtype>A0</itemtype>
@@ -19,52 +22,83 @@
     <products>
         <itemtype>AP</itemtype>
         <itemtype>BP</itemtype>
+        <itemtype>CP</itemtype>
     </products>
     <workflow>
         <process id="1" input="A0" output="A1" duration="10"/>
-        <process id="2" input="B0" output="B1" duration="10"/>
-        <process id="3" input="C0" output="C1" duration="3"/>
-        <process id="4" input="A1" output="AP" duration="5"/>
-        <process id="5" input="B1" output="BP" duration="5"/>
-        <process id="6" input="C1" output="A1" duration="3"/>
-        <process id="7" input="C1" output="B1" duration="5"/>
+        <process id="2" input="A1" output="AP" duration="5"/>
+        <process id="3" input="B0" output="B1" duration="3"/>
+        <process id="4" input="B1" output="BP" duration="5"/>
+        <process id="5" input="C0" output="C1" duration="5"/>
+        <process id="6" input="C1" output="C2" duration="3"/>
+        <process id="7" input="C2" output="CP" duration="5"/>
     </workflow>
     <workstations>
-        <mfws id="1" inputcapacity="3" outputcapacity="3">
+        <mfws type="A01" id="1" inputcapacity="3" outputcapacity="3">
             <processes>
                 <process id="1"/>
-                <process id="2"/>
+            </processes>
+        </mfws>
+        <mfws type="A01" id="1" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="1"/>
+            </processes>
+        </mfws>
+        <mfws type="B01" id="2" inputcapacity="3" outputcapacity="3">
+            <processes>
                 <process id="3"/>
             </processes>
         </mfws>
-        <mfws id="2" inputcapacity="3" outputcapacity="3">
+        <mfws type="B01" id="2" inputcapacity="3" outputcapacity="3">
             <processes>
-                <process id="4"/>
+                <process id="3"/>
+            </processes>
+        </mfws>
+        <mfws type="C01" id="3" inputcapacity="3" outputcapacity="3">
+            <processes>
                 <process id="5"/>
             </processes>
         </mfws>
-        <mfws id="3" inputcapacity="3" outputcapacity="3">
+        <mfws type="C01" id="3" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="5"/>
+            </processes>
+        </mfws>
+        <mfws type="C12" id="4" inputcapacity="3" outputcapacity="3">
             <processes>
                 <process id="6"/>
+            </processes>
+        </mfws>
+        <mfws type="C12" id="4" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="6"/>
+            </processes>
+        </mfws>
+        <mfws type="TOP" id="5" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="2"/>
+                <process id="4"/>
                 <process id="7"/>
             </processes>
         </mfws>
-        <mfws id="1" inputcapacity="3" outputcapacity="3">
+        <mfws type="TOP" id="5" inputcapacity="3" outputcapacity="3">
             <processes>
-                <process id="1"/>
                 <process id="2"/>
-                <process id="3"/>
-            </processes>
-        </mfws>
-        <mfws id="2" inputcapacity="3" outputcapacity="3">
-            <processes>
                 <process id="4"/>
-                <process id="5"/>
+                <process id="7"/>
             </processes>
         </mfws>
-        <mfws id="3" inputcapacity="3" outputcapacity="3">
+        <mfws type="TOP" id="5" inputcapacity="3" outputcapacity="3">
             <processes>
-                <process id="6"/>
+                <process id="2"/>
+                <process id="4"/>
+                <process id="7"/>
+            </processes>
+        </mfws>
+        <mfws type="TOP" id="5" inputcapacity="3" outputcapacity="3">
+            <processes>
+                <process id="2"/>
+                <process id="4"/>
                 <process id="7"/>
             </processes>
         </mfws>

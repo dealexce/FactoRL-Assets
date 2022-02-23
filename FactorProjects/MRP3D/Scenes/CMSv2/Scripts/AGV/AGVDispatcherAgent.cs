@@ -30,22 +30,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public override void OnActionReceived(ActionBuffers actions)
         {
             var action = actions.DiscreteActions[0];
-            if (action == 0)
-            {
-                _agvController.target = new Target(null, null);
-            }
-            else
-            {
-                _agvController.target = _agvController.planeController.AvailableTargetCombination[action - 1];
-            }
-            _agvController.noTargetTime = 0f;
+            _agvController.AssignNewTarget(action);
         }
 
 
-        public Target RequestNewTarget()
+        public int RequestNewRandomTarget()
         {
-            int randomTargetIndex = Random.Range(0, _agvController.availableTargetsObj_forTest.Count);
-            return new Target(_agvController.availableTargetsObj_forTest[randomTargetIndex],null);
+            return Random.Range(0, _agvController.targetableGameObjects.Count);
         }
 
         public void RequestTargetDecision()
@@ -57,25 +48,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //Mask invalid actions based on AGV's holding item (TODO:and workstations' status?)
         public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
         {
-            List<Target> comb = _agvController.planeController.AvailableTargetCombination;
-            //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.itemType==null）
+            List<Target> comb = _agvController._planeController.TargetCombinationList;
+            //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
             if (_agvController.holdingItem == null)
             {
                 for (int i = 0; i < comb.Count; i++)
                 {
-                    if (comb[i].itemType == null)
+                    if (comb[i].ItemType == null)
                     {
                         actionMask.SetActionEnabled(0, i+1, false);
                     }
                 }
             }
-            //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作（comb.itemType!=null)和收不了的target
+            //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作（comb.ItemType!=null)和收不了的target
             else
             {
                 for (int i = 0; i < comb.Count; i++)
                 {
-                    if (comb[i].itemType != null||
-                        !_agvController.AvailableTargetsItemHolderDict[comb[i].gameObject]
+                    if (comb[i].ItemType != null||
+                        !_agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject]
                             .supportInputs.Contains(_agvController.holdingItem.itemType))
                     {
                         actionMask.SetActionEnabled(0, i+1, false);
@@ -86,17 +77,22 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         
 
         //collect relative position of all workstations
+        //collect status of all workstations (input/output buffer capacity ratio)
+        //collect target of all AGVs in one-hot
+        //SIZE = TargetableGameObjectItemHolderDict.Keys.Count*2+MFWSControllers.Count*2+AGVControllers.Count*TargetCombinationList.Count
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
         {
+            //for debug
             StringBuilder sb = new StringBuilder();
-            foreach (var targetObj in _agvController.availableTargetsObj_forTest)
+            //collect relative position of all workstations
+            foreach (var targetObj in _agvController.targetableGameObjects)
             {
                 Vector2 polarTargetPos = new Vector2();
                 Vector3 targetPos = Vector3.zero;
                 if (targetObj != null)
                 {
-                    targetPos = (targetObj.transform.position - transform.position) / _agvController.planeController.maxDiameter;
+                    targetPos = (targetObj.transform.position - transform.position) / _agvController._planeController.MAXDiameter;
                     Vector3 cross = Vector3.Cross(targetPos, transform.forward);
                     float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
                     polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
@@ -107,10 +103,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     sb.Append(polarTargetPos.ToString());
                 }
             }
-            foreach (var c in _agvController.planeController.MfwsControllers)
+            //collect status of all workstations (input/output buffer capacity ratio)
+            foreach (var c in _agvController._planeController.MFWSControllers)
             {
                 sensor.AddObservation(c.getInputCapacityRatio());
                 sensor.AddObservation(c.getOutputCapacityRatio());
+            }
+            //collect target of all AGVs in one-hot
+            foreach (var agv in _agvController._planeController.AGVControllers)
+            {
+                AGVStatus agvStatus = agv.GetStatus();
+                // sensor.AddOneHotObservation(agv.targetIndex,
+                //     _agvController
+                //         ._planeController
+                //         .TargetCombinationList
+                //         .Count);
             }
             if (showDebug)
             {
@@ -123,9 +130,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             var o = actionsOut.DiscreteActions;
-            // o[0] = Random.Range(1, _agvController.planeController.AvailableTargetCombination.Count+1);
+            // o[0] = Random.Range(1, _agvController._planeController.TargetCombinationList.Count+1);
             o[0] = cur++;
-            if (cur > _agvController.planeController.AvailableTargetCombination.Count)
+            if (cur > _agvController._planeController.TargetCombinationList.Count)
             {
                 cur = 1;
             }

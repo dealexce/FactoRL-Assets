@@ -70,7 +70,7 @@ namespace Multi
                 }
                 else
                 {
-                    Debug.LogError("itemType prefab pair conflict:"+typePrefab.itemType);
+                    Debug.LogError("ItemType prefab pair conflict:"+typePrefab.itemType);
                 }
             }
             

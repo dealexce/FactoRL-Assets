@@ -1,12 +1,18 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class ExportController : ItemHolder
+    public class ExportController : ItemHolder, LinkedToPlane
     {
         public string productType;
-        public PlaneController _planeController;
-        //TODO:实现ExportController
+        public PlaneController _planeController { get; set; }
+
+        private void Awake()
+        {
+            InputGameObject = gameObject;
+            _planeController = GetComponentInParent<PlaneController>();
+        }
 
         protected override void OnReceived(ExchangeMessage exchangeMessage)
         {

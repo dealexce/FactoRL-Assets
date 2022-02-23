@@ -2,27 +2,43 @@
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
+
+    #region Target
+
     /// <summary>
-    /// gameObject是持有物体的对象，itemType是要从gameObject拿取的物体类型，如果是null则是把某物体给gameObject
+    /// GameObject是持有物体的对象，
+    /// TargetAction是枚举，指定操作是Get/Give/Hold，
+    /// ItemType是指定的物体类型
     /// </summary>
     public struct Target
     {
-        public GameObject gameObject;
-        public string itemType;
+        public GameObject GameObject{ get; private set; }
+        public TargetAction TargetAction{ get; private set; }
+        public string ItemType{ get; private set; }
 
-        public Target(GameObject gameObject, string itemType)
+        public Target(GameObject gameObject, TargetAction targetAction, string itemType)
         {
-            this.gameObject = gameObject;
-            this.itemType = itemType;
+            this.GameObject = gameObject;
+            this.TargetAction = targetAction;
+            this.ItemType = itemType;
         }
     }
 
+    public enum TargetAction
+    {
+        Get,Give,Hold
+    }
+
+
+    #endregion
+
+    #region Process
     public struct Process
     {
-        public int pid;
-        public string inputType;
-        public string outputType;
-        public float duration;
+        public int pid { get; private set; }
+        public string inputType { get; private set; }
+        public string outputType { get; private set; }
+        public float duration { get; private set; }
 
         public Process(int pid, string inputType, string outputType, float duration)
         {
@@ -32,4 +48,57 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             this.duration = duration;
         }
     }
+    #endregion
+
+    #region Status
+
+    public struct AGVStatus
+    {
+        public Rigidbody Rigidbody;
+        public int HoldingItemIndex;
+        public int TargetIndex;
+
+        public AGVStatus(Rigidbody rigidbody, int holdingItemIndex, int targetIndex)
+        {
+            Rigidbody = rigidbody;
+            HoldingItemIndex = holdingItemIndex;
+            TargetIndex = targetIndex;
+        }
+    }
+
+    public struct MFWSStatus
+    {
+        /// <summary>
+        /// this should be number of items in input buffer/max capacity of input buffer
+        /// </summary>
+        public float InputLoadRatio;
+        /// <summary>
+        /// 输入口各类物料的数量/全局最大缓冲区容量
+        /// </summary>
+        public float[] InputItemQuantityArray;
+        /// <summary>
+        /// this should be number of items in output buffer/max capacity of output buffer
+        /// </summary>
+        public float OutputLoadRatio;
+        /// <summary>
+        /// 输出口各类物料的数量/全局最大缓冲区容量
+        /// </summary>
+        public float[] OutputItemQuantityArray;
+        /// <summary>
+        /// Index of current process in PlaneController.ProcessList
+        /// </summary>
+        public int CurrentProcessIndex;
+
+        public MFWSStatus(float inputLoadRatio, float[] inputItemQuantityArray, float outputLoadRatio, float[] outputItemQuantityArray, int currentProcessIndex)
+        {
+            InputLoadRatio = inputLoadRatio;
+            InputItemQuantityArray = inputItemQuantityArray;
+            OutputLoadRatio = outputLoadRatio;
+            OutputItemQuantityArray = outputItemQuantityArray;
+            CurrentProcessIndex = currentProcessIndex;
+        }
+    }
+
+    #endregion
+
 }

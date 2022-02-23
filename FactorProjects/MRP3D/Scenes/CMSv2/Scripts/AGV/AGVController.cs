@@ -5,30 +5,66 @@ using UnityEngine;
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
 
-    public class AGVController : ItemHolder, Resetable
+    public class AGVController : ItemHolder, Resetable, LinkedToPlane, IHasStatus<AGVStatus>
     {
-        public PlaneController planeController;
+        [HideInInspector]
+        public PlaneController _planeController { get; set; }
+        [HideInInspector]
         public AGVMoveAgent agvMoveAgent;
-        public bool activateAward = false;
+        [HideInInspector]
         public AGVDispatcherAgent agvDispatcherAgent;
-        public float noTargetHoldTime = 1f;
-        public float noTargetTime = 0f;
-        public Target target;
-        
-        public float moveSpeed = 5;
-        public float maxSpeed = 8;
-        public float rotateSpeed = 3;
         
         private Rigidbody _rigidbody;
-        private BoxCollider _collider;
+        
+        public bool activateAward = false;
+
+        public float noTargetHoldTime = 1f;
+        private float noTargetTime = 0f;
+        
+        public Item holdingItem;
+        
+        public Target target;
+
+        //Move settings
+        public float moveSpeed = 5;
+        public float rotateSpeed = 3;
+        
         public Vector2 polarVelocity { get; private set; }
         public Vector2 polarTargetPos { get; private set; }
         
-        public Dictionary<GameObject,ItemHolder> AvailableTargetsItemHolderDict { get; private set; }
-        public List<GameObject> availableTargetsObj_forTest;
+        public Dictionary<GameObject,ItemHolder> TargetableGameObjectItemHolderDict { get; private set; }
+        public List<GameObject> targetableGameObjects;
+        private List<Target> _availableTargetCombinations;
         private int cur = 0;
+
+        public AGVStatus GetStatus()
+        {
+            return new AGVStatus(
+                _rigidbody,
+                _planeController.ItemTypeIndexDict[holdingItem.itemType],
+                _planeController.TargetCombinationIndexDict[target]);
+        }
+
+        #region MonoBehaviorInitialization
+
+        private void Awake()
+        {
+            _rigidbody = GetComponentInParent<Rigidbody>();
+            agvDispatcherAgent = GetComponentInChildren<AGVDispatcherAgent>();
+            agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
+        }
+
+        private void Start()
+        {
+            TargetableGameObjectItemHolderDict = _planeController.GameObjectItemHolderDict;
+            targetableGameObjects = new List<GameObject>(TargetableGameObjectItemHolderDict.Keys);
+            _availableTargetCombinations = _planeController.TargetCombinationList;
+            agvDispatcherAgent.RequestTargetDecision();
+        }
+
+        #endregion
+        
         #region ItemHolderImplement
-        public Item holdingItem;
         public override Item GetItem(string itemType)
         {
             return holdingItem;
@@ -106,7 +142,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 return;
             }
             //到达当前设定的target
-            if (otherGameObject == target.gameObject)
+            if (otherGameObject == target.GameObject)
             {
                 agvMoveAgent.arriveTargetTrain();
                 arriveTarget();
@@ -123,21 +159,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             agvMoveAgent.collideTrain();
         }
 
-        private void Awake()
-        {
-            _rigidbody = GetComponentInParent<Rigidbody>();
-            _collider = GetComponent<BoxCollider>();
-            agvDispatcherAgent = GetComponentInChildren<AGVDispatcherAgent>();
-            agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
-        }
 
-        private void Start()
-        {
-            planeController = GetComponentInParent<PlaneController>();
-            AvailableTargetsItemHolderDict = planeController.AvailableTargets;
-            availableTargetsObj_forTest = new List<GameObject>(AvailableTargetsItemHolderDict.Keys);
-            agvDispatcherAgent.RequestTargetDecision();
-        }
 
         private void Update()
         {
@@ -145,16 +167,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             polarVelocity = new Vector2(_rigidbody.velocity.magnitude/moveSpeed, _rigidbody.angularVelocity.y/rotateSpeed);
 
             Vector3 targetPos = Vector3.zero;
-            if (target.gameObject != null)
+            if (target.GameObject != null)
             {
-                targetPos = (target.gameObject.transform.position - position) / planeController.maxDiameter;
+                targetPos = (target.GameObject.transform.position - position) / _planeController.MAXDiameter;
                 Vector3 cross = Vector3.Cross(targetPos, transform.forward);
                 float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
                 polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
             }
             
             //如果没有指派任何目标且距离上一次分配目标已经超过闲置时间
-            if (target.gameObject == null)
+            if (target.GameObject == null)
             {
                 if (noTargetTime > noTargetHoldTime)
                 {
@@ -181,36 +203,38 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             _rigidbody.angularVelocity = rotation * rotateSpeed;
         }
         
-        public void AssignNewTarget(GameObject gameObject, string itemType)
+        public void AssignNewTarget(int targetIndex)
         {
-            target = new Target(gameObject,itemType);
+            noTargetTime = 0f;
+            target = _planeController.TargetCombinationList[targetIndex];
+            
         }
         private void OnDrawGizmosSelected()
         {
-            if (target.gameObject != null)
+            if (target.GameObject != null)
             {
                 Gizmos.color = Color.blue;
-                Gizmos.DrawLine(transform.position,target.gameObject.transform.position);
+                Gizmos.DrawLine(transform.position,target.GameObject.transform.position);
             }
         }
         
         private void arriveTarget()
         {
-            ExchangeMessage exchangeMessage;
-            if (target.itemType == null)
+            ExchangeMessage exchangeMessage = ExchangeMessage.Fail;
+            if (target.TargetAction == TargetAction.Give)
             {
                 //把holdingItem给targetItemHolder
-                exchangeMessage = ItemController.PassItem(this, AvailableTargetsItemHolderDict[target.gameObject], holdingItem);
+                exchangeMessage = ItemController.PassItem(this, TargetableGameObjectItemHolderDict[target.GameObject], holdingItem);
             }
-            else
+            else if(target.TargetAction == TargetAction.Get)
             {
                 //从targetItemHolder拿一个targetItemType类型的Item
-                exchangeMessage = ItemController.PassItem(AvailableTargetsItemHolderDict[target.gameObject], this, target.itemType);
+                exchangeMessage = ItemController.PassItem(TargetableGameObjectItemHolderDict[target.GameObject], this, target.ItemType);
             }
             //交换成功，重置target
             if (exchangeMessage == ExchangeMessage.OK)
             {
-                target = new Target(null, null);
+                target = ProductionConstants.NullTarget;
             }
         }
 
