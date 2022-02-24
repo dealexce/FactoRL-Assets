@@ -234,7 +234,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             //交换成功，重置target
             if (exchangeMessage == ExchangeMessage.OK)
             {
-                target = ProductionConstants.NullTarget;
+                target = null;
             }
         }
 

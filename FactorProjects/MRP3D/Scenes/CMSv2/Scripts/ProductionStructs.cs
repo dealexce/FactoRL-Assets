@@ -10,7 +10,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     /// TargetAction是枚举，指定操作是Get/Give/Hold，
     /// ItemType是指定的物体类型
     /// </summary>
-    public struct Target
+    public record Target
     {
         public GameObject GameObject{ get; private set; }
         public TargetAction TargetAction{ get; private set; }
@@ -33,7 +33,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     #endregion
 
     #region Process
-    public struct Process
+    public record Process
     {
         public int pid { get; private set; }
         public string inputType { get; private set; }
@@ -49,6 +49,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
     }
     #endregion
+    
 
     #region Status
 

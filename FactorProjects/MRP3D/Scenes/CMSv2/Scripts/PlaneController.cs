@@ -50,13 +50,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         /// <summary>
         /// XML中定义的Processes, k->pid, v->Process, pid=0 ~ NullProcess
         /// </summary>
-        public List<Process> ProcessList { get; private set; } = new List<Process>(){ProductionConstants.NullProcess};
+        public List<Process> ProcessList { get; private set; } = new List<Process>(){null};
         public Dictionary<Process,int> ProcessIndexDict { get; private set; }
 
         /// <summary>
         /// 所有有效的[targetGameObject, targetItem]组合, k=0 ~ NullTarget
         /// </summary>
-        public List<Target> TargetCombinationList { get; private set; } = new List<Target>(){ProductionConstants.NullTarget};
+        public List<Target> TargetCombinationList { get; private set; } = new List<Target>(){null};
         public Dictionary<Target,int> TargetCombinationIndexDict { get; private set; }
 
         /// <summary>
