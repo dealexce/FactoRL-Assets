@@ -131,8 +131,8 @@ namespace Multi
             // Vector3 position = _robot.transform.position;
             // Vector3 forward = _robot.transform.forward;
             // var workstationController = _workstationControllerDict.Values.FirstOrDefault();
-            // stringBuilder.Append(workstationController.getInputCapacityRatio());
-            // stringBuilder.Append(workstationController.getOutputCapacityRatio());
+            // stringBuilder.Append(workstationController.GetInputCapacityRatio());
+            // stringBuilder.Append(workstationController.GetOutputCapacityRatio());
             // Debug.Log(stringBuilder);
         }
         

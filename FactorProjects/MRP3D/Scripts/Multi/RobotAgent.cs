@@ -101,8 +101,8 @@ namespace Multi
         //         Vector3 inputPos = (position - workstation.transform.position)/scale;
         //         inputObservation[0] = inputPos.x;
         //         inputObservation[1] = inputPos.y;
-        //         inputObservation[2] = 1 - _workstationControllerDict[workstation].getInputCapacityRatio() < 1 ? 1f : 0f;
-        //         inputObservation[3] = _workstationControllerDict[workstation].getOutputCapacityRatio() > 0 ? 1f : 0f;
+        //         inputObservation[2] = 1 - _workstationControllerDict[workstation].GetInputCapacityRatio() < 1 ? 1f : 0f;
+        //         inputObservation[3] = _workstationControllerDict[workstation].GetOutputCapacityRatio() > 0 ? 1f : 0f;
         //         sensor.AddObservation(inputObservation);
         //     }
         //     Vector3 rawStackPos = (position - rawStack.transform.position) / scale;

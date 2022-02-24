@@ -83,31 +83,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
         {
-            //for debug
-            StringBuilder sb = new StringBuilder();
+            //Normalization values
+            float maxDiameter = _agvController._planeController.MAXDiameter;
             //collect relative position of all workstations
             foreach (var targetObj in _agvController.targetableGameObjects)
             {
                 Vector2 polarTargetPos = new Vector2();
-                Vector3 targetPos = Vector3.zero;
                 if (targetObj != null)
                 {
-                    targetPos = (targetObj.transform.position - transform.position) / _agvController._planeController.MAXDiameter;
-                    Vector3 cross = Vector3.Cross(targetPos, transform.forward);
-                    float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
-                    polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
+                    polarTargetPos = Utils.PolarRelativePosition(transform,targetObj.transform,maxDiameter);
                 }
                 sensor.AddObservation(polarTargetPos);
-                if (showDebug)
-                {
-                    sb.Append(polarTargetPos.ToString());
-                }
             }
             //collect status of all workstations (input/output buffer capacity ratio)
             foreach (var c in _agvController._planeController.MFWSControllers)
             {
-                sensor.AddObservation(c.getInputCapacityRatio());
-                sensor.AddObservation(c.getOutputCapacityRatio());
+                sensor.AddObservation(c.GetInputCapacityRatio());
+                sensor.AddObservation(c.GetOutputCapacityRatio());
             }
             //collect target of all AGVs in one-hot
             foreach (var agv in _agvController._planeController.AGVControllers)
@@ -118,12 +110,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 //         ._planeController
                 //         .TargetCombinationList
                 //         .Count);
-            }
-            if (showDebug)
-            {
-                sb.Append("|R:");
-                sb.Append(GetCumulativeReward());
-                Debug.Log(sb.ToString());
             }
         }
         

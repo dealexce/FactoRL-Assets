@@ -15,7 +15,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public GameObject GameObject{ get; private set; }
         public TargetAction TargetAction{ get; private set; }
         public string ItemType{ get; private set; }
-
+        public Target(){}
         public Target(GameObject gameObject, TargetAction targetAction, string itemType)
         {
             this.GameObject = gameObject;
@@ -39,6 +39,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public string inputType { get; private set; }
         public string outputType { get; private set; }
         public float duration { get; private set; }
+
+        public Process(){}
 
         public Process(int pid, string inputType, string outputType, float duration)
         {

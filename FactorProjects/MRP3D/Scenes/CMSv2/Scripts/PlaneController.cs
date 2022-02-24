@@ -44,19 +44,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         /// <summary>
         /// XML中定义的物料类型, k=0 ~ NullItem
         /// </summary>
-        public List<string> ItemTypeList { get; private set; } = new List<string>(){ProductionConstants.NullItem};
+        public List<string> ItemTypeList { get; private set; } = new List<string>(){PConsts.NullItem};
         public Dictionary<string,int> ItemTypeIndexDict { get; private set; }
 
         /// <summary>
         /// XML中定义的Processes, k->pid, v->Process, pid=0 ~ NullProcess
         /// </summary>
-        public List<Process> ProcessList { get; private set; } = new List<Process>(){null};
+        public List<Process> ProcessList { get; private set; } = new List<Process>(){PConsts.NullProcess};
         public Dictionary<Process,int> ProcessIndexDict { get; private set; }
 
         /// <summary>
         /// 所有有效的[targetGameObject, targetItem]组合, k=0 ~ NullTarget
         /// </summary>
-        public List<Target> TargetCombinationList { get; private set; } = new List<Target>(){null};
+        public List<Target> TargetCombinationList { get; private set; } = new List<Target>(){PConsts.NullTarget};
         public Dictionary<Target,int> TargetCombinationIndexDict { get; private set; }
 
         /// <summary>
@@ -196,7 +196,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 TargetCombinationList.Add(new Target(
                     controller.inputPlate,
                     TargetAction.Give,
-                    ProductionConstants.AnyItem));
+                    PConsts.AnyItem));
                 foreach (XmlNode processNode in e.SelectSingleNode("processes").ChildNodes)
                 {
                     XmlElement processElement = (XmlElement) processNode;
@@ -235,7 +235,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
             #endregion
 
-            #region Index Dictionary Generate
+            #region Reverse Index Dictionary Initialize
 
             ItemTypeIndexDict = Utils.ToIndexDict(ItemTypeList);
             ProcessIndexDict = Utils.ToIndexDict(ProcessList);

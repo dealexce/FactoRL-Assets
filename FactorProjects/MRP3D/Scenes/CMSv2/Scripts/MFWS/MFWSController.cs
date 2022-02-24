@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Multi;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
@@ -12,15 +13,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public List<int> supportProcessId = new List<int>();
         public int inputBufferCapacity = 20;
         public int outputBufferCapacity = 20;
+
+        //每次给出hold动作时的待机时间
+        public float holdActionTime = 1f;
+        
         public PlaneController _planeController { get; set; }    //由PlaneController赋值
         public MFWSAgent mfwsAgent;
         public bool isMultiFunctional;
 
         //processing variables and objects
-        private Process currentProcess = default;
-        private Item processingItem = null;
-        private float onProcessTime = 0f;
-        private bool outputReady = true;
+        private int currentProcessIndex;
+        private float remainHoldTime;
         
         //input/output plate GameObjects
         public GameObject inputPlate;
@@ -34,18 +37,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public MFWSStatus GetStatus()
         {
             return new MFWSStatus(
-                getInputCapacityRatio(),
+                GetInputCapacityRatio(),
                 getItemQuantityArray(InputItemBuffer),
-                getOutputCapacityRatio(),
+                GetOutputCapacityRatio(),
                 getItemQuantityArray(OutputItemBuffer),
-                _planeController.ProcessIndexDict[currentProcess]);
+                currentProcessIndex);
         }
-        public float getInputCapacityRatio()
+        public float GetInputCapacityRatio()
         {
             return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
         }
         
-        public float getOutputCapacityRatio()
+        public float GetOutputCapacityRatio()
         {
             return (float)OutputItemBuffer.Count/outputBufferCapacity;
         }
@@ -82,11 +85,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
-            if (InputItemBuffer.Count>0&&outputReady&&processingItem == null)
+            if (remainHoldTime<=0f 
+                && currentProcessIndex==0 
+                && InputItemBuffer.Count>0 
+                && OutputItemBuffer.Count<outputBufferCapacity)
             {
-                DecideAndStartProcessItem();
+                mfwsAgent.DecideProcess();
+            }
+
+            if (remainHoldTime > 0f)
+            {
+                remainHoldTime -= Time.fixedDeltaTime;
             }
         }
 
@@ -139,10 +150,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             if (item != null && OutputItemBuffer.Contains(item))
             {
                 OutputItemBuffer.Remove(item);
-                if (OutputItemBuffer.Count < outputBufferCapacity)
-                {
-                    outputReady = true;
-                }
                 return true;
             }
             return false;
@@ -170,13 +177,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         public void EpisodeReset()
         {
-            CancelInvoke();
-            if (processingItem != null)
-            {
-                Destroy(processingItem.gameObject);
-            }
-            processingItem = null;
-            currentProcess = default;
+            StopCoroutine(nameof(ProcessItemToOutput));
+            Done();
             foreach (var item in InputItemBuffer)
             {
                 GameObject.Destroy(item.gameObject);
@@ -187,18 +189,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 GameObject.Destroy(item.gameObject);
             }
             OutputItemBuffer.Clear();
-            outputReady = true;
         }
 
-        private void DecideAndStartProcessItem()
+        public void DecideAndStartProcessItem(int todoPid)
         {
-            int todoPid = mfwsAgent.DecideProcess();
-            if (todoPid == -1)
+            currentProcessIndex = todoPid;
+            Process p = _planeController.ProcessList[todoPid];
+            if (p == PConsts.NullProcess)
             {
+                Hold();
                 return;
             }
-            currentProcess = _planeController.ProcessList[todoPid];
-            string inputType = currentProcess.inputType;
+            string inputType = p.inputType;
             Item processItem = null;
             foreach (var item in InputItemBuffer)
             {
@@ -210,168 +212,42 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
             if (processItem == null)
             {
-                Debug.LogError("MFWS Agent have chosen an invalid process");
+                Debug.LogError("MFWS Agent have chosen an invalid process: no required item found");
                 return;
             }
-            InputItemBuffer.Remove(processItem);
-            this.processingItem = processItem;
-            processItem.transform.position = transform.position + Vector3.up;
-            Invoke("ProcessingItemToOutput",currentProcess.duration);
+            StartCoroutine(nameof(ProcessItemToOutput),(processItem,p));
         }
 
-        private void ProcessingItemToOutput()
+        private void Hold()
         {
-            if (processingItem != null)
-            {
-                //Add processingItem into OutputItemBuffer and move its position to outputPlate
-                processingItem.setItemType(currentProcess.outputType);
-                OutputItemBuffer.Add(processingItem);
-                processingItem.transform.position = outputPlate.transform.position + Vector3.up * OutputItemBuffer.Count;
-            }
-            if (OutputItemBuffer.Count >= outputBufferCapacity)
-            {
-                outputReady = false;
-            }
-            currentProcess = default;
-            processingItem = null;
+            remainHoldTime += holdActionTime;
         }
 
+        IEnumerator ProcessItemToOutput((Item,Process) ip)
+        {
+            var (item, process) = ip;
+            Assert.IsNotNull(item);
+            Assert.AreEqual(item.itemType,process.inputType);
+            Assert.AreNotEqual(process,PConsts.NullProcess);
+            //Move processing item to the middle
+            item.transform.position = transform.position + Vector3.up;
+            //simulate process time
+            yield return new WaitForSeconds(process.duration);
+            //set the type of input item to output item type
+            item.setItemType(process.outputType);
+            //Add processingItem into OutputItemBuffer and move its position to outputPlate
+            InputItemBuffer.Remove(item);
+            OutputItemBuffer.Add(item);
+            //Move output item to the output plate
+            item.transform.position = outputPlate.transform.position + Vector3.up * OutputItemBuffer.Count;
+            Done();
+            
+        }
 
-        //
-        // public void ResetStation()
-        // {
-        //     if (processingItem != null)
-        //     {
-        //         Destroy(processingItem.GameObject);
-        //     }
-        //     processingItem = null;
-        //     onProcessTime = 0f;
-        //     foreach (var item in InputItemBuffer)
-        //     {
-        //         GameObject.Destroy(item.GameObject);
-        //     }
-        //     InputItemBuffer.Clear();
-        //     foreach (var item in OutputItemBuffer)
-        //     {
-        //         GameObject.Destroy(item.GameObject);
-        //     }
-        //     OutputItemBuffer.Clear();
-        // }
-        //
-        // private void Start()
-        // {
-        // }
-        //
-        // /// <summary>
-        // /// 加工过程：没有processingItem且InputItemBuffer不为空时，取一个item为processingItem并开始计时，
-        // /// 当onProcessTime大于processTime且OutputItemBuffer未满时，执行GenerateOutputItem，
-        // /// 删掉processingItem，重置onProcessTime，生成一个outputItem放在outputPlate上并存入OutputItemBuffer
-        // /// </summary>
-        // private void FixedUpdate()
-        // {
-        //     if (InputItemBuffer.Count > 0 && processingItem == null)
-        //     {
-        //         processingItem = InputItemBuffer[0];
-        //         InputItemBuffer.RemoveAt(0);
-        //     }
-        //     if (processingItem != null)
-        //     {
-        //         onProcessTime += Time.deltaTime;
-        //         if (onProcessTime > processTime && OutputItemBuffer.Count<outputBufferCapacity)
-        //         {
-        //             Destroy(processingItem.GameObject);
-        //             processingItem = null;
-        //             onProcessTime = 0f;
-        //             GenerateOutputItem();
-        //         }
-        //     }
-        //     int tempCount = 1;
-        //     foreach (var item in InputItemBuffer)
-        //     {
-        //         item.GameObject.transform.position = inputPlate.transform.position + Vector3.up * .5f * tempCount++;
-        //     }
-        //     if (processingItem != null)
-        //     {
-        //         processingItem.GameObject.transform.position = transform.position + Vector3.up;
-        //     }
-        //     foreach (var item in OutputItemBuffer)
-        //     {
-        //         item.GameObject.transform.position = outputPlate.transform.position + Vector3.up * .5f * tempCount++;
-        //     }
-        // }
-        //
-        // /// <summary>
-        // /// 生成一个outputObject，放在outputPlate上，并new一个Item存入outputBuffer
-        // /// </summary>
-        // private void GenerateOutputItem()
-        // {
-        //     GameObject outputObject = Instantiate(outputPrefab);
-        //     
-        //     Item item = new Item(outputType, outputObject);
-        //     OutputItemBuffer.Add(item);
-        // }
-        //
-        // public override Item GetItem()
-        // {
-        //     if (OutputItemBuffer.Count > 0)
-        //     {
-        //         return OutputItemBuffer[0];
-        //     }
-        //     return null;
-        // }
-        //
-        // public override ExchangeMessage CheckReceivable(ItemHolder giver, Item item)
-        // {
-        //     if (item.ItemType != inputType)
-        //     {
-        //         return ExchangeMessage.WrongType;
-        //     }
-        //     if (InputItemBuffer.Count >= inputBufferCapacity)
-        //     {
-        //         return ExchangeMessage.Overload;
-        //     }
-        //     return ExchangeMessage.OK;
-        // }
-        //
-        // public override ExchangeMessage CheckGivable(ItemHolder receiver, Item item)
-        // {
-        //     if (OutputItemBuffer.Contains(item))
-        //     {
-        //         return ExchangeMessage.OK;
-        //     }
-        //     return ExchangeMessage.ItemNotFound;
-        // }
-        //
-        // protected override bool Store(Item item)
-        // {
-        //     try
-        //     {
-        //         InputItemBuffer.Add(item);
-        //         return true;
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return false;
-        //     }
-        // }
-        //
-        // protected override bool Remove(Item item)
-        // {
-        //     return OutputItemBuffer.Remove(item);
-        //     
-        // }
-        //
-        // protected override void OnReceived(ExchangeMessage exchangeMessage)
-        // {
-        //     if (exchangeMessage==ExchangeMessage.WrongType)
-        //     {
-        //         _planeController.OnRewardEvent(Event.InputTypeError);
-        //     }
-        //     if (exchangeMessage == ExchangeMessage.OK)
-        //     {
-        //         _planeController.OnRewardEvent(Event.CorrectItemDelivered,(int)inputType+1.0f);
-        //     }
-        // }
+        private void Done()
+        {
+            currentProcessIndex = 0;
+        }
     }
 }
 
