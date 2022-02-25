@@ -75,14 +75,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
         }
 
-        public int DecideProcess()
+        public void DecideProcess()
         {
+            RequestDecision();
+        }
+
+        public override void Heuristic(in ActionBuffers actionsOut)
+        {
+            var act = actionsOut.DiscreteActions;
             List<int> available = mfwsController.getCurrentAvailableProcessId();
             if (available.Count == 0)
             {
-                return 0;
+                act[0] = 0;
             }
-            return available[Random.Range(0, available.Count)];
+            act[0] = available[Random.Range(0, available.Count)];
         }
     }
 }

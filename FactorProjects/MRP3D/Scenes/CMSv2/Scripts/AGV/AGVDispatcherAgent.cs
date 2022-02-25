@@ -52,24 +52,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
             if (_agvController.holdingItem == null)
             {
-                for (int i = 0; i < comb.Count; i++)
+                for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].ItemType == null)
+                    if (comb[i].TargetAction == TargetAction.Give)
                     {
-                        actionMask.SetActionEnabled(0, i+1, false);
+                        actionMask.SetActionEnabled(0, i, false);
                     }
                 }
             }
-            //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作（comb.ItemType!=null)和收不了的target
+            //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作和收不了的target
             else
             {
-                for (int i = 0; i < comb.Count; i++)
+                for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].ItemType != null||
+                    if (comb[i].TargetAction ==TargetAction.Get||
                         !_agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject]
                             .supportInputs.Contains(_agvController.holdingItem.itemType))
                     {
-                        actionMask.SetActionEnabled(0, i+1, false);
+                        actionMask.SetActionEnabled(0, i, false);
                     }
                 }
             }
@@ -101,27 +101,44 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 sensor.AddObservation(c.GetInputCapacityRatio());
                 sensor.AddObservation(c.GetOutputCapacityRatio());
             }
-            //collect target of all AGVs in one-hot
+            int targetCount = _agvController._planeController.TargetCombinationList.Count;
+            //collect target and relative position of all AGVs in one-hot
             foreach (var agv in _agvController._planeController.AGVControllers)
             {
                 AGVStatus agvStatus = agv.GetStatus();
-                // sensor.AddOneHotObservation(agv.targetIndex,
-                //     _agvController
-                //         ._planeController
-                //         .TargetCombinationList
-                //         .Count);
+                sensor.AddOneHotObservation(agvStatus.TargetIndex,targetCount);
+                sensor.AddObservation(Utils.PolarRelativePosition(_agvController.transform,agv.transform,maxDiameter));
             }
         }
         
+        //give a random valid target
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            var o = actionsOut.DiscreteActions;
-            // o[0] = Random.Range(1, _agvController._planeController.TargetCombinationList.Count+1);
-            o[0] = cur++;
-            if (cur > _agvController._planeController.TargetCombinationList.Count)
+            List<int> availableTarget = new List<int>{0};
+            var comb = _agvController._planeController.TargetCombinationList;
+            if (_agvController.holdingItem == null)
             {
-                cur = 1;
+                for (int i = 1; i < comb.Count; i++)
+                {
+                    if (comb[i].TargetAction == TargetAction.Get)
+                    {
+                        availableTarget.Add(i);
+                    }
+                }
             }
+            //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作和收不了的target
+            else
+            {
+                for (int i = 1; i < comb.Count; i++)
+                {
+                    if (comb[i].TargetAction ==TargetAction.Give&&comb[i].ItemType==_agvController.holdingItem.itemType)
+                    {
+                        availableTarget.Add(i);
+                    }
+                }
+            }
+            var o = actionsOut.DiscreteActions;
+            o[0] = availableTarget[Random.Range(0, availableTarget.Count)];
         }
     }
 }

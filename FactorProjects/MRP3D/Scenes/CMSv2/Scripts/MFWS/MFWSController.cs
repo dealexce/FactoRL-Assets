@@ -10,7 +10,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     public class MFWSController : ItemHolder, Resetable, LinkedToPlane, IHasStatus<MFWSStatus>
     {
         //记录这个机器可以执行的process：k:input类型 v:process
-        public List<int> supportProcessId = new List<int>();
+        public List<int> supportProcessIndex = new List<int>();
         public int inputBufferCapacity = 20;
         public int outputBufferCapacity = 20;
 
@@ -161,7 +161,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public List<int> getCurrentAvailableProcessId()
         {
             List<int> res = new List<int>();
-            foreach (var id in supportProcessId)
+            foreach (var id in supportProcessIndex)
             {
                 foreach (var item in InputItemBuffer)
                 {

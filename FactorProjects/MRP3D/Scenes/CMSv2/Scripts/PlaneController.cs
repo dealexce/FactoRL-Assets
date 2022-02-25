@@ -197,21 +197,27 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     controller.inputPlate,
                     TargetAction.Give,
                     PConsts.AnyItem));
+                //待机action
+                controller.supportProcessIndex.Add(0);
                 foreach (XmlNode processNode in e.SelectSingleNode("processes").ChildNodes)
                 {
                     XmlElement processElement = (XmlElement) processNode;
                     int pid = Int32.Parse(processElement.GetAttribute("id"));
-                    controller.supportProcessId.Add(pid);
+                    controller.supportProcessIndex.Add(pid);
                     if (!controller.supportInputs.Contains(ProcessList[pid].inputType))
                     {
                         controller.supportInputs.Add(ProcessList[pid].inputType);
+                        TargetCombinationList.Add(new Target(
+                            controller.inputPlate,
+                            TargetAction.Give,
+                            ProcessList[pid].inputType));
                         TargetCombinationList.Add(new Target(
                             controller.outputPlate,
                             TargetAction.Get,
                             ProcessList[pid].outputType));  //代表从这个WS的outputPlate拿outputType的物体
                     }
                 }
-                controller.isMultiFunctional = controller.supportProcessId.Count > 1;
+                controller.isMultiFunctional = controller.supportProcessIndex.Count > 2;
                 EpisodeResetObjects.Add(g,controller);
                 GameObjectItemHolderDict.Add(controller.inputPlate,controller);
                 GameObjectItemHolderDict.Add(controller.outputPlate, controller);
@@ -255,10 +261,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //TODO:计算并打印当前XML配置下各个Agent的观测和动作空间大小
         public void PrintAgentSpaceInfo()
         {
-            Debug.Log("AGV Dispatcher Act Size: "+(TargetCombinationList.Count+1));
-            Debug.Log("AGV Dispatcher Obs Size: "+(GameObjectItemHolderDict.Keys.Count*2+MFWSControllers.Count*2+AGVControllers.Count*TargetCombinationList.Count));
-            Debug.Log("MFWS Act Size: "+(ProcessList.Count+1));
-            Debug.Log("MFWS Obs Size: "+(ProcessList.Count+1));
+            Debug.Log("AGV Dispatcher Act Size: "+(TargetCombinationList.Count));
+            Debug.Log("MFWS Act Size: "+(ProcessList.Count));
         }
 
         private void OnDrawGizmos()

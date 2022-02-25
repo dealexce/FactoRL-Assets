@@ -20,10 +20,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         public float noTargetHoldTime = 1f;
         private float noTargetTime = 0f;
-        
+
         public Item holdingItem;
         
-        public Target target;
+        public Target target = PConsts.NullTarget;
 
         //Move settings
         public float moveSpeed = 5;
@@ -39,9 +39,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         public AGVStatus GetStatus()
         {
+            string holdingItemType = holdingItem != null ? holdingItem.itemType : PConsts.NullItem;
             return new AGVStatus(
                 _rigidbody,
-                _planeController.ItemTypeIndexDict[holdingItem.itemType],
+                _planeController.ItemTypeIndexDict[holdingItemType],
                 _planeController.TargetCombinationIndexDict[target]);
         }
 
@@ -234,7 +235,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             //交换成功，重置target
             if (exchangeMessage == ExchangeMessage.OK)
             {
-                target = null;
+                target = PConsts.NullTarget;
             }
         }
 
