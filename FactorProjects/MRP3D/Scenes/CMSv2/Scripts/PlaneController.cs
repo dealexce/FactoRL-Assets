@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using Multi;
 using Unity.MLAgents;
@@ -13,18 +16,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     public class PlaneController : MonoBehaviour
     {
         
-        public int maxEnvSteps = 25000;
+        public int maxEnvSteps = 50000;
         [SerializeField]
         [InspectorUtil.DisplayOnly]
         private int resetTimerStep = 0;
-
-        [SerializeField]
-        [InspectorUtil.DisplayOnly]
-        private int deliveredCounts = 0;
+        
         public static string configPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv2/config.xml";
         //XML Config Element
-        public static XmlNode envNode { get; private set; }
+        public static XmlNode EnvNode { get; private set; }
         
+        //evaluate
+        public bool showEva = false;
+        public static int TotalFinished = 0;
+        public static int TotalFailed = 0;
+        public static int EpisodeCount = 0;
+
         //关联对象
         public GameObject ground;
         [HideInInspector]
@@ -39,7 +45,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         //Group
         public float timePenalty = 3f;
-        private SimpleMultiAgentGroup _simpleMultiAgentGroup = new SimpleMultiAgentGroup();
+        private SimpleMultiAgentGroup _AGVMultiAgentGroup = new SimpleMultiAgentGroup();
+        private SimpleMultiAgentGroup _MFWSMultiAgentGroup = new SimpleMultiAgentGroup();
 
         /// <summary>
         /// XML中定义的物料类型, k=0 ~ NullItem
@@ -63,6 +70,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         /// 存放GameObject的ItemHolder组件
         /// </summary>
         public Dictionary<GameObject, ItemHolder> GameObjectItemHolderDict { get; private set; } = new Dictionary<GameObject, ItemHolder>();
+        
+        public List<string> ProductItemTypeList { get; } = new List<string>();
+        public List<ExportController> ExportControllerList = new List<ExportController>();
+        public Dictionary<string, ExportController> ProductTypeExportControllerDict = new Dictionary<string, ExportController>();
         public List<MFWSController> MFWSControllers { get; private set; } = new List<MFWSController>();
         public List<AGVController> AGVControllers { get; private set; } = new List<AGVController>();
 
@@ -78,7 +89,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         /// <summary>
         /// 当前场地尺寸
         /// </summary>
-        public float curX=30f, curZ=20f;
+        public float curX=50f, curZ=50f;
         #endregion
 
         #region Normalization values
@@ -90,30 +101,61 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public float MAXCapacity { get; private set; }
         #endregion
 
+        /// <summary>
+        /// 是否生成新的positions并覆盖positionPath下的文件
+        /// </summary>
+        public static bool CoverNewPositions = false;
+        public static List<Vector3> positions;
+        public static string positionPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv2/positions";
         static PlaneController()
         {
             //加载XML配置文件
             XmlDocument xmlDocument = new XmlDocument();
             xmlDocument.Load(configPath);
-            envNode = xmlDocument.SelectSingleNode("env");
+            EnvNode = xmlDocument.SelectSingleNode("env");
             Debug.Log("XML LOADED");
+            //如果不要覆盖生成新的positions，并且存在position二进制文件，作为List<Vector3>加载
+            if (!CoverNewPositions&&File.Exists(positionPath))
+            {
+                using (FileStream fs = new FileStream(positionPath, FileMode.Open))
+                {
+                    try
+                    {
+                        BinaryFormatter bf = new BinaryFormatter();
+                        SurrogateSelector ss = new SurrogateSelector();
+                        var streamingContext = new StreamingContext(StreamingContextStates.All);
+                        ss.AddSurrogate(typeof(Vector3), streamingContext, new Vector3SerializationSurrogate());
+                        bf.SurrogateSelector = ss;
+                        positions = bf.Deserialize(fs) as List<Vector3>;
+                    }
+                    catch (Exception e)
+                    {
+                        positions = null;
+                        Console.WriteLine(e);
+                        throw;
+                    }
+
+                }
+            }
         }
         
+        
         //生产对象列表
-        private Dictionary<GameObject, MonoBehaviour> EpisodeResetObjects = new Dictionary<GameObject, MonoBehaviour>(); 
+        private List<GameObject> EpisodeResetObjectsList = new List<GameObject>();
+        private Dictionary<GameObject, MonoBehaviour> EpisodeResetObjectsDict = new Dictionary<GameObject, MonoBehaviour>(); 
         private void Start()
         {
 
             #region Ground Config
             groundController = ground.GetComponent<Ground>();
             //配置ground随机尺寸范围
-            XmlElement groundElement = (XmlElement) envNode.SelectSingleNode("ground");
+            XmlElement groundElement = (XmlElement) EnvNode.SelectSingleNode("ground");
             minX = float.Parse(groundElement.GetAttribute("minX")); 
             maxX = float.Parse(groundElement.GetAttribute("maxX")); 
             minZ = float.Parse(groundElement.GetAttribute("minZ")); 
             maxZ = float.Parse(groundElement.GetAttribute("maxZ"));
             //随机本episode的ground尺寸
-            if (randomGroundSize)
+            if (randomPositions&&randomGroundSize)
             {
                 curX = Random.Range(minX, maxX);
                 curZ = Random.Range(minZ, maxZ);
@@ -124,14 +166,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             #region Normalization used values
             //计算场地内最长对角线距离，用于归一化
             MAXDiameter = (float)Math.Sqrt(Math.Pow(maxX, 2) + Math.Pow(maxZ, 2));
-            XmlElement normElement = (XmlElement) envNode.SelectSingleNode("norm");
+            XmlElement normElement = (XmlElement) EnvNode.SelectSingleNode("norm");
             MAXCapacity = Int32.Parse(normElement.GetAttribute("maxCapacity"));
             MAXDuration = Int32.Parse(normElement.GetAttribute("maxDuration"));
             #endregion
 
             #region ItemTypeList config
             //根据XML配置生成ItemType集合，用于场景中的物体生成
-            foreach (XmlNode node in envNode.SelectSingleNode("itemtypes").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("itemtypes").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 string type = node.InnerText;
@@ -141,7 +183,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
             #region ProcessList config
             //根据XML配置的processes用三元组数组记录所有的process
-            foreach (XmlNode node in envNode.SelectSingleNode("workflow").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("workflow").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 Process p = new Process(
@@ -155,27 +197,33 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
             #region Import/Outport Config
             //配置Import原料口
-            foreach (XmlNode node in envNode.SelectSingleNode("raws").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("raws").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(importPrefab, this.transform);
                 ImportController ic = g.GetComponent<ImportController>();
                 ic._planeController = this;
                 ic.rawType = node.InnerText;
-                EpisodeResetObjects.Add(g,ic);
+                EpisodeResetObjectsList.Add(g);
+                EpisodeResetObjectsDict.Add(g,ic);
                 GameObjectItemHolderDict.Add(g, ic);
                 TargetCombinationList.Add(new Target(g,TargetAction.Get,ic.rawType));
             }
             //配置Export出货口
-            foreach (XmlNode node in envNode.SelectSingleNode("products").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("products").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(exportPrefab, this.transform);
                 ExportController ec = g.GetComponent<ExportController>();
                 ec._planeController = this;
-                ec.productType = node.InnerText;
+                string productItemType = node.InnerText;
+                ec.productType = productItemType;
+                ProductItemTypeList.Add(productItemType);
+                ExportControllerList.Add(ec);
+                ProductTypeExportControllerDict.Add(productItemType,ec);
                 ec.supportInputs.Add(ec.productType);
-                EpisodeResetObjects.Add(g,ec);
+                EpisodeResetObjectsList.Add(g);
+                EpisodeResetObjectsDict.Add(g,ec);
                 GameObjectItemHolderDict.Add(g, ec);
                 TargetCombinationList.Add(new Target(g,TargetAction.Give,ec.productType));
             }
@@ -183,7 +231,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
             #region MFWS Config
             //根据XML配置的workstations生成场景中的Workstation
-            foreach (XmlNode node in envNode.SelectSingleNode("workstations").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("workstations").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(MFWMPrefab, transform);
@@ -204,6 +252,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     XmlElement processElement = (XmlElement) processNode;
                     int pid = Int32.Parse(processElement.GetAttribute("id"));
                     controller.supportProcessIndex.Add(pid);
+                    if(!controller.inputSet.Contains(ProcessList[pid].inputType))
+                        controller.inputSet.Add(ProcessList[pid].inputType);
+                    if(!controller.outputSet.Contains(ProcessList[pid].outputType))
+                        controller.outputSet.Add(ProcessList[pid].outputType);
                     if (!controller.supportInputs.Contains(ProcessList[pid].inputType))
                     {
                         controller.supportInputs.Add(ProcessList[pid].inputType);
@@ -218,25 +270,28 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     }
                 }
                 controller.isMultiFunctional = controller.supportProcessIndex.Count > 2;
-                EpisodeResetObjects.Add(g,controller);
+                EpisodeResetObjectsList.Add(g);
+                EpisodeResetObjectsDict.Add(g,controller);
                 GameObjectItemHolderDict.Add(controller.inputPlate,controller);
                 GameObjectItemHolderDict.Add(controller.outputPlate, controller);
                 MFWSControllers.Add(controller);
-                //TargetableGameObjectItemHolderDict.Add(g, controller);
+                
+                _MFWSMultiAgentGroup.RegisterAgent(controller.mfwsAgent);
             }
             #endregion
 
             #region AGV config
             //根据XML配置的agvs生成场景中的AGV
-            foreach (XmlNode node in envNode.SelectSingleNode("agvs").ChildNodes)
+            foreach (XmlNode node in EnvNode.SelectSingleNode("agvs").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject AGV = Instantiate(AGVPrefab, transform);
                 AGVController agvController = AGV.GetComponent<AGVController>();
                 agvController._planeController = this;
                 AGVDispatcherAgent dpAgent = agvController.agvDispatcherAgent;
-                _simpleMultiAgentGroup.RegisterAgent(dpAgent);
-                EpisodeResetObjects.Add(AGV,agvController);
+                _AGVMultiAgentGroup.RegisterAgent(dpAgent);
+                EpisodeResetObjectsList.Add(AGV);
+                EpisodeResetObjectsDict.Add(AGV,agvController);
                 AGVControllers.Add(agvController);
             }
             #endregion
@@ -279,37 +334,187 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private void FixedUpdate()
         {
             resetTimerStep += 1;
-            _simpleMultiAgentGroup.AddGroupReward(timePenalty/(float)maxEnvSteps);
+            _AGVMultiAgentGroup.AddGroupReward(timePenalty/(float)maxEnvSteps);
             if (resetTimerStep >= maxEnvSteps && maxEnvSteps > 0)
             {
                 ResetGround(false);
                 resetTimerStep = 0;
             }
+            var removeList = new List<float>();
+            foreach (var (k,v) in OrderList)
+            {
+                if (v.deadLine > Time.fixedTime)
+                {
+                    break;
+                }
+                removeList.Add(k);
+                OrderFailed();
+            }
+            foreach (var rk in removeList)
+            {
+                OrderList.Remove(rk);
+            }
+            ReloadOrders();
+        }
+        
+                
+        //Orders
+        public int OrderWindowLength = 5;
+        [SerializeField]
+        [InspectorUtil.DisplayOnly]
+        public int finishedOrders = 0, failedOrders = 0;
+        public SortedList<float,Order> OrderList = new SortedList<float,Order>();
+
+        /// <summary>
+        /// 生成随机产品+ddl在随机30~60秒之后的订单填满OrderList
+        /// </summary>
+        private void ReloadOrders()
+        {
+            while (OrderList.Count < OrderWindowLength)
+            {
+                Order o = new Order(ProductItemTypeList[Random.Range(0, ProductItemTypeList.Count)], GetRandomNonConflictDeadline());
+                while (ProductTypeExportControllerDict[o.productItemType].stock > 0)
+                {
+                    ProductTypeExportControllerDict[o.productItemType].RemoveOneStock();
+                    OrderFinished();
+                    o = new Order(ProductItemTypeList[Random.Range(0, ProductItemTypeList.Count)], GetRandomNonConflictDeadline());
+                }
+                OrderList.Add(o.deadLine,o);
+            }
         }
 
+        public float minDeadline { get; } = 60f;
+        public float maxDeadline { get; } = 120f;
+        private float GetRandomNonConflictDeadline()
+        {
+            float ddl = Time.fixedTime + Random.Range(minDeadline, maxDeadline);
+            while (OrderList.ContainsKey(ddl))
+            {
+                ddl = Time.fixedTime + Random.Range(minDeadline, maxDeadline);
+            }
+            return ddl;
+        }
+
+        public bool TryFinishOrder(string productItemType)
+        {
+            foreach (var (k,v) in OrderList)
+            {
+                if (v.productItemType == productItemType)
+                {
+                    OrderList.Remove(k);
+                    OrderFinished();
+                    ReloadOrders();
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        private void OrderFinished()
+        {
+            _AGVMultiAgentGroup.AddGroupReward(.1f);
+            groundController.FlipColor(Ground.GroundSwitchColor.Green);
+            finishedOrders++;
+        }
+        
+        private void OrderFailed()
+        {
+            _AGVMultiAgentGroup.AddGroupReward(-.1f);
+            groundController.FlipColor(Ground.GroundSwitchColor.Red);
+            failedOrders++;
+        }
+
+        public bool randomPositions = false;
         public void ResetGround(bool init)
         {
+            OrderList.Clear();
+            ReloadOrders();
             if (!init)
             {
                 //随机本episode的ground尺寸
-                if (randomGroundSize)
+                if (randomPositions&&randomGroundSize)
                 {
                     curX = Random.Range(minX, maxX);
                     curZ = Random.Range(minZ, maxZ);
                 }
             
                 groundController.changeSize(curX,curZ);
-                _simpleMultiAgentGroup.GroupEpisodeInterrupted();
-            }
-            foreach (var kv in EpisodeResetObjects)
-            {
-                ResetToSafeRandomPosition(kv.Key);
-                if (!init && kv.Value is Resetable)
+                _AGVMultiAgentGroup.GroupEpisodeInterrupted();
+                _MFWSMultiAgentGroup.GroupEpisodeInterrupted();
+
+                if (showEva)
                 {
-                    (kv.Value as Resetable).EpisodeReset();
+                    CalculateAndPrintAverageDPE();
+                }
+                
+            }
+            finishedOrders = 0;
+            failedOrders = 0;
+            //如果随机位置，则直接随机重置所有对象的位置
+            if (randomPositions)
+            {
+                foreach (var o in EpisodeResetObjectsList)
+                {
+                    ResetToSafeRandomPosition(o);
+                    if (!init && EpisodeResetObjectsDict[o] is Resetable)
+                    {
+                        (EpisodeResetObjectsDict[o] as Resetable).EpisodeReset();
+                    }
+                }
+                return;
+            }
+            //如果positions为空或者无效，生成一组新的所有物体的随机位置并序列化存到positionPath中
+            bool initPositions = positions == null || positions.Count!=EpisodeResetObjectsList.Count;
+            if (initPositions)
+            {
+                positions = new List<Vector3>();
+            }
+            if (initPositions)
+            {
+                foreach (var o in EpisodeResetObjectsList)
+                {
+                    Vector3 position = ResetToSafeRandomPosition(o);
+                    positions.Add(position-transform.position);
+                    if (!init && EpisodeResetObjectsDict[o] is Resetable)
+                    {
+                        (EpisodeResetObjectsDict[o] as Resetable).EpisodeReset();
+                    }
+                }
+                using (FileStream fs = new FileStream(positionPath, FileMode.Create))
+                {
+                    var bf = new BinaryFormatter();
+                    SurrogateSelector ss = new SurrogateSelector();
+                    var streamingContext = new StreamingContext(StreamingContextStates.All);
+                    ss.AddSurrogate(typeof(Vector3), streamingContext, new Vector3SerializationSurrogate());
+                    bf.SurrogateSelector = ss;
+                    bf.Serialize(fs,positions);
                 }
             }
-            deliveredCounts = 0;
+            else
+            {
+                for (int i = 0; i < EpisodeResetObjectsList.Count; i++)
+                {
+                    GameObject o = EpisodeResetObjectsList[i];
+                    var c = EpisodeResetObjectsDict[o] as Resetable;
+                    o.transform.position = positions[i]+transform.position;
+                    if (!init && c!=null)
+                    {
+                        c.EpisodeReset();
+                    }
+                }
+            }
+
+        }
+
+        private void CalculateAndPrintAverageDPE()
+        {
+            //计算场均DPE
+            TotalFinished += finishedOrders;
+            TotalFailed += failedOrders;
+            EpisodeCount++;
+            Debug.Log("EPISODE: "+EpisodeCount+
+                      " | average Finished: "+(float)TotalFinished/EpisodeCount+
+                      " | average Failed: "+(float)TotalFailed/EpisodeCount);
         }
 
         /// <summary>
@@ -361,7 +566,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
 
         //TODO:旋转随机
-        private void ResetToSafeRandomPosition(GameObject g)
+        private Vector3 ResetToSafeRandomPosition(GameObject g)
         {
             //更改物体位置之后要手动调用Physics.Simulate，否则可能无法检测到碰撞！
             Physics.autoSimulation=false;
@@ -393,6 +598,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 Debug.LogError("Unable to find a safe position to reset work point: "+g.name);
             }
+            return potentialPosition;
         }
 
         public Item InstantiateItem(string itemType, GameObject parentObj)
@@ -410,11 +616,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
         }
 
-        public void ProductFinished()
-        {
-            _simpleMultiAgentGroup.AddGroupReward(1f);
-            groundController.FlipGreen();
-            deliveredCounts++;
-        }
+
     }
 }

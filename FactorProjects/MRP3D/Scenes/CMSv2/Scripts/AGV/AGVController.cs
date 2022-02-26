@@ -24,6 +24,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public Item holdingItem;
         
         public Target target = PConsts.NullTarget;
+        
+        public bool fixDecision = true;
 
         //Move settings
         public float moveSpeed = 5;
@@ -35,7 +37,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public Dictionary<GameObject,ItemHolder> TargetableGameObjectItemHolderDict { get; private set; }
         public List<GameObject> targetableGameObjects;
         private List<Target> _availableTargetCombinations;
-        private int cur = 0;
+
+        public int autoDispatcherRequestStep = 100;
+        private int dispatcherAcademicStep = 0;
 
         public AGVStatus GetStatus()
         {
@@ -61,6 +65,52 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             targetableGameObjects = new List<GameObject>(TargetableGameObjectItemHolderDict.Keys);
             _availableTargetCombinations = _planeController.TargetCombinationList;
             agvDispatcherAgent.RequestTargetDecision();
+        }
+
+        private void FixedUpdate()
+        {            
+            Vector3 position = transform.position;
+            polarVelocity = new Vector2(_rigidbody.velocity.magnitude/moveSpeed, _rigidbody.angularVelocity.y/rotateSpeed);
+
+            Vector3 targetPos = Vector3.zero;
+            if (target.GameObject != null)
+            {
+                targetPos = (target.GameObject.transform.position - position) / _planeController.MAXDiameter;
+                Vector3 cross = Vector3.Cross(targetPos, transform.forward);
+                float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
+                polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
+            }
+            
+            //如果没有指派任何目标且距离上一次分配目标已经超过闲置时间
+            if (target.GameObject == null)
+            {
+                if (noTargetTime > noTargetHoldTime)
+                {
+                    agvDispatcherAgent.RequestTargetDecision();
+                }
+                else
+                {
+                    noTargetTime += Time.deltaTime;
+                }
+            }
+            if (fixDecision)
+            {
+                return;
+            }
+            dispatcherAcademicStep++;
+            if (dispatcherAcademicStep > autoDispatcherRequestStep)
+            {
+                agvDispatcherAgent.RequestTargetDecision();
+            }
+        }
+        private void Update()
+        {
+
+            //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
+            // if (Input.GetKeyDown(KeyCode.R))
+            // {
+            //     agvDispatcherAgent.RequestTargetDecision();
+            // }
         }
 
         #endregion
@@ -162,42 +212,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
 
 
-        private void Update()
-        {
-            Vector3 position = transform.position;
-            polarVelocity = new Vector2(_rigidbody.velocity.magnitude/moveSpeed, _rigidbody.angularVelocity.y/rotateSpeed);
 
-            Vector3 targetPos = Vector3.zero;
-            if (target.GameObject != null)
-            {
-                targetPos = (target.GameObject.transform.position - position) / _planeController.MAXDiameter;
-                Vector3 cross = Vector3.Cross(targetPos, transform.forward);
-                float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
-                polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
-            }
-            
-            //如果没有指派任何目标且距离上一次分配目标已经超过闲置时间
-            if (target.GameObject == null)
-            {
-                if (noTargetTime > noTargetHoldTime)
-                {
-                    agvDispatcherAgent.RequestTargetDecision();
-                }
-                else
-                {
-                    noTargetTime += Time.deltaTime;
-                }
-            }
 
-            //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
-            // if (Input.GetKeyDown(KeyCode.R))
-            // {
-            //     agvDispatcherAgent.RequestTargetDecision();
-            // }
-        }
+
 
         public void Move(float forward, float rotate)
         {
+            if (target == PConsts.NullTarget)
+            {
+                _rigidbody.velocity = Vector3.zero;
+                _rigidbody.angularVelocity = Vector3.zero;
+                return;
+            }
             Vector3 movement = transform.forward * Mathf.Clamp(forward, -1f, 1f);
             Vector3 rotation = transform.up * Mathf.Clamp(rotate, -1f, 1f);
             _rigidbody.velocity = movement * moveSpeed;
@@ -207,6 +233,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public void AssignNewTarget(int targetIndex)
         {
             noTargetTime = 0f;
+            dispatcherAcademicStep = 0;
             target = _planeController.TargetCombinationList[targetIndex];
             
         }

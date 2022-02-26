@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
@@ -7,11 +8,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     {
         public string productType;
         public PlaneController _planeController { get; set; }
+        public GameObject FloatingTextObject;
+        private TextMeshPro _textMesh;
+        public int stock = 0;
 
         private void Awake()
         {
             InputGameObject = gameObject;
             _planeController = GetComponentInParent<PlaneController>();
+            _textMesh = FloatingTextObject.GetComponent<TextMeshPro>();
+        }
+
+        private void Start()
+        {
+            refreshText();
         }
 
         protected override void OnReceived(ExchangeMessage exchangeMessage)
@@ -43,7 +53,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             if (productType.Equals(item.itemType))
             {
                 Destroy(item.gameObject);
-                _planeController.ProductFinished();
+                if(!_planeController.TryFinishOrder(productType)){
+                    stock++;
+                    refreshText();
+                }
                 return true;
             }
             return false;
@@ -52,6 +65,22 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         protected override bool Remove(Item item)
         {
             return false;
+        }
+
+        public void RemoveOneStock()
+        {
+            if (stock > 0)
+            {
+                stock--;
+                refreshText();
+            }
+            else
+                Debug.LogError("NO MORE STOCK BUT ASKED TO REMOVE ONE: "+productType);
+        }
+
+        public void refreshText()
+        {
+            _textMesh.text = productType + "*" + stock;
         }
     }
 }

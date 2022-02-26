@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
@@ -7,11 +8,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     {
         public string itemType { get; private set; }
         public GameObject FloatingTextObject;
-        private TextMesh _textMesh;
+        private TextMeshPro _textMesh;
 
         private void Awake()
         {
-            _textMesh = FloatingTextObject.GetComponent<TextMesh>();
+            _textMesh = FloatingTextObject.GetComponent<TextMeshPro>();
             _textMesh.text = itemType;
         }
 

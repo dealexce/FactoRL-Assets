@@ -6,6 +6,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
     public class Ground : MonoBehaviour
     {
+        public enum GroundSwitchColor
+        {
+            Green,Red
+        }
         public float x, z;
         public GameObject ground;
         public GameObject northWall, southWall, westWall, eastWall;
@@ -13,7 +17,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public float groundMFx, groundMFz, wallMFx, wallMFz;
         
         //for visualization
-        public Material _greenMaterial;
+        public Material _successMaterial;
+        public Material _failedMaterial;
         private Material _originMaterial;
         private MeshRenderer _meshRenderer;
 
@@ -49,16 +54,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
 
         //visualization indicate product finished
-        public void FlipGreen()
+        public void FlipColor(GroundSwitchColor color)
         {
-            StartCoroutine(ProductReceivedSwapMaterial(1f));
+            switch (color)
+            {
+                case GroundSwitchColor.Green:
+                    StartCoroutine(ProductReceivedSwapMaterial(1f,_successMaterial));
+                    break;
+                case GroundSwitchColor.Red:
+                    StartCoroutine(ProductReceivedSwapMaterial(1f, _failedMaterial));
+                    break;
+            }
         }
         /// <summary>
         /// Swap ground material, wait time seconds, then swap back to the regular material.
         /// </summary>
-        IEnumerator ProductReceivedSwapMaterial(float time)
+        IEnumerator ProductReceivedSwapMaterial(float time,Material material)
         {
-            _meshRenderer.material = _greenMaterial;
+            _meshRenderer.material = material;
             yield return new WaitForSeconds(time);
             _meshRenderer.material = _originMaterial;
         }

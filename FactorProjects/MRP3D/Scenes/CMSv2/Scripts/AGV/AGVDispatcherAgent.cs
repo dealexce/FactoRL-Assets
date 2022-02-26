@@ -14,11 +14,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private AGVController _agvController;
         private int cur = 1;
         public bool showDebug = false;
+        private BufferSensorComponent _bufferSensor;
 
         private void Awake()
         {
             _agvController = GetComponentInParent<AGVController>();
-
+            _bufferSensor = GetComponent<BufferSensorComponent>();
         }
 
         private void Start()
@@ -54,7 +55,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].TargetAction == TargetAction.Give)
+                    if (comb[i].TargetAction == TargetAction.Give
+                        || _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemType)==null)
                     {
                         actionMask.SetActionEnabled(0, i, false);
                     }
@@ -83,6 +85,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
         {
+            var pl = _agvController._planeController.ProductItemTypeList;
+            //Order Obs
+            foreach (var (ddl,order) in _agvController._planeController.OrderList)
+            {
+                float[] obs = new float[1 + pl.Count];
+                obs[pl.IndexOf(order.productItemType)] = 1f;
+                obs[pl.Count] = (ddl-Time.fixedTime)/_agvController._planeController.maxDeadline;
+                _bufferSensor.AppendObservation(obs);
+            }
+            foreach (var ec in _agvController._planeController.ExportControllerList)
+            {
+                sensor.AddObservation(Math.Clamp(ec.stock,0,10)/10);
+            }
             //Normalization values
             float maxDiameter = _agvController._planeController.MAXDiameter;
             //collect relative position of all workstations
@@ -95,32 +110,45 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
                 sensor.AddObservation(polarTargetPos);
             }
-            //collect status of all workstations (input/output buffer capacity ratio)
+            //collect status of all workstations
             foreach (var c in _agvController._planeController.MFWSControllers)
             {
-                sensor.AddObservation(c.GetInputCapacityRatio());
-                sensor.AddObservation(c.GetOutputCapacityRatio());
+                var s = c.GetSimpleStatus();
+                sensor.AddObservation(s.SelfInputItemQuantityArray);
+                sensor.AddObservation(s.SelfOutputItemQuantityArray);
+                sensor.AddObservation(s.SelfCurrentProcessOneHot);
             }
             int targetCount = _agvController._planeController.TargetCombinationList.Count;
+            int itemTypeCount = _agvController._planeController.ItemTypeList.Count;
             //collect target and relative position of all AGVs in one-hot
             foreach (var agv in _agvController._planeController.AGVControllers)
             {
+                if (agv == _agvController)
+                {
+                    continue;
+                }
                 AGVStatus agvStatus = agv.GetStatus();
                 sensor.AddOneHotObservation(agvStatus.TargetIndex,targetCount);
+                //sensor.AddOneHotObservation(agvStatus.HoldingItemIndex,itemTypeCount);
                 sensor.AddObservation(Utils.PolarRelativePosition(_agvController.transform,agv.transform,maxDiameter));
             }
+            AGVStatus thisStatus = _agvController.GetStatus();
+            sensor.AddOneHotObservation(thisStatus.TargetIndex,targetCount);
+            sensor.AddOneHotObservation(thisStatus.HoldingItemIndex,itemTypeCount);
         }
         
         //give a random valid target
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            List<int> availableTarget = new List<int>{0};
+            List<int> availableTarget = new List<int>();
             var comb = _agvController._planeController.TargetCombinationList;
             if (_agvController.holdingItem == null)
             {
                 for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].TargetAction == TargetAction.Get)
+                    //holdingItem == null，只分配拿的动作，且要去拿的ItemHolder手中现在有那个物体
+                    if (comb[i].TargetAction == TargetAction.Get 
+                        && _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemType)!=null)
                     {
                         availableTarget.Add(i);
                     }
@@ -138,7 +166,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
             }
             var o = actionsOut.DiscreteActions;
-            o[0] = availableTarget[Random.Range(0, availableTarget.Count)];
+            if (availableTarget.Count == 0)
+                o[0] = 0;
+            else
+                o[0] = availableTarget[Random.Range(0, availableTarget.Count)];
         }
     }
 }

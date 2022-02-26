@@ -11,6 +11,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     {
         //记录这个机器可以执行的process：k:input类型 v:process
         public List<int> supportProcessIndex = new List<int>();
+        public List<string> inputSet = new List<string>();
+        public List<string> outputSet = new List<string>();
         public int inputBufferCapacity = 20;
         public int outputBufferCapacity = 20;
 
@@ -30,6 +32,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public GameObject outputPlate;
 
         private List<Item> InputItemBuffer = new List<Item>();
+
         private List<Item> OutputItemBuffer = new List<Item>();
 
         #region Status
@@ -43,6 +46,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 getItemQuantityArray(OutputItemBuffer),
                 currentProcessIndex);
         }
+        
         public float GetInputCapacityRatio()
         {
             return 1f-(float)InputItemBuffer.Count/inputBufferCapacity;
@@ -63,6 +67,41 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                     res[itemIndex] += 1f / _planeController.MAXCapacity;
                 else
                     Debug.LogError("INVALID ITEM INDEX");
+            }
+            return res;
+        }
+        
+        public MFWSSimpleStatus GetSimpleStatus()
+        {
+            return new MFWSSimpleStatus(getSelfItemQuantityArray(BufferWay.In),
+                getSelfItemQuantityArray(BufferWay.Out),
+                Utils.ToOneHotObservation(supportProcessIndex.IndexOf(currentProcessIndex),supportProcessIndex.Count)
+                );
+        }
+        
+        private enum BufferWay
+        {
+            In,Out
+        }
+        private float[] getSelfItemQuantityArray(BufferWay bw)
+        {
+            List<string> set = inputSet;
+            List<Item> buffer = InputItemBuffer;
+            int capacity = inputBufferCapacity;
+            if(bw == BufferWay.Out){
+                set = outputSet;
+                buffer = OutputItemBuffer;
+                capacity = outputBufferCapacity;
+            }
+            int typeNum = set.Count;
+            float[] res = new float[typeNum];
+            foreach (var item in buffer)
+            {
+                int itemIndex = set.IndexOf(item.itemType);
+                if (itemIndex < typeNum)
+                    res[itemIndex] += 1f / capacity;
+                else
+                    Debug.LogError("FOUND INVALID ITEM IN BUFFER");
             }
             return res;
         }

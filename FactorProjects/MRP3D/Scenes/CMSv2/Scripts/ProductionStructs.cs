@@ -51,6 +51,22 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
     }
     #endregion
+
+    #region Order
+
+    public record Order
+    {
+        public string productItemType { get; }
+        public float deadLine { get; }
+
+        public Order(string productItemType, float deadLine)
+        {
+            this.productItemType = productItemType;
+            this.deadLine = deadLine;
+        }
+    }
+
+    #endregion
     
 
     #region Status
@@ -69,6 +85,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         }
     }
 
+    public struct MFWSSimpleStatus
+    {
+        public float[] SelfInputItemQuantityArray;
+        public float[] SelfOutputItemQuantityArray;
+        public float[] SelfCurrentProcessOneHot;
+
+        public MFWSSimpleStatus(float[] selfInputItemQuantityArray, float[] selfOutputItemQuantityArray, float[] selfCurrentProcessOneHot)
+        {
+            SelfInputItemQuantityArray = selfInputItemQuantityArray;
+            SelfOutputItemQuantityArray = selfOutputItemQuantityArray;
+            SelfCurrentProcessOneHot = selfCurrentProcessOneHot;
+        }
+    }
     public struct MFWSStatus
     {
         /// <summary>

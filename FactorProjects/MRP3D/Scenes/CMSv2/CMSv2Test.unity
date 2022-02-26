@@ -296,10 +296,6 @@ PrefabInstance:
       propertyPath: testModel
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 3876532165463257340, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
-      propertyPath: maxEnvSteps
-      value: 50000
-      objectReference: {fileID: 0}
     - target: {fileID: 4964062834330788524, guid: d9368a476bbf7e74eb6cc61577aeb12f, type: 3}
       propertyPath: m_Enabled
       value: 1

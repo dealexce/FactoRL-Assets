@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <env>
-    <ground minX="40" maxX="60" minZ="40" maxZ="60"/>
+    <ground minX="35" maxX="50" minZ="35" maxZ="50"/>
     <norm maxDuration="20" maxCapacity="10"/>
     <itemtypes>
         <itemtype>A0</itemtype>
@@ -104,6 +104,10 @@
         </mfws>
     </workstations>
     <agvs>
+        <agv/>
+        <agv/>
+        <agv/>
+        <agv/>
         <agv/>
         <agv/>
         <agv/>

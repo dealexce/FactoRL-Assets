@@ -23,5 +23,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             float angle = Vector3.Angle(relativePos, self.forward) / 180f;
             return new Vector2(cross.y > 0 ? -angle : angle, relativePos.magnitude);
         }
+        
+        public static float[] ToOneHotObservation(int observation, int range)
+        {
+            float[] oh = new float[range];
+            for (var i = 0; i < range; i++)
+            {
+                oh[i] = (i == observation ? 1.0f : 0.0f);
+            }
+            return oh;
+        }
     }
 }

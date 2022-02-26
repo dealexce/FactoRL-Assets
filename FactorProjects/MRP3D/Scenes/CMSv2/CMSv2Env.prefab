@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6791616295999900290}
   m_Father: {fileID: 3361853402934223141}
@@ -44,8 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d657808f24674d179ef1e63e51abcf05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxEnvSteps: 20000
+  maxEnvSteps: 50000
   resetTimerStep: 0
+  showEVA: 1
   ground: {fileID: 6615889485304135894}
   groundController: {fileID: 0}
   importPrefab: {fileID: 7451406427367902720, guid: bf518c0d82009b14e9989e42e00bf7b7, type: 3}
@@ -53,10 +55,13 @@ MonoBehaviour:
   MFWMPrefab: {fileID: 8412221806419059806, guid: 18f687276b8036144abfb5fb417b0a0e, type: 3}
   itemPrefab: {fileID: 7580886048584861730, guid: 3a225a1d60423884487f4c48a37722b2, type: 3}
   AGVPrefab: {fileID: 3138914704657889545, guid: 1324955814674cf4f9b4da27561061a0, type: 3}
-  maxDiameter: 0
+  timePenalty: 20
   randomGroundSize: 1
-  curX: 30
-  curZ: 20
+  curX: 50
+  curZ: 50
+  OrderWindowLength: 5
+  finishedOrders: 0
+  failedOrders: 0
 --- !u!1 &1342626240838426125
 GameObject:
   m_ObjectHideFlags: 0
@@ -83,6 +88,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2791733022000664604}
   m_Father: {fileID: 0}
