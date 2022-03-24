@@ -49,16 +49,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //Mask invalid actions based on AGV's holding item (TODO:and workstations' status?)
         public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
         {
+            int mc = 0;
             List<Target> comb = _agvController._planeController.TargetCombinationList;
             //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
             if (_agvController.holdingItem == null)
             {
                 for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].TargetAction == TargetAction.Give
+                    if (comb[i].TargetAction != TargetAction.Get
                         || _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemType)==null)
                     {
                         actionMask.SetActionEnabled(0, i, false);
+                        mc++;
                     }
                 }
             }
@@ -67,13 +69,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].TargetAction ==TargetAction.Get||
+                    if (comb[i].TargetAction != TargetAction.Give||
                         !_agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject]
                             .supportInputs.Contains(_agvController.holdingItem.itemType))
                     {
                         actionMask.SetActionEnabled(0, i, false);
+                        mc++;
                     }
                 }
+            }
+            if (mc < comb.Count - 1)
+            {
+                actionMask.SetActionEnabled(0, 0, false);
             }
         }
         
@@ -140,7 +147,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         //give a random valid target
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            List<int> availableTarget = new List<int>();
+            List<int> availableTarget = new List<int>{0};
             var comb = _agvController._planeController.TargetCombinationList;
             if (_agvController.holdingItem == null)
             {
@@ -166,10 +173,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
             }
             var o = actionsOut.DiscreteActions;
-            if (availableTarget.Count == 0)
-                o[0] = 0;
-            else
-                o[0] = availableTarget[Random.Range(0, availableTarget.Count)];
+            o[0] = availableTarget[Random.Range(0, availableTarget.Count)];
+            o[0] = RequestNewRandomTarget();
         }
     }
 }

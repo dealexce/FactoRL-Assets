@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxEnvSteps: 50000
   resetTimerStep: 0
-  showEVA: 1
+  showEva: 1
   ground: {fileID: 6615889485304135894}
   groundController: {fileID: 0}
   importPrefab: {fileID: 7451406427367902720, guid: bf518c0d82009b14e9989e42e00bf7b7, type: 3}
@@ -55,13 +55,17 @@ MonoBehaviour:
   MFWMPrefab: {fileID: 8412221806419059806, guid: 18f687276b8036144abfb5fb417b0a0e, type: 3}
   itemPrefab: {fileID: 7580886048584861730, guid: 3a225a1d60423884487f4c48a37722b2, type: 3}
   AGVPrefab: {fileID: 3138914704657889545, guid: 1324955814674cf4f9b4da27561061a0, type: 3}
-  timePenalty: 20
+  timePenalty: 0
+  ExportControllerList: []
   randomGroundSize: 1
   curX: 50
   curZ: 50
+  showMachine: 1
+  machinePrefabPath: Machines
   OrderWindowLength: 5
   finishedOrders: 0
   failedOrders: 0
+  randomPositions: 1
 --- !u!1 &1342626240838426125
 GameObject:
   m_ObjectHideFlags: 0

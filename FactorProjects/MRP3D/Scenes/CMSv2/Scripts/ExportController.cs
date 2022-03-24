@@ -4,13 +4,19 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 {
-    public class ExportController : ItemHolder, LinkedToPlane
+    public class ExportController : ItemHolder, LinkedToPlane, Resetable
     {
         public string productType;
         public PlaneController _planeController { get; set; }
         public GameObject FloatingTextObject;
         private TextMeshPro _textMesh;
         public int stock = 0;
+
+        public void EpisodeReset()
+        {
+            stock = 0;
+            refreshText();
+        }
 
         private void Awake()
         {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
@@ -22,10 +23,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private Material _originMaterial;
         private MeshRenderer _meshRenderer;
 
+        public GameObject FloatingTextObject;
+        private TextMeshPro _textMeshPro;
+
         private void Awake()
         {
             _meshRenderer = ground.GetComponent<MeshRenderer>();
             _originMaterial = _meshRenderer.material;
+            _textMeshPro = FloatingTextObject.GetComponent<TextMeshPro>();
         }
 
         private void Start()
@@ -51,6 +56,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             northWall.transform.localScale = new Vector3(x / wallMFx, 1f, 1f);
             southWall.transform.localPosition = new Vector3(0f, .4f, -z / 2f-wallMFz/2f);
             southWall.transform.localScale = new Vector3(x / wallMFx, 1f, 1f);
+        }
+
+        public void changeText(string text)
+        {
+            _textMeshPro.text = text;
         }
 
         //visualization indicate product finished

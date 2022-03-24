@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 using System.Xml;
 using Multi;
 using Unity.MLAgents;
@@ -142,7 +143,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         
         //生产对象列表
         private List<GameObject> EpisodeResetObjectsList = new List<GameObject>();
-        private Dictionary<GameObject, MonoBehaviour> EpisodeResetObjectsDict = new Dictionary<GameObject, MonoBehaviour>(); 
+        private Dictionary<GameObject, MonoBehaviour> EpisodeResetObjectsDict = new Dictionary<GameObject, MonoBehaviour>();
+        public bool showMachine = true;
+        public string machinePrefabPath = "Machines";
+        private GameObject[] MachinePrefabs;
         private void Start()
         {
 
@@ -230,11 +234,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             #endregion
 
             #region MFWS Config
+
+            MachinePrefabs = Resources.LoadAll<GameObject>(machinePrefabPath);
             //根据XML配置的workstations生成场景中的Workstation
             foreach (XmlNode node in EnvNode.SelectSingleNode("workstations").ChildNodes)
             {
                 XmlElement e = (XmlElement) node;
                 GameObject g = Instantiate(MFWMPrefab, transform);
+                int id = Int32.Parse(e.GetAttribute("id"))-1;
+                if (showMachine)
+                {
+                    Instantiate(MachinePrefabs[Math.Clamp(id, 0, MachinePrefabs.Length)], g.transform);
+                }
                 MFWSController controller = g.GetComponent<MFWSController>();
                 controller._planeController = this;
                 //设置缓冲区容量
@@ -334,7 +345,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         private void FixedUpdate()
         {
             resetTimerStep += 1;
-            _AGVMultiAgentGroup.AddGroupReward(timePenalty/(float)maxEnvSteps);
+            //_AGVMultiAgentGroup.AddGroupReward(-timePenalty/(float)maxEnvSteps);
             if (resetTimerStep >= maxEnvSteps && maxEnvSteps > 0)
             {
                 ResetGround(false);
@@ -355,6 +366,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 OrderList.Remove(rk);
             }
             ReloadOrders();
+            if(showEva)
+                RefreshOrderText();
         }
         
                 
@@ -381,6 +394,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 }
                 OrderList.Add(o.deadLine,o);
             }
+        }
+
+        private void RefreshOrderText()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var (ddl,order) in OrderList)
+            {
+                sb.Append(order.productItemType + " IN " + (ddl - Time.fixedTime).ToString("F1")+'\n');
+            }
+            groundController.changeText(sb.ToString());
         }
 
         public float minDeadline { get; } = 60f;
@@ -436,16 +459,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 {
                     curX = Random.Range(minX, maxX);
                     curZ = Random.Range(minZ, maxZ);
+                    groundController.changeSize(curX,curZ);
                 }
-            
-                groundController.changeSize(curX,curZ);
                 _AGVMultiAgentGroup.GroupEpisodeInterrupted();
                 _MFWSMultiAgentGroup.GroupEpisodeInterrupted();
-
-                if (showEva)
-                {
-                    CalculateAndPrintAverageDPE();
-                }
+                
+                CalculateAndPrintAverageDPE();
                 
             }
             finishedOrders = 0;
@@ -512,7 +531,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             TotalFinished += finishedOrders;
             TotalFailed += failedOrders;
             EpisodeCount++;
-            Debug.Log("EPISODE: "+EpisodeCount+
+            if(showEva)
+                Debug.Log("EPISODE: "+EpisodeCount+
                       " | average Finished: "+(float)TotalFinished/EpisodeCount+
                       " | average Failed: "+(float)TotalFailed/EpisodeCount);
         }
