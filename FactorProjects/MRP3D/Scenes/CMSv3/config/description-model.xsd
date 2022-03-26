@@ -1,0 +1,130 @@
+﻿<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="scenario" type="Scenario"/>
+    <xs:complexType name="Scenario">
+        <xs:all>
+            <xs:element name="model" type="Model"/>
+            <xs:element name="layout" type="Layout"/>
+        </xs:all>
+    </xs:complexType>
+<!--    Model    -->
+    <xs:complexType name="Model">
+        <xs:all>
+            <xs:element name="modelName" type="xs:string"/>
+            <xs:element name="itemStates" type="ItemStates"/>
+            <xs:element name="processes" type="Processes"/>
+            <xs:element name="workstations" type="Workstations"/>
+            <xs:element name="agv" type="Agv"/>
+        </xs:all>
+    </xs:complexType>
+    <!--    Item State    -->
+    <xs:complexType name="ItemStates">
+        <xs:sequence>
+            <xs:element name="itemState" type="ItemState" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="ItemState">
+        <xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="idref" type="xs:IDREF"/>
+        <xs:attribute name="name" type="xs:string"/>
+    </xs:complexType>
+    
+    <!--    Process    -->
+    <xs:complexType name="Processes">
+        <xs:sequence>
+            <xs:element name="process" type="Process" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Process">
+        <xs:sequence minOccurs="0">
+            <xs:element name="inputs" type="Inputs" minOccurs="1"/>
+            <xs:element name="outputs" type="Outputs" minOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute name="duration" type="xs:float"/>
+        <xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="idref" type="xs:IDREF"/>
+    </xs:complexType>
+    <xs:complexType name="Inputs">
+        <xs:sequence>
+            <xs:element name="inputItemState" type="ItemState" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Outputs">
+        <xs:sequence>
+            <xs:element name="outputItemState" type="ItemState" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    
+    <!--    Workstation    -->
+    <xs:complexType name="Workstations">
+        <xs:sequence>
+            <xs:element name="workstation" type="Workstation" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Workstation">
+        <xs:all minOccurs="0">
+            <xs:element name="supportProcesses" type="SupportProcesses" minOccurs="1"/>
+        </xs:all>
+        <xs:attribute name="name" type="xs:string"/>
+        <xs:attribute name="id" type="xs:ID"/>
+        <xs:attribute name="idref" type="xs:IDREF"/>
+    </xs:complexType>
+    <xs:complexType name="SupportProcesses">
+        <xs:sequence>
+            <xs:element name="supportProcess" type="Process" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!--    Agv    -->
+    <xs:complexType name="Agv">
+        <xs:attribute name="move-speed" type="xs:float" use="required"/>
+        <xs:attribute name="rotate-speed" type="xs:float" use="required"/>
+        <xs:attribute name="capacity" type="xs:integer" default="1"/>
+    </xs:complexType>
+    
+    
+<!--    Layout    -->
+    <xs:complexType name="Layout">
+        <xs:all>
+            <xs:element name="groundSize" type="GroundSize"/>
+            <xs:element name="workstationInstances" type="WorkstationInstances"/>
+            <xs:element name="agvInstances" type="AgvInstances"/>
+            <xs:element name="importStation" type="ImportStation"/>
+            <xs:element name="exportStation" type="ExportStation"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:attributeGroup name="Position">
+        <xs:attribute name="x" type="xs:float" default="0"/>
+        <xs:attribute name="y" type="xs:float" default="0"/>
+    </xs:attributeGroup>
+
+    <xs:complexType name="GroundSize">
+        <xs:attribute name="x" type="xs:float" use="required"/>
+        <xs:attribute name="y" type="xs:float" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="WorkstationInstances">
+        <xs:sequence>
+            <xs:element name="workstationInstance" type="WorkstationInstance" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="WorkstationInstance">
+        <xs:all>
+            <xs:element name="workstationModel" type="Workstation"/>
+        </xs:all>
+        <xs:attributeGroup ref="Position"/>
+    </xs:complexType>
+    <xs:complexType name="AgvInstances">
+        <xs:sequence>
+            <xs:element name="agv" type="AgvInstance" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="AgvInstance">
+        <xs:attributeGroup ref="Position"/>
+    </xs:complexType>
+    <xs:complexType name="ImportStation">
+        <xs:attributeGroup ref="Position"/>
+    </xs:complexType>
+    <xs:complexType name="ExportStation">
+        <xs:attributeGroup ref="Position"/>
+    </xs:complexType>
+</xs:schema>

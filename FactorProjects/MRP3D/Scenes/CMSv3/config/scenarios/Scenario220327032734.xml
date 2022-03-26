@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scenario xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <model>
+    <modelName>Scenario01</modelName>
+    <itemStates>
+      <itemState id="AR" name="A-Raw" />
+      <itemState id="A1" name="A-1" />
+      <itemState id="AP" name="A-Product" />
+      <itemState id="BR" name="B-Raw" />
+      <itemState id="B1" name="B-1" />
+      <itemState id="BP" name="B-Product" />
+      <itemState id="CR1" name="C-Raw1" />
+      <itemState id="C1" name="C-1" />
+      <itemState id="CR2" name="C-Raw2" />
+      <itemState id="CP" name="C-Product" />
+      <itemState id="S1" name="ScrewT1" />
+      <itemState id="S2" name="ScrewT2" />
+      <itemState id="G" name="Glue" />
+    </itemStates>
+    <processes>
+      <process id="PA1">
+        <inputs>
+          <inputItemState idref="AR" />
+          <inputItemState idref="S1" />
+          <inputItemState idref="G" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="A1" />
+        </outputs>
+      </process>
+      <process id="PA2">
+        <inputs>
+          <inputItemState idref="A1" />
+          <inputItemState idref="S2" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="AP" />
+        </outputs>
+      </process>
+      <process id="PB1">
+        <inputs>
+          <inputItemState idref="BR" />
+          <inputItemState idref="S1" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="B1" />
+        </outputs>
+      </process>
+      <process id="PB2">
+        <inputs>
+          <inputItemState idref="B1" />
+          <inputItemState idref="S2" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="BP" />
+        </outputs>
+      </process>
+      <process id="PC1">
+        <inputs>
+          <inputItemState idref="CR1" />
+          <inputItemState idref="S1" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="C1" />
+        </outputs>
+      </process>
+      <process id="PC2">
+        <inputs>
+          <inputItemState idref="C1" />
+          <inputItemState idref="G" />
+        </inputs>
+        <outputs>
+          <outputItemState idref="CP" />
+        </outputs>
+      </process>
+    </processes>
+    <workstations>
+      <workstation name="A-1 Assembler" id="W1">
+        <supportProcesses>
+          <supportProcess idref="PA1" />
+        </supportProcesses>
+      </workstation>
+      <workstation name="ScrewT1 Adder" id="W2">
+        <supportProcesses>
+          <supportProcess idref="PB1" />
+          <supportProcess idref="PC1" />
+        </supportProcesses>
+      </workstation>
+      <workstation name="ScrewT2 Adder" id="W3">
+        <supportProcesses>
+          <supportProcess idref="PA2" />
+          <supportProcess idref="PB2" />
+        </supportProcesses>
+      </workstation>
+      <workstation name="C-Product Assembler" id="W4">
+        <supportProcesses>
+          <supportProcess idref="PC2" />
+        </supportProcesses>
+      </workstation>
+    </workstations>
+    <agv move-speed="5" rotate-speed="5" />
+  </model>
+  <layout>
+    <groundSize x="50" y="50" />
+    <workstationInstances>
+      <workstationInstance y="-1">
+        <workstationModel idref="W1" />
+      </workstationInstance>
+      <workstationInstance x="15" y="-1">
+        <workstationModel idref="W2" />
+      </workstationInstance>
+      <workstationInstance x="-12" y="18">
+        <workstationModel idref="W3" />
+      </workstationInstance>
+      <workstationInstance x="18" y="18">
+        <workstationModel idref="W4" />
+      </workstationInstance>
+      <workstationInstance y="-8">
+        <workstationModel idref="W1" />
+      </workstationInstance>
+      <workstationInstance y="-15">
+        <workstationModel idref="W1" />
+      </workstationInstance>
+      <workstationInstance x="15" y="-8">
+        <workstationModel idref="W2" />
+      </workstationInstance>
+      <workstationInstance x="15" y="-15">
+        <workstationModel idref="W2" />
+      </workstationInstance>
+      <workstationInstance x="-12" y="9">
+        <workstationModel idref="W3" />
+      </workstationInstance>
+      <workstationInstance x="-12">
+        <workstationModel idref="W3" />
+      </workstationInstance>
+      <workstationInstance y="18">
+        <workstationModel idref="W4" />
+      </workstationInstance>
+      <workstationInstance x="9" y="18">
+        <workstationModel idref="W4" />
+      </workstationInstance>
+    </workstationInstances>
+    <agvInstances>
+      <agv x="-6.60000038" y="-10.5" />
+      <agv x="-6.6" y="-15.5" />
+      <agv x="-10.6" y="-10.5" />
+      <agv x="-10.6" y="-15.5" />
+      <agv x="-14.6" y="-10.5" />
+      <agv x="-14.6" y="-15.5" />
+      <agv x="-18.6" y="-10.5" />
+      <agv x="-18.6" y="-15.5" />
+    </agvInstances>
+    <importStation x="8" y="-22" />
+    <exportStation x="22" y="8" />
+  </layout>
+</scenario>

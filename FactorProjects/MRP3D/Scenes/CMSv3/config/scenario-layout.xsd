@@ -1,0 +1,38 @@
+﻿<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="layout" type="Layout"/>
+    <xs:complexType name="Layout">
+        <xs:all>
+            <xs:element name="groundSize" type="GroundSize"/>
+            <xs:element name="workstations" type="Workstations"/>
+            <xs:element name="agvs" type="Agvs"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:attributeGroup name="Position">
+        <xs:attribute name="x" type="xs:float" default="0"/>
+        <xs:attribute name="y" type="xs:float" default="0"/>
+    </xs:attributeGroup>
+    
+    <xs:complexType name="GroundSize">
+        <xs:attribute name="x" type="xs:float"/>
+        <xs:attribute name="y" type="xs:float"/>
+    </xs:complexType>
+    <xs:complexType name="Workstations">
+        <xs:sequence>
+            <xs:element name="workstation" type="Workstation" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Workstation">
+        <xs:attribute name="id" type="xs:string"/>
+        <xs:attributeGroup ref="Position"/>
+    </xs:complexType>
+    <xs:complexType name="Agvs">
+        <xs:sequence>
+            <xs:element name="agv" type="Agv" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Agv">
+        <xs:attributeGroup ref="Position" />
+    </xs:complexType>
+
+</xs:schema>

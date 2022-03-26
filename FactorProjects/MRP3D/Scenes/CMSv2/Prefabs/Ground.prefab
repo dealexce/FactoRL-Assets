@@ -495,7 +495,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6807858561631827430}
-  - component: {fileID: 60290150206952120}
+  - component: {fileID: 6602121691791877685}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
@@ -524,7 +524,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &60290150206952120
+--- !u!114 &6602121691791877685
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -533,11 +533,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6623291110514311090}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c3a49c599034d4c86cffac6e439824c, type: 3}
+  m_Script: {fileID: 11500000, guid: 36956ecfdbac4ff1b8c238191599b490, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  x: 30
-  z: 20
+  x: 40
+  z: 30
   ground: {fileID: 517769798603499203}
   northWall: {fileID: 127090534267298699}
   southWall: {fileID: 4517991216001606570}
@@ -549,8 +549,8 @@ MonoBehaviour:
   groundMFz: 0
   wallMFx: 0
   wallMFz: 0
-  _successMaterial: {fileID: 2100000, guid: 97981a8cbdca78e4eb8c8f6444de8fcb, type: 2}
-  _failedMaterial: {fileID: 2100000, guid: b3ee790d4ae9a41449fe2d80c9288d71, type: 2}
+  _successMaterial: {fileID: 2100000, guid: 9c4332da95f8ef147b55e8ae410199ea, type: 2}
+  _failedMaterial: {fileID: 2100000, guid: 62d82962554086d498db89eb56c8cad7, type: 2}
   FloatingTextObject: {fileID: 8047277310879264753}
 --- !u!1 &8047277310879264753
 GameObject:

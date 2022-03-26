@@ -14,7 +14,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
         public float x, z;
         public GameObject ground;
         public GameObject northWall, southWall, westWall, eastWall;
+        [HideInInspector]
         public MeshFilter groundMF, wallMF;
+        [HideInInspector]
         public float groundMFx, groundMFz, wallMFx, wallMFz;
         
         //for visualization
