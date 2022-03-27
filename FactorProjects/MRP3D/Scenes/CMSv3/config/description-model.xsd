@@ -27,7 +27,16 @@
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
         <xs:attribute name="name" type="xs:string"/>
+        <xs:attribute name="type" type="SpecialItemStateType">
+            
+        </xs:attribute>
     </xs:complexType>
+    <xs:simpleType name="SpecialItemStateType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Raw"/>
+            <xs:enumeration value="Product"/>
+        </xs:restriction>
+    </xs:simpleType>
     
     <!--    Process    -->
     <xs:complexType name="Processes">
@@ -37,21 +46,21 @@
     </xs:complexType>
     <xs:complexType name="Process">
         <xs:sequence minOccurs="0">
-            <xs:element name="inputs" type="Inputs" minOccurs="1"/>
-            <xs:element name="outputs" type="Outputs" minOccurs="1"/>
+            <xs:element name="inputItemsRef" type="InputItemsRef" minOccurs="1"/>
+            <xs:element name="outputItemsRef" type="OutputItemsRef" minOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="duration" type="xs:float"/>
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
     </xs:complexType>
-    <xs:complexType name="Inputs">
+    <xs:complexType name="InputItemsRef">
         <xs:sequence>
-            <xs:element name="inputItemState" type="ItemState" maxOccurs="unbounded"/>
+            <xs:element name="inputItemRef" type="ItemState" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
-    <xs:complexType name="Outputs">
+    <xs:complexType name="OutputItemsRef">
         <xs:sequence>
-            <xs:element name="outputItemState" type="ItemState" maxOccurs="unbounded"/>
+            <xs:element name="outputItemRef" type="ItemState" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
     
@@ -63,15 +72,17 @@
     </xs:complexType>
     <xs:complexType name="Workstation">
         <xs:all minOccurs="0">
-            <xs:element name="supportProcesses" type="SupportProcesses" minOccurs="1"/>
+            <xs:element name="supportProcessesRef" type="SupportProcessesRef" minOccurs="1"/>
         </xs:all>
         <xs:attribute name="name" type="xs:string"/>
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
+        <xs:attribute name="inputCapacity" type="xs:int" default="10"/>
+        <xs:attribute name="outputCapacity" type="xs:int" default="10"/>
     </xs:complexType>
-    <xs:complexType name="SupportProcesses">
+    <xs:complexType name="SupportProcessesRef">
         <xs:sequence>
-            <xs:element name="supportProcess" type="Process" maxOccurs="unbounded"/>
+            <xs:element name="supportProcessRef" type="Process" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
 
@@ -109,7 +120,7 @@
     </xs:complexType>
     <xs:complexType name="WorkstationInstance">
         <xs:all>
-            <xs:element name="workstationModel" type="Workstation"/>
+            <xs:element name="workstationRef" type="Workstation"/>
         </xs:all>
         <xs:attributeGroup ref="Position"/>
     </xs:complexType>

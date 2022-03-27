@@ -11,12 +11,12 @@
 using System.Xml.Serialization;
 
 // 
-// 此源代码由 xsd 自动生成, Version=4.7.3081.0。
+// 此源代码由 xsd 自动生成, Version=4.8.3928.0。
 // 
 
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -51,7 +51,7 @@ public partial class Scenario {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -127,7 +127,7 @@ public partial class Model {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -138,6 +138,10 @@ public partial class ItemState {
     private string idrefField;
     
     private string nameField;
+    
+    private SpecialItemStateType typeField;
+    
+    private bool typeFieldSpecified;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
@@ -171,10 +175,44 @@ public partial class ItemState {
             this.nameField = value;
         }
     }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public SpecialItemStateType type {
+        get {
+            return this.typeField;
+        }
+        set {
+            this.typeField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool typeSpecified {
+        get {
+            return this.typeFieldSpecified;
+        }
+        set {
+            this.typeFieldSpecified = value;
+        }
+    }
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
+[System.SerializableAttribute()]
+public enum SpecialItemStateType {
+    
+    /// <remarks/>
+    Raw,
+    
+    /// <remarks/>
+    Product,
+}
+
+/// <remarks/>
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -215,7 +253,7 @@ public partial class ExportStation {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -256,7 +294,7 @@ public partial class ImportStation {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -297,13 +335,13 @@ public partial class AgvInstance {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 public partial class WorkstationInstance {
     
-    private Workstation workstationModelField;
+    private Workstation workstationRefField;
     
     private float xField;
     
@@ -316,12 +354,12 @@ public partial class WorkstationInstance {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlElementAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    public Workstation workstationModel {
+    public Workstation workstationRef {
         get {
-            return this.workstationModelField;
+            return this.workstationRefField;
         }
         set {
-            this.workstationModelField = value;
+            this.workstationRefField = value;
         }
     }
     
@@ -351,13 +389,13 @@ public partial class WorkstationInstance {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 public partial class Workstation {
     
-    private Process[] supportProcessesField;
+    private Process[] supportProcessesRefField;
     
     private string nameField;
     
@@ -365,15 +403,24 @@ public partial class Workstation {
     
     private string idrefField;
     
+    private int inputCapacityField;
+    
+    private int outputCapacityField;
+    
+    public Workstation() {
+        this.inputCapacityField = 10;
+        this.outputCapacityField = 10;
+    }
+    
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    [System.Xml.Serialization.XmlArrayItemAttribute("supportProcess", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
-    public Process[] supportProcesses {
+    [System.Xml.Serialization.XmlArrayItemAttribute("supportProcessRef", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
+    public Process[] supportProcessesRef {
         get {
-            return this.supportProcessesField;
+            return this.supportProcessesRefField;
         }
         set {
-            this.supportProcessesField = value;
+            this.supportProcessesRefField = value;
         }
     }
     
@@ -409,18 +456,42 @@ public partial class Workstation {
             this.idrefField = value;
         }
     }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    [System.ComponentModel.DefaultValueAttribute(10)]
+    public int inputCapacity {
+        get {
+            return this.inputCapacityField;
+        }
+        set {
+            this.inputCapacityField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    [System.ComponentModel.DefaultValueAttribute(10)]
+    public int outputCapacity {
+        get {
+            return this.outputCapacityField;
+        }
+        set {
+            this.outputCapacityField = value;
+        }
+    }
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
 public partial class Process {
     
-    private ItemState[] inputsField;
+    private ItemState[] inputItemsRefField;
     
-    private ItemState[] outputsField;
+    private ItemState[] outputItemsRefField;
     
     private float durationField;
     
@@ -432,25 +503,25 @@ public partial class Process {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    [System.Xml.Serialization.XmlArrayItemAttribute("inputItemState", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
-    public ItemState[] inputs {
+    [System.Xml.Serialization.XmlArrayItemAttribute("inputItemRef", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
+    public ItemState[] inputItemsRef {
         get {
-            return this.inputsField;
+            return this.inputItemsRefField;
         }
         set {
-            this.inputsField = value;
+            this.inputItemsRefField = value;
         }
     }
     
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    [System.Xml.Serialization.XmlArrayItemAttribute("outputItemState", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
-    public ItemState[] outputs {
+    [System.Xml.Serialization.XmlArrayItemAttribute("outputItemRef", Form=System.Xml.Schema.XmlSchemaForm.Unqualified, IsNullable=false)]
+    public ItemState[] outputItemsRef {
         get {
-            return this.outputsField;
+            return this.outputItemsRefField;
         }
         set {
-            this.outputsField = value;
+            this.outputItemsRefField = value;
         }
     }
     
@@ -500,7 +571,7 @@ public partial class Process {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -534,7 +605,7 @@ public partial class GroundSize {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -609,7 +680,7 @@ public partial class Layout {
 }
 
 /// <remarks/>
-[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.7.3081.0")]
+[System.CodeDom.Compiler.GeneratedCodeAttribute("xsd", "4.8.3928.0")]
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]

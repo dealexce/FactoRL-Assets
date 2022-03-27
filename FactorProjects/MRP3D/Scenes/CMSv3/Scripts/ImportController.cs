@@ -1,55 +1,56 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class ImportController : ItemHolder, LinkedToPlane
+    public class ImportController : MonoBehaviour, IExchangable, ILinkedToPlane
     {
-        public string rawType;
-        public PlaneController _planeController { get; set; }
+        public PlaneController planeController { get; set; }
 
-        public Item bufferItem;
-
-
-        private void Awake()
-        {
-            OutputGameObject = gameObject;
-            _planeController = GetComponentInParent<PlaneController>();
-        }
+        public Dictionary<string,Item> bufferRawItems;
+        
 
         private void Start()
         {
-            bufferItem = _planeController.InstantiateItem(rawType, gameObject);
+            foreach (var (id,itemState) in SceanrioLoader.ItemStateDict)
+            {
+                bufferRawItems.Add(id,planeController.InstantiateItem(id, gameObject));
+            }
         }
 
-        public override Item GetItem(string itemType)
+        public Item GetItem(string itemType)
         {
-            return bufferItem;
+            bufferRawItems.TryGetValue(itemType, out Item item);
+            return item;
         }
 
-        protected override bool Remove(Item item)
+        public bool Remove(Item item)
         {
-            if (item != bufferItem)
+            var id = item.itemState.id;
+            if (!bufferRawItems.ContainsKey(id))
+            {
                 return false;
-            bufferItem = _planeController.InstantiateItem(rawType, gameObject);
+            }
+            bufferRawItems[id] = planeController.InstantiateItem(id, gameObject);
             return true;
         }
 
-        protected override bool Store(Item item)
+        public bool Store(Item item)
         {
             return false;
         }
 
-        public override ExchangeMessage CheckReceivable(ItemHolder giver, Item item)
+        public ExchangeMessage CheckReceivable(IExchangable giver, Item item)
         {
             return ExchangeMessage.Unreceivable;
         }
 
-        public override ExchangeMessage CheckGivable(ItemHolder receiver, Item item)
+        public ExchangeMessage CheckGivable(IExchangable receiver, Item item)
         {
-            if (rawType.Equals(item.itemType))
+            if (bufferRawItems.ContainsKey(item.itemState.id))
             {
-                return ExchangeMessage.OK;
+                return ExchangeMessage.Ok;
             }
             return ExchangeMessage.WrongType;
         }

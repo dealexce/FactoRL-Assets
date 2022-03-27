@@ -1,20 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class SceanrioLoader
     {
-        private static string ModelConfigPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/Scenario01-init.xml";
         private static Scenario _scenario=null;
-        private static Dictionary<string, ItemState> ItemStateDict = new Dictionary<string, ItemState>();
+        public static Dictionary<string, ItemState> ItemStateDict { get; } = new Dictionary<string, ItemState>();
         private static Dictionary<string, Process> ProcessDict = new Dictionary<string, Process>();
         private static Dictionary<string, Workstation> WorkstationDict = new Dictionary<string, Workstation>();
         public static void Load(string path)
         {
+            if (_scenario != null)
+            {
+                Debug.LogWarning("Already loaded a scenario, overwriting current scenario");
+            }
             XmlSerializer serializer = new XmlSerializer(typeof(Scenario));
             using (StreamReader reader = new StreamReader(path))
             {
@@ -43,7 +46,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             return _scenario;
         }
-
         public static ItemState getItemState(string id)
         {
             return ItemStateDict[id];

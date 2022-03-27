@@ -27,17 +27,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public ExchangeMessage Give(ItemHolder receiver, Item item)
         {
             ExchangeMessage exchangeMessage = CheckGivable(receiver,item);
-            if (exchangeMessage != ExchangeMessage.OK)
+            if (exchangeMessage != ExchangeMessage.Ok)
             {
                 return exchangeMessage;
             }
             exchangeMessage = receiver.CheckReceivable(this, item);
-            if (exchangeMessage != ExchangeMessage.OK)
+            if (exchangeMessage != ExchangeMessage.Ok)
             {
                 return exchangeMessage;
             }
             exchangeMessage = receiver.Receive(this, item);
-            if (exchangeMessage == ExchangeMessage.OK)
+            if (exchangeMessage == ExchangeMessage.Ok)
             {
                 this.Remove(item);
             }
@@ -52,7 +52,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <returns></returns>
         private ExchangeMessage Receive(ItemHolder giver, Item item)
         {
-            ExchangeMessage exchangeMessage = ExchangeMessage.OK;
+            ExchangeMessage exchangeMessage = ExchangeMessage.Ok;
             if (!Store(item))
             {
                     exchangeMessage = ExchangeMessage.StoreFail;

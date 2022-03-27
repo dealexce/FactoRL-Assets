@@ -50,7 +50,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
         {
             int mc = 0;
-            List<Target> comb = _AGVController._planeController.TargetCombinationList;
+            List<Target> comb = _AGVController.PlaneController.TargetCombinationList;
             //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
             if (_AGVController.holdingItem == null)
             {
@@ -92,21 +92,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
         {
-            var pl = _AGVController._planeController.ProductItemTypeList;
+            var pl = _AGVController.PlaneController.ProductItemTypeList;
             //Order Obs
-            foreach (var (ddl,order) in _AGVController._planeController.OrderList)
+            foreach (var (ddl,order) in _AGVController.PlaneController.OrderList)
             {
                 float[] obs = new float[1 + pl.Count];
                 obs[pl.IndexOf(order.productItemType)] = 1f;
-                obs[pl.Count] = (ddl-Time.fixedTime)/_AGVController._planeController.maxDeadline;
+                obs[pl.Count] = (ddl-Time.fixedTime)/_AGVController.PlaneController.maxDeadline;
                 _bufferSensor.AppendObservation(obs);
             }
-            foreach (var ec in _AGVController._planeController.ExportControllerList)
+            foreach (var ec in _AGVController.PlaneController.ExportControllerList)
             {
                 sensor.AddObservation(Math.Clamp(ec.stock,0,10)/10);
             }
             //Normalization values
-            float maxDiameter = _AGVController._planeController.MAXDiameter;
+            float maxDiameter = _AGVController.PlaneController.MAXDiameter;
             //collect relative position of all workstations
             foreach (var targetObj in _AGVController.targetableGameObjects)
             {
@@ -118,17 +118,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 sensor.AddObservation(polarTargetPos);
             }
             //collect status of all workstations
-            foreach (var c in _AGVController._planeController.MFWSControllers)
+            foreach (var c in _AGVController.PlaneController.MFWSControllers)
             {
                 var s = c.GetSimpleStatus();
                 sensor.AddObservation(s.SelfInputItemQuantityArray);
                 sensor.AddObservation(s.SelfOutputItemQuantityArray);
                 sensor.AddObservation(s.SelfCurrentProcessOneHot);
             }
-            int targetCount = _AGVController._planeController.TargetCombinationList.Count;
-            int itemTypeCount = _AGVController._planeController.ItemTypeList.Count;
+            int targetCount = _AGVController.PlaneController.TargetCombinationList.Count;
+            int itemTypeCount = _AGVController.PlaneController.ItemTypeList.Count;
             //collect target and relative position of all AGVs in one-hot
-            foreach (var agv in _AGVController._planeController.AGVControllers)
+            foreach (var agv in _AGVController.PlaneController.AGVControllers)
             {
                 if (agv == _AGVController)
                 {
@@ -148,7 +148,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             List<int> availableTarget = new List<int>{0};
-            var comb = _AGVController._planeController.TargetCombinationList;
+            var comb = _AGVController.PlaneController.TargetCombinationList;
             if (_AGVController.holdingItem == null)
             {
                 for (int i = 1; i < comb.Count; i++)

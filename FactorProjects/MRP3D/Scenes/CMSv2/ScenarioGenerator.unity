@@ -332,7 +332,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1603264899}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: FactorProjects.MRP3D.Scenes.CMSv3.Scripts.ScenarioGenerator,
           Assembly-CSharp
         m_MethodName: OnAddWorkstationClicked
@@ -1949,7 +1949,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1603264899}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: FactorProjects.MRP3D.Scenes.CMSv3.Scripts.ScenarioGenerator,
           Assembly-CSharp
         m_MethodName: OnSaveClicked
@@ -2009,7 +2009,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1603264900}
-  - component: {fileID: 1603264899}
+  - component: {fileID: 1603264901}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -2017,26 +2017,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1603264899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1603264898}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ad3e36c1f1348b4bce2eab241d20153, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  workstationPrefab: {fileID: 8412221806419059806, guid: 8473c3dafdb8abb4b961230586ad277c, type: 3}
-  machinePrefabPath: Machines
-  showMachine: 1
-  agvPrefab: {fileID: 3138914704657889545, guid: 623571eb11eae324da33cfaa25fe9708, type: 3}
-  importStationPrefab: {fileID: 7451406427367902720, guid: e6f8ba7f618fb284ea9fa983a1e9f825, type: 3}
-  exportStationPrefab: {fileID: 6420293301762786809, guid: b103863232be6b04bba20a508eed256d, type: 3}
-  uiCanvas: {fileID: 1941402841}
-  scenarioXmlOutputPath: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios
 --- !u!4 &1603264900
 Transform:
   m_ObjectHideFlags: 0
@@ -2053,6 +2033,26 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1603264901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1603264898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc850f6484c54684a45f1089e55847e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  workstationPrefab: {fileID: 8412221806419059806, guid: 3359e8cd6765495499624984306a914a, type: 3}
+  machinePrefabPath: Machines
+  showMachine: 0
+  agvPrefab: {fileID: 3138914704657889545, guid: 03b97ac916628ca47b66ea53099ffa5b, type: 3}
+  importStationPrefab: {fileID: 7451406427367902720, guid: e6f8ba7f618fb284ea9fa983a1e9f825, type: 3}
+  exportStationPrefab: {fileID: 6420293301762786809, guid: b103863232be6b04bba20a508eed256d, type: 3}
+  uiCanvas: {fileID: 1941402841}
+  scenarioXmlOutputPath: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios
 --- !u!1 &1903601451
 GameObject:
   m_ObjectHideFlags: 0

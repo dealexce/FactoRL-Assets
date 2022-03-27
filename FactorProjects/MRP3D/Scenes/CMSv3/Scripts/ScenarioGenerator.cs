@@ -8,18 +8,19 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class ScenarioGenerator : MonoBehaviour
     {
-        private static string ModelConfigPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220327032734.xml";
-        private static Scenario _scenario=null;
-        static ScenarioGenerator()
-        {
-            SceanrioLoader.Load(ModelConfigPath);
-            _scenario = SceanrioLoader.getScenario();
-        }
+        public string scenarioXmlPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220327032734.xml";
+        public bool randomizeLayout = false;
+        //TODO: Show only when randomizeLayout is set to true
+        public float minGroundX = 40f, maxGroundX = 60f;
+        public float minGroundY = 40f, maxGroundY = 60f;
+        
+        protected Scenario _scenario;
 
         private Ground _ground;
 
@@ -32,29 +33,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject importStationPrefab;
         public GameObject exportStationPrefab;
 
-        public GameObject uiCanvas;
+        public List<GameObject> entityGameObjects = new List<GameObject>();
 
-        private void Awake()
-        {
-            
-        }
 
-        private void Start()
+        public void Start()
         {
             _ground = GetComponentInChildren<Ground>();
+            SceanrioLoader.Load(scenarioXmlPath);
+            _scenario = SceanrioLoader.getScenario();
             Assert.IsNotNull(_scenario);
-            InitPanel();
             InitLayout();
+            if (randomizeLayout)
+            {
+                RandomizeLayout();
+            }
         }
 
-        private void InitPanel()
+        protected void InitLayout()
         {
-            InitDropdown();
-        }
-
-        private void InitLayout()
-        {
-
             //change ground size
             _ground.changeSize(_scenario.layout.groundSize.x, _scenario.layout.groundSize.y);
 
@@ -65,7 +61,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 InstantiateWorkstation(wsi);
             }
 
-
             //instantiate agv instances according to layout
             foreach (var agv in _scenario.layout.agvInstances)
             {
@@ -74,118 +69,108 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
             //instantiate import station and export station according to layout
             ImportStation importStation = _scenario.layout.importStation;
-            InstantiateOnGround(importStationPrefab, importStation.x, importStation.y);
+            InstantiateEntityOnGround(importStationPrefab, importStation.x, importStation.y);
             ExportStation exportStation = _scenario.layout.exportStation;
-            InstantiateOnGround(exportStationPrefab, exportStation.x, exportStation.y);
+            InstantiateEntityOnGround(exportStationPrefab, exportStation.x, exportStation.y);
         }
 
-        private void InstantiateAgvInstance(AgvInstance agv)
-        {
+        #region Randomization
 
-            var g = InstantiateOnGround(agvPrefab, agv.x, agv.y);
+        protected void RandomizeLayout()
+        {
+            float randomX= Random.Range(minGroundX, maxGroundX);
+            float randomY = Random.Range(minGroundY, maxGroundY);
+            _ground.changeSize(randomX, randomY);
+
+            // Deactivate objects before reset position for better position randomization
+            // TODO: Check whether this will cause problems
+            foreach (var eo in entityGameObjects)
+            {
+                eo.SetActive(false);
+            }
+
+            foreach (var eo in entityGameObjects)
+            {
+                eo.SetActive(true);
+                ResetToSafeRandomPosition(eo);
+            }
+        }
+        
+        private Vector3 ResetToSafeRandomPosition(GameObject prefab)
+        {
+            //更改物体位置之后要手动调用Physics.Simulate，否则可能无法检测到碰撞！
+            Utils.ForcePhysicsSimulate();
+
+            float groundSizeX = _scenario.layout.groundSize.x;
+            float groundSizeY = _scenario.layout.groundSize.y;
+            
+            //100次以内尝试
+            int remainAttempts = 100;
+            bool safePositionFound = false;
+            var potentialPosition = Vector3.zero;
+            //获取碰撞盒外接正方体
+            Bounds bounds = Utils.GetEncapsulateBoxColliderBounds(prefab);
+            while (!safePositionFound && remainAttempts>0)
+            {
+                potentialPosition = new Vector3(Random.Range(-groundSizeX/2f, groundSizeX/2f),bounds.extents.y,Random.Range(-groundSizeY/2f, groundSizeY/2f));
+                potentialPosition = transform.position + potentialPosition;
+                remainAttempts--;
+                LayerMask mask = LayerMask.GetMask("Default","Trigger");    //添加遮罩：只检测Default层
+                Collider[] colliders = Physics.OverlapBox(potentialPosition, bounds.extents,Quaternion.identity,mask);
+
+                safePositionFound = colliders.Length == 0;
+            }
+            if (safePositionFound)
+            {
+                potentialPosition = new Vector3(potentialPosition.x, transform.position.y+prefab.transform.position.y - bounds.min.y+0.1f, potentialPosition.z);
+                prefab.transform.position = potentialPosition;
+            }
+            else
+            {
+                Debug.LogError("Unable to find a safe position to reset work point: "+prefab.name);
+            }
+            return potentialPosition;
+        }
+
+        #endregion
+
+        #region Instantiation
+
+        protected void InstantiateAgvInstance(AgvInstance agv)
+        {
+            var g = InstantiateEntityOnGround(agvPrefab, agv.x, agv.y);
             AgvBase agvBase = g.GetComponent<AgvBase>();
             agvBase.agvConfig = _scenario.model.agv;
         }
 
-        private void InstantiateWorkstation(WorkstationInstance wsi)
+        protected void InstantiateWorkstation(WorkstationInstance wsi)
         {
-            InstantiateWorkstation(wsi.workstationModel.idref,wsi.x,wsi.y);
+            InstantiateWorkstation(wsi.workstationRef.idref,wsi.x,wsi.y);
         }
 
-        private void InstantiateWorkstation(string id, float x, float y)
+        protected void InstantiateWorkstation(string id, float x, float y)
         {
-            GameObject g = InstantiateOnGround(workstationPrefab, x, y);
+            GameObject g = InstantiateEntityOnGround(workstationPrefab, x, y);
             if (showMachine)
             {
                 Instantiate(WorkstationUtil.GetMachinePrefab(id), g.transform);
             }
-            MFWSController controller = g.GetComponent<MFWSController>();
+            WorkstationBase controller = g.GetComponent<WorkstationBase>();
             controller.workstation = SceanrioLoader.getWorkstation(id);
         }
 
-        public GameObject InstantiateOnGround(GameObject prefab, float x, float z)
+        public GameObject InstantiateEntityOnGround(GameObject prefab, float x, float z)
         {
-            return Instantiate(
+            GameObject entityGameObject = Instantiate(
                 prefab, 
                 transform.position+new Vector3(x, Utils.GetEncapsulateBoxColliderBounds(prefab).extents.y, z),
                 new Quaternion(),
                 transform);
-        }
-        
-        private TMP_Dropdown _dropdown;
-        private Workstation[] _workstationsForDropDown;
-
-        private void InitDropdown()
-        {
-            _dropdown = uiCanvas.GetComponentInChildren<TMP_Dropdown>();
-            _workstationsForDropDown = _scenario.model.workstations;
-            _dropdown.options.Clear();
-            TMP_Dropdown.OptionData tempData;
-            foreach (var ws in _workstationsForDropDown)
-            {
-                tempData = new TMP_Dropdown.OptionData();
-                tempData.text = ws.name;
-                _dropdown.options.Add(tempData);
-            }
-            _dropdown.captionText.text = _workstationsForDropDown[0].name;
+            entityGameObjects.Add(entityGameObject);
+            return entityGameObject;
         }
 
-        public void OnAddWorkstationClicked()
-        {
-            InstantiateWorkstation(_workstationsForDropDown[_dropdown.value].id,0f,0f);
-        }
+        #endregion
 
-
-        public string scenarioXmlOutputPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios";
-        public void OnSaveClicked()
-        {
-            List<WorkstationInstance> wsiList = new List<WorkstationInstance>();
-            foreach (var wsc in GetComponentsInChildren<MFWSController>())
-            {
-                Workstation w = new Workstation();
-                w.idref = wsc.workstation.id;
-                wsiList.Add(new WorkstationInstance()
-                {
-                    workstationModel = w,
-                    x=wsc.transform.position.x,
-                    y=wsc.transform.position.z
-                });
-            }
-            _scenario.layout.workstationInstances = wsiList.ToArray();
-
-            List<AgvInstance> agviList = new List<AgvInstance>();
-            foreach (var agvc in GetComponentsInChildren<AgvBase>())
-            {
-                agviList.Add(new AgvInstance()
-                {
-                    x=agvc.transform.position.x,
-                    y=agvc.transform.position.z
-                });
-            }
-            _scenario.layout.agvInstances = agviList.ToArray();
-            var it = GetComponentInChildren<ImportControllerBase>().transform.position;
-            _scenario.layout.importStation = new ImportStation()
-            {
-                x = it.x,
-                y = it.z
-            };
-            var ot = GetComponentInChildren<ExportControllerBase>().transform.position;
-            _scenario.layout.exportStation = new ExportStation()
-            {
-                x = ot.x,
-                y = ot.z
-            };
-
-            XmlSerializer serializer = new XmlSerializer(typeof(Scenario));
-            String path = scenarioXmlOutputPath
-                          + "/Scenario"
-                          + DateTime.Now.ToString("yyMMddHHmmss")
-                          + ".xml";
-            using (StreamWriter writer = new StreamWriter(path))
-            {
-                serializer.Serialize(writer,_scenario);
-                Debug.Log("Successfully saved scenario at "+path);
-            }
-        }
     }
 }

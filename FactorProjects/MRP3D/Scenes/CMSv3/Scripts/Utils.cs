@@ -76,5 +76,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
             return bounds;
         }
+
+        public static void ForcePhysicsSimulate()
+        {
+            Physics.autoSimulation=false;
+            Physics.Simulate(Time.fixedDeltaTime);
+            Physics.autoSimulation = true;
+        }
     }
 }

@@ -7,7 +7,7 @@
 
     public enum ExchangeMessage
     {
-        OK,Fail,ItemNotFound,NullItem,WrongType,Overload,StoreFail,
+        Ok,Fail,Error,ItemNotFound,NullItem,WrongType,Overload,StoreFail,
         RequestDenied,GiverRequired,Ungivable,Unreceivable
     }
 }

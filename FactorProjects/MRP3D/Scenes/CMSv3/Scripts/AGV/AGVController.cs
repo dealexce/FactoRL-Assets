@@ -5,10 +5,10 @@ using UnityEngine;
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
 
-    public class AGVController : ItemHolder, Resetable, LinkedToPlane, IHasStatus<AGVStatus>
+    public class AGVController : ItemHolder, IResetable, ILinkedToPlane, IHasStatus<AGVStatus>
     {
         [HideInInspector]
-        public PlaneController _planeController { get; set; }
+        public PlaneController PlaneController { get; set; }
         [HideInInspector]
         public AGVMoveAgent agvMoveAgent;
         [HideInInspector]
@@ -46,8 +46,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             string holdingItemType = holdingItem != null ? holdingItem.itemType : PConsts.NullItem;
             return new AGVStatus(
                 _rigidbody,
-                _planeController.ItemTypeIndexDict[holdingItemType],
-                _planeController.TargetCombinationIndexDict[target]);
+                PlaneController.ItemTypeIndexDict[holdingItemType],
+                PlaneController.TargetCombinationIndexDict[target]);
         }
 
         #region MonoBehaviorInitialization
@@ -61,9 +61,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void Start()
         {
-            TargetableGameObjectItemHolderDict = _planeController.GameObjectItemHolderDict;
+            TargetableGameObjectItemHolderDict = PlaneController.GameObjectItemHolderDict;
             targetableGameObjects = new List<GameObject>(TargetableGameObjectItemHolderDict.Keys);
-            _availableTargetCombinations = _planeController.TargetCombinationList;
+            _availableTargetCombinations = PlaneController.TargetCombinationList;
             agvDispatcherAgent.RequestTargetDecision();
         }
 
@@ -75,7 +75,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             Vector3 targetPos = Vector3.zero;
             if (target.GameObject != null)
             {
-                targetPos = (target.GameObject.transform.position - position) / _planeController.MAXDiameter;
+                targetPos = (target.GameObject.transform.position - position) / PlaneController.MAXDiameter;
                 Vector3 cross = Vector3.Cross(targetPos, transform.forward);
                 float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
                 polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
@@ -147,7 +147,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if (holdingItem == null)
             {
-                return ExchangeMessage.OK;
+                return ExchangeMessage.Ok;
             }
             else
             {
@@ -159,7 +159,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if (holdingItem != null)
             {
-                return ExchangeMessage.OK;
+                return ExchangeMessage.Ok;
             }
             else
             {
@@ -234,7 +234,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             noTargetTime = 0f;
             dispatcherAcademicStep = 0;
-            target = _planeController.TargetCombinationList[targetIndex];
+            target = PlaneController.TargetCombinationList[targetIndex];
             
         }
         private void OnDrawGizmosSelected()
@@ -260,7 +260,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 exchangeMessage = ItemController.PassItem(TargetableGameObjectItemHolderDict[target.GameObject], this, target.ItemType);
             }
             //交换成功，重置target
-            if (exchangeMessage == ExchangeMessage.OK)
+            if (exchangeMessage == ExchangeMessage.Ok)
             {
                 target = PConsts.NullTarget;
             }
