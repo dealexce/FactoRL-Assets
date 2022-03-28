@@ -9,7 +9,7 @@ using UnityEngine.Assertions;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class WorkstationBase : MonoBehaviour, IExchangable, IResetable, ILinkedToPlane
+    public class WorkstationController : MonoBehaviour, IExchangable, IResetable, ILinkedToPlane, IHasStatus<WorkstationStatus>
     {
         public PlaneController planeController { get; set; }
         public GameObject inputPlateGameObject;
@@ -25,6 +25,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public List<Item> inputBufferItems = new List<Item>();
         [InspectorUtil.DisplayOnly]
         public List<Item> outputBufferItems = new List<Item>();
+
+        public WorkstationStatus GetStatus()
+        {
+            throw new NotImplementedException();
+        }
 
         #region IExchangable Implement
         public Item GetItem(string id)
@@ -182,7 +187,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public float itemInterval = 1f;
         /// <summary>
-        /// TODO: Place items in input buffer, output buffer and _currentProcessInputs
+        /// TODO: Check whether should use local position
         /// </summary>
         private void PlaceItems()
         {

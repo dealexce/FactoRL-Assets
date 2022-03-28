@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,12 +17,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return dict;
         }
 
-        public static Vector2 PolarRelativePosition(Transform self, Transform other, float maxDistance)
+        public static Vector2 NormalizedPolarRelativePosition(Transform self, Transform other, float maxDistance)
         {
-            Vector3 relativePos = (other.position - self.position) / maxDistance;
+            Vector3 relativePos = (other.position - self.position);
             Vector3 cross = Vector3.Cross(relativePos, self.forward);
             float angle = Vector3.Angle(relativePos, self.forward) / 180f;
-            return new Vector2(cross.y > 0 ? -angle : angle, relativePos.magnitude);
+            return new Vector2(
+                cross.y > 0 ? -angle : angle, 
+                NormalizeValue(relativePos.magnitude,0f,maxDistance));
         }
         
         public static float[] ToOneHotObservation(int observation, int range)
@@ -82,6 +85,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             Physics.autoSimulation=false;
             Physics.Simulate(Time.fixedDeltaTime);
             Physics.autoSimulation = true;
+        }
+        public static float NormalizeValue(float value, float minValue, float maxValue)
+        {
+            return (Math.Clamp(value, minValue, maxValue) - minValue) / (maxValue - minValue);
         }
     }
 }

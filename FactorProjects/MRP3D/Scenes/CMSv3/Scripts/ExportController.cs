@@ -6,7 +6,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class ExportController : MonoBehaviour, IExchangable, ILinkedToPlane, IResetable
     {
-        public string productType;
         public PlaneController planeController { get; set; }
         public GameObject FloatingTextObject;
         private TextMeshPro _textMesh;

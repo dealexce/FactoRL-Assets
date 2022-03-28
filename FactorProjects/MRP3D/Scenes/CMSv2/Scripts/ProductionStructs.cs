@@ -14,13 +14,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
     {
         public GameObject GameObject{ get; private set; }
         public TargetAction TargetAction{ get; private set; }
-        public string ItemType{ get; private set; }
+        public string ItemStateId{ get; private set; }
         public Target(){}
-        public Target(GameObject gameObject, TargetAction targetAction, string itemType)
+        public Target(GameObject gameObject, TargetAction targetAction, string itemStateId)
         {
             this.GameObject = gameObject;
             this.TargetAction = targetAction;
-            this.ItemType = itemType;
+            this.ItemStateId = itemStateId;
         }
     }
 

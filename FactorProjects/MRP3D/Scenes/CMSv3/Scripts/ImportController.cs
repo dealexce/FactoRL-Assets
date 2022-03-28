@@ -8,31 +8,31 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public PlaneController planeController { get; set; }
 
-        public Dictionary<string,Item> bufferRawItems;
+        public Dictionary<string,Item> rawItemsDict;
         
 
         private void Start()
         {
             foreach (var (id,itemState) in SceanrioLoader.ItemStateDict)
             {
-                bufferRawItems.Add(id,planeController.InstantiateItem(id, gameObject));
+                rawItemsDict.Add(id,planeController.InstantiateItem(id, gameObject));
             }
         }
 
         public Item GetItem(string itemType)
         {
-            bufferRawItems.TryGetValue(itemType, out Item item);
+            rawItemsDict.TryGetValue(itemType, out Item item);
             return item;
         }
 
         public bool Remove(Item item)
         {
             var id = item.itemState.id;
-            if (!bufferRawItems.ContainsKey(id))
+            if (!rawItemsDict.ContainsKey(id))
             {
                 return false;
             }
-            bufferRawItems[id] = planeController.InstantiateItem(id, gameObject);
+            rawItemsDict[id] = planeController.InstantiateItem(id, gameObject);
             return true;
         }
 
@@ -48,7 +48,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public ExchangeMessage CheckGivable(IExchangable receiver, Item item)
         {
-            if (bufferRawItems.ContainsKey(item.itemState.id))
+            if (rawItemsDict.ContainsKey(item.itemState.id))
             {
                 return ExchangeMessage.Ok;
             }

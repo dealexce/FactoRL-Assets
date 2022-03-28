@@ -90,7 +90,7 @@
     <xs:complexType name="Agv">
         <xs:attribute name="move-speed" type="xs:float" use="required"/>
         <xs:attribute name="rotate-speed" type="xs:float" use="required"/>
-        <xs:attribute name="capacity" type="xs:integer" default="1"/>
+        <xs:attribute name="capacity" type="xs:int" default="1"/>
     </xs:complexType>
     
     

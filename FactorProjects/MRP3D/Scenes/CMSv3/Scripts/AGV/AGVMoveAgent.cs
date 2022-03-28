@@ -11,7 +11,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class AGVMoveAgent : Agent
     {
-        public AGVController AGVController;
+        public AgvController AGVController;
 
         public bool trainingMode = true;
         public float arriveReward = 1f;
@@ -41,7 +41,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         void Awake()
         {
-            AGVController = GetComponentInParent<AGVController>();
+            AGVController = GetComponentInParent<AgvController>();
         }
 
         private void Start()

@@ -33,7 +33,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject importStationPrefab;
         public GameObject exportStationPrefab;
 
-        public List<GameObject> entityGameObjects = new List<GameObject>();
+        public Dictionary<Type, List<GameObject>> EntityGameObjectsDict = new Dictionary<Type, List<GameObject>>()
+        {
+            {typeof(Agv), new List<GameObject>()},
+            {typeof(Workstation), new List<GameObject>()},
+            {typeof(ImportStation), new List<GameObject>()},
+            {typeof(ExportStation), new List<GameObject>()}
+        };
 
 
         public void Start()
@@ -69,33 +75,38 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
             //instantiate import station and export station according to layout
             ImportStation importStation = _scenario.layout.importStation;
-            InstantiateEntityOnGround(importStationPrefab, importStation.x, importStation.y);
+            InstantiateEntityOnGround(typeof(ImportStation), importStationPrefab, importStation.x, importStation.y);
             ExportStation exportStation = _scenario.layout.exportStation;
-            InstantiateEntityOnGround(exportStationPrefab, exportStation.x, exportStation.y);
+            InstantiateEntityOnGround(typeof(ExportStation), exportStationPrefab, exportStation.x, exportStation.y);
         }
 
         #region Randomization
 
         protected void RandomizeLayout()
         {
-            float randomX= Random.Range(minGroundX, maxGroundX);
+            float randomX = Random.Range(minGroundX, maxGroundX);
             float randomY = Random.Range(minGroundY, maxGroundY);
             _ground.changeSize(randomX, randomY);
 
             // Deactivate objects before reset position for better position randomization
             // TODO: Check whether this will cause problems
-            foreach (var eo in entityGameObjects)
+            foreach (var list in EntityGameObjectsDict.Values)
             {
-                eo.SetActive(false);
+                foreach (var obj in list)
+                {
+                    obj.SetActive(false);
+                }
             }
-
-            foreach (var eo in entityGameObjects)
+            foreach (var list in EntityGameObjectsDict.Values)
             {
-                eo.SetActive(true);
-                ResetToSafeRandomPosition(eo);
+                foreach (var obj in list)
+                {
+                    obj.SetActive(true);
+                    ResetToSafeRandomPosition(obj);
+                }
             }
         }
-        
+
         private Vector3 ResetToSafeRandomPosition(GameObject prefab)
         {
             //更改物体位置之后要手动调用Physics.Simulate，否则可能无法检测到碰撞！
@@ -138,9 +149,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         protected void InstantiateAgvInstance(AgvInstance agv)
         {
-            var g = InstantiateEntityOnGround(agvPrefab, agv.x, agv.y);
-            AgvBase agvBase = g.GetComponent<AgvBase>();
-            agvBase.agvConfig = _scenario.model.agv;
+            var g = InstantiateEntityOnGround(typeof(Agv), agvPrefab, agv.x, agv.y);
+            AgvController agvController = g.GetComponent<AgvController>();
+            agvController.agv = _scenario.model.agv;
         }
 
         protected void InstantiateWorkstation(WorkstationInstance wsi)
@@ -150,23 +161,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         protected void InstantiateWorkstation(string id, float x, float y)
         {
-            GameObject g = InstantiateEntityOnGround(workstationPrefab, x, y);
+            GameObject g = InstantiateEntityOnGround(typeof(Workstation), workstationPrefab, x, y);
             if (showMachine)
             {
                 Instantiate(WorkstationUtil.GetMachinePrefab(id), g.transform);
             }
-            WorkstationBase controller = g.GetComponent<WorkstationBase>();
+            WorkstationController controller = g.GetComponent<WorkstationController>();
             controller.workstation = SceanrioLoader.getWorkstation(id);
         }
 
-        public GameObject InstantiateEntityOnGround(GameObject prefab, float x, float z)
+        public GameObject InstantiateEntityOnGround(Type type, GameObject prefab, float x, float z)
         {
             GameObject entityGameObject = Instantiate(
                 prefab, 
                 transform.position+new Vector3(x, Utils.GetEncapsulateBoxColliderBounds(prefab).extents.y, z),
                 new Quaternion(),
                 transform);
-            entityGameObjects.Add(entityGameObject);
+            EntityGameObjectsDict[type].Add(entityGameObject);
             return entityGameObject;
         }
 

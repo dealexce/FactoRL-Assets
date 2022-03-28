@@ -690,10 +690,10 @@ public partial class Agv {
     
     private float rotatespeedField;
     
-    private string capacityField;
+    private int capacityField;
     
     public Agv() {
-        this.capacityField = "1";
+        this.capacityField = 1;
     }
     
     /// <remarks/>
@@ -719,9 +719,9 @@ public partial class Agv {
     }
     
     /// <remarks/>
-    [System.Xml.Serialization.XmlAttributeAttribute(DataType="integer")]
-    [System.ComponentModel.DefaultValueAttribute("1")]
-    public string capacity {
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    [System.ComponentModel.DefaultValueAttribute(1)]
+    public int capacity {
         get {
             return this.capacityField;
         }

@@ -50,7 +50,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             //TODO: Save Ground Size
             
             List<WorkstationInstance> wsiList = new List<WorkstationInstance>();
-            foreach (var wsc in GetComponentsInChildren<WorkstationBase>())
+            foreach (var wsc in GetComponentsInChildren<WorkstationController>())
             {
                 Workstation w = new Workstation();
                 w.idref = wsc.workstation.id;
@@ -64,7 +64,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             _scenario.layout.workstationInstances = wsiList.ToArray();
 
             List<AgvInstance> agviList = new List<AgvInstance>();
-            foreach (var agvc in GetComponentsInChildren<AgvBase>())
+            foreach (var agvc in GetComponentsInChildren<AgvController>())
             {
                 agviList.Add(new AgvInstance()
                 {

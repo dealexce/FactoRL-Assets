@@ -57,7 +57,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 for (int i = 1; i < comb.Count; i++)
                 {
                     if (comb[i].TargetAction != TargetAction.Get
-                        || _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemType)==null)
+                        || _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemStateId)==null)
                     {
                         actionMask.SetActionEnabled(0, i, false);
                         mc++;
@@ -155,7 +155,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
                 {
                     //holdingItem == null，只分配拿的动作，且要去拿的ItemHolder手中现在有那个物体
                     if (comb[i].TargetAction == TargetAction.Get 
-                        && _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemType)!=null)
+                        && _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemStateId)!=null)
                     {
                         availableTarget.Add(i);
                     }
@@ -166,7 +166,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             {
                 for (int i = 1; i < comb.Count; i++)
                 {
-                    if (comb[i].TargetAction ==TargetAction.Give&&comb[i].ItemType==_agvController.holdingItem.itemType)
+                    if (comb[i].TargetAction ==TargetAction.Give&&comb[i].ItemStateId==_agvController.holdingItem.itemType)
                     {
                         availableTarget.Add(i);
                     }

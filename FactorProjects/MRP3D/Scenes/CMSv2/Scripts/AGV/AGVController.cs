@@ -235,7 +235,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             noTargetTime = 0f;
             dispatcherAcademicStep = 0;
             target = _planeController.TargetCombinationList[targetIndex];
-            
         }
         private void OnDrawGizmosSelected()
         {
@@ -257,7 +256,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             else if(target.TargetAction == TargetAction.Get)
             {
                 //从targetItemHolder拿一个targetItemType类型的Item
-                exchangeMessage = ItemController.PassItem(TargetableGameObjectItemHolderDict[target.GameObject], this, target.ItemType);
+                exchangeMessage = ItemController.PassItem(TargetableGameObjectItemHolderDict[target.GameObject], this, target.ItemStateId);
             }
             //交换成功，重置target
             if (exchangeMessage == ExchangeMessage.OK)

@@ -14,13 +14,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public GameObject GameObject{ get; private set; }
         public TargetAction TargetAction{ get; private set; }
-        public string ItemType{ get; private set; }
+        public string ItemStateId{ get; private set; }
         public Target(){}
-        public Target(GameObject gameObject, TargetAction targetAction, string itemType)
+        public Target(GameObject gameObject, TargetAction targetAction, string itemStateId)
         {
             this.GameObject = gameObject;
             this.TargetAction = targetAction;
-            this.ItemType = itemType;
+            this.ItemStateId = itemStateId;
         }
     }
 
@@ -56,12 +56,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
     public record Order
     {
-        public string productItemType { get; }
+        public string ProductId { get; }
         public float deadLine { get; }
 
-        public Order(string productItemType, float deadLine)
+        public Order(string productId, float deadLine)
         {
-            this.productItemType = productItemType;
+            this.ProductId = productId;
             this.deadLine = deadLine;
         }
     }
@@ -98,7 +98,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             SelfCurrentProcessOneHot = selfCurrentProcessOneHot;
         }
     }
-    public struct MFWSStatus
+    public struct WorkstationStatus
     {
         /// <summary>
         /// this should be number of items in input buffer/max capacity of input buffer
@@ -121,7 +121,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// </summary>
         public int CurrentProcessIndex;
 
-        public MFWSStatus(float inputLoadRatio, float[] inputItemQuantityArray, float outputLoadRatio, float[] outputItemQuantityArray, int currentProcessIndex)
+        public WorkstationStatus(float inputLoadRatio, float[] inputItemQuantityArray, float outputLoadRatio, float[] outputItemQuantityArray, int currentProcessIndex)
         {
             InputLoadRatio = inputLoadRatio;
             InputItemQuantityArray = inputItemQuantityArray;
