@@ -77,8 +77,8 @@
         <xs:attribute name="name" type="xs:string"/>
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
-        <xs:attribute name="inputCapacity" type="xs:int" default="10"/>
-        <xs:attribute name="outputCapacity" type="xs:int" default="10"/>
+        <xs:attribute name="inputCapacity" type="xs:int"/>
+        <xs:attribute name="outputCapacity" type="xs:int"/>
     </xs:complexType>
     <xs:complexType name="SupportProcessesRef">
         <xs:sequence>
@@ -90,7 +90,7 @@
     <xs:complexType name="Agv">
         <xs:attribute name="move-speed" type="xs:float" use="required"/>
         <xs:attribute name="rotate-speed" type="xs:float" use="required"/>
-        <xs:attribute name="capacity" type="xs:int" default="1"/>
+        <xs:attribute name="capacity" type="xs:int"/>
     </xs:complexType>
     
     

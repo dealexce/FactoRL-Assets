@@ -27,7 +27,7 @@ namespace Unity.MLAgents
         }
 
         /// <summary>
-        /// Represents how high above the target the monitors will be.
+        /// Represents how high above the currentTarget the monitors will be.
         /// </summary>
         public static float verticalOffset = 3f;
 
@@ -36,7 +36,7 @@ namespace Unity.MLAgents
         static Dictionary<Transform, Dictionary<string, DisplayValue>> s_DisplayTransformValues;
 
         /// <summary>
-        /// Camera used to calculate GUI screen position relative to the target
+        /// Camera used to calculate GUI screen position relative to the currentTarget
         /// transform.
         /// </summary>
         static Dictionary<Transform, Camera> s_TransformCamera;
@@ -77,7 +77,7 @@ namespace Unity.MLAgents
         /// <param name="target">The transform you want to attach the information to.
         /// </param>
         /// <param name="camera">Camera used to calculate GUI position relative to
-        /// the target. If null, `Camera.main` will be used.</param>
+        /// the currentTarget. If null, `Camera.main` will be used.</param>
         public static void Log(
             string key,
             string value,
@@ -151,7 +151,7 @@ namespace Unity.MLAgents
         /// <param name="target">The transform you want to attach the information to.
         /// </param>
         /// <param name="camera">Camera used to calculate GUI position relative to
-        /// the target. If null, `Camera.main` will be used.</param>
+        /// the currentTarget. If null, `Camera.main` will be used.</param>
         public static void Log(
             string key,
             float value,
@@ -211,7 +211,7 @@ namespace Unity.MLAgents
         /// <param name="target">The transform you want to attach the information to.
         /// </param>
         /// <param name="camera">Camera used to calculate GUI position relative to
-        /// the target. If null, `Camera.main` will be used.</param>
+        /// the currentTarget. If null, `Camera.main` will be used.</param>
         public static void Log(
             string key,
             float[] value,

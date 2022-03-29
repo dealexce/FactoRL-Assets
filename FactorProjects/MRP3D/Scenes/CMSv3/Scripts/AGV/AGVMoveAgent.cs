@@ -11,15 +11,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class AGVMoveAgent : Agent
     {
-        public AgvController AGVController;
+        private AgvController _agvController;
 
         public bool trainingMode = true;
+        public bool showObsDebugInfo = false;
+        public bool activateReward = true;
         public float arriveReward = 1f;
         public float collisionReward = -.01f;
         
 
 
-        public void arriveTargetTrain()
+        public void ArriveTarget()
         {
             RewardIfActivated(arriveReward);
         }
@@ -31,7 +33,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void RewardIfActivated(float r)
         {
-            if (AGVController.activateAward)
+            if (activateReward)
             {
                 AddReward(r);
             }
@@ -41,7 +43,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         void Awake()
         {
-            AGVController = GetComponentInParent<AgvController>();
+            _agvController = GetComponentInParent<AgvController>();
         }
 
         private void Start()
@@ -88,29 +90,30 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     rot = -1f;
                     break;
             }
-            AGVController.Move(move, rot);
+            _agvController.Move(move, rot);
         }
 
         /// <summary>
         /// Total Observation:
         /// 2 (polar velocity x,z)
-        /// 2 (target relative position x,z)
+        /// 2 (currentTarget relative position x,z)
         /// = 4 continuous
         /// </summary>
         /// <param name="sensor"></param>
         public override void CollectObservations(VectorSensor sensor)
         {
-            sensor.AddObservation(AGVController.polarVelocity);
-            sensor.AddObservation(AGVController.polarTargetPos);
-            if (!trainingMode)
+            sensor.AddObservation(_agvController.PolarVelocity);
+            sensor.AddObservation(_agvController.PolarTargetPos);
+            if (showObsDebugInfo)
             {
-                Debug.Log("R:" + GetCumulativeReward()+ "|polarV:"+AGVController.polarVelocity+"|polarP:"+AGVController.polarTargetPos.ToString("f6"));
+                Debug.Log(
+                    "R:" + GetCumulativeReward()+ 
+                    "|polarV:"+_agvController.PolarVelocity+
+                    "|polarP:"+_agvController.PolarTargetPos.ToString("f6"));
             }
         }
-        
-        //TODO:
 
-        
+
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             if (trainingMode)

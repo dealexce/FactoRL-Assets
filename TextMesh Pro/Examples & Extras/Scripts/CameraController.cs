@@ -70,7 +70,7 @@ namespace TMPro.Examples
         {
             if (CameraTarget == null)
             {
-                // If we don't have a target (assigned by the player, create a dummy in the center of the scene).
+                // If we don't have a currentTarget (assigned by the player, create a dummy in the center of the scene).
                 dummyTarget = new GameObject("Camera Target").transform;
                 CameraTarget = dummyTarget;
             }
@@ -82,7 +82,7 @@ namespace TMPro.Examples
             GetPlayerInput();
 
 
-            // Check if we still have a valid target
+            // Check if we still have a valid currentTarget
             if (CameraTarget != null)
             {
                 if (CameraMode == CameraModes.Isometric)

@@ -690,8 +690,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffa1103444dd4dfcbdc301cd9af7a371, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inputPlateGameObject: {fileID: 0}
+  outputPlateGameObject: {fileID: 0}
   nameText: {fileID: 6501516249766613147}
   processText: {fileID: 5324883770312507107}
+  receivableInputItemStates: []
+  inputBufferItems: []
+  outputBufferItems: []
+  holdActionDuration: 1
+  itemInterval: 1
 --- !u!1 &8967289009620138078
 GameObject:
   m_ObjectHideFlags: 0

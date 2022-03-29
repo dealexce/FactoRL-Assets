@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class ExportController : MonoBehaviour, IExchangable, ILinkedToPlane, IResetable
+    public class ExportController : MonoBehaviour, IExchangeable, ILinkedToPlane, IResetable
     {
         public PlaneController planeController { get; set; }
         public GameObject FloatingTextObject;
@@ -25,12 +25,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return null;
         }
 
-        public ExchangeMessage CheckGivable(IExchangable receiver, Item item)
+        public ExchangeMessage CheckGivable(IExchangeable receiver, Item item)
         {
             return ExchangeMessage.Ungivable;
         }
 
-        public ExchangeMessage CheckReceivable(IExchangable giver, Item item)
+        public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
         {
             if (item.itemState.type==SpecialItemStateType.Product)
             {

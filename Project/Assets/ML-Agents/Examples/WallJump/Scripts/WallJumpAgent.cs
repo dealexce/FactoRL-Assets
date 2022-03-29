@@ -141,7 +141,7 @@ public class WallJumpAgent : Agent
     /// </summary>
     /// <param name="targetPos">Target position.</param>
     /// <param name="rb">The rigidbody to be moved.</param>
-    /// <param name="targetVel">The velocity to target during the
+    /// <param name="targetVel">The velocity to currentTarget during the
     ///  motion.</param>
     /// <param name="maxVel">The maximum velocity posible.</param>
     void MoveTowards(

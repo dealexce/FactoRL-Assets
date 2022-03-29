@@ -26,7 +26,7 @@ public class CrawlerAgent : Agent
 
     const float m_maxWalkingSpeed = 15; //The max walking speed
 
-    //The current target walking speed. Clamped because a value of zero will cause NaNs
+    //The current currentTarget walking speed. Clamped because a value of zero will cause NaNs
     public float TargetWalkingSpeed
     {
         get { return m_TargetWalkingSpeed; }
@@ -52,7 +52,7 @@ public class CrawlerAgent : Agent
     //Because ragdolls can move erratically during training, using a stabilized reference transform improves learning
     OrientationCubeController m_OrientationCube;
 
-    //The indicator graphic gameobject that points towards the target
+    //The indicator graphic gameobject that points towards the currentTarget
     DirectionIndicator m_DirectionIndicator;
     JointDriveController m_JdController;
 
@@ -69,7 +69,7 @@ public class CrawlerAgent : Agent
 
     public override void Initialize()
     {
-        SpawnTarget(TargetPrefab, transform.position); //spawn target
+        SpawnTarget(TargetPrefab, transform.position); //spawn currentTarget
 
         m_OrientationCube = GetComponentInChildren<OrientationCubeController>();
         m_DirectionIndicator = GetComponentInChildren<DirectionIndicator>();
@@ -88,7 +88,7 @@ public class CrawlerAgent : Agent
     }
 
     /// <summary>
-    /// Spawns a target prefab at pos
+    /// Spawns a currentTarget prefab at pos
     /// </summary>
     /// <param name="prefab"></param>
     /// <param name="pos"></param>
@@ -151,7 +151,7 @@ public class CrawlerAgent : Agent
         //rotation delta
         sensor.AddObservation(Quaternion.FromToRotation(body.forward, cubeForward));
 
-        //Add pos of target relative to orientation cube
+        //Add pos of currentTarget relative to orientation cube
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(m_Target.transform.position));
 
         RaycastHit hit;
@@ -176,7 +176,7 @@ public class CrawlerAgent : Agent
 
         var continuousActions = actionBuffers.ContinuousActions;
         var i = -1;
-        // Pick a new target joint rotation
+        // Pick a new currentTarget joint rotation
         bpDict[leg0Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg1Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg2Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
@@ -222,12 +222,12 @@ public class CrawlerAgent : Agent
         var cubeForward = m_OrientationCube.transform.forward;
 
         // Set reward for this step according to mixture of the following elements.
-        // a. Match target speed
+        // a. Match currentTarget speed
         //This reward will approach 1 if it matches perfectly and approach zero as it deviates
         var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
 
-        // b. Rotation alignment with target direction.
-        //This reward will approach 1 if it faces the target direction perfectly and approach zero as it deviates
+        // b. Rotation alignment with currentTarget direction.
+        //This reward will approach 1 if it faces the currentTarget direction perfectly and approach zero as it deviates
         var lookAtTargetReward = (Vector3.Dot(cubeForward, body.forward) + 1) * .5F;
 
         AddReward(matchSpeedReward * lookAtTargetReward);
@@ -281,7 +281,7 @@ public class CrawlerAgent : Agent
     }
 
     /// <summary>
-    /// Agent touched the target
+    /// Agent touched the currentTarget
     /// </summary>
     public void TouchedTarget()
     {

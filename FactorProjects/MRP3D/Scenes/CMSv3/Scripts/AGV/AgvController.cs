@@ -1,64 +1,102 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using OD;
 using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
 
-    public class AgvController : MonoBehaviour, IExchangable, IResetable, ILinkedToPlane, IHasStatus<AGVStatus>
+    public class AgvController : MonoBehaviour, IExchangeable, IResetable, ILinkedToPlane, IHasStatus<AGVStatus>
     {
         public PlaneController planeController { get; set; }
         public Agv agv;
-        public List<Item> HoldingItems = new List<Item>();
+        public OrderedDictionary<string,List<Item>> HoldingItems;
+
+        public AGVDispatcherAgent agvDispatcherAgent;
+        public AGVMoveAgent agvMoveAgent;
+        
+        private Rigidbody _rigidbody;
+        private void Awake()
+        {
+            _rigidbody = GetComponentInParent<Rigidbody>();
+            agvDispatcherAgent = GetComponentInChildren<AGVDispatcherAgent>();
+            agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
+        }
+
+        private void Start()
+        {
+            InitHoldingItems();
+            moveSpeed = agv.movespeed;
+            rotateSpeed = agv.rotatespeed;
+        }
+
+        private void InitHoldingItems()
+        {
+            HoldingItems = new OrderedDictionary<string,List<Item>>();
+            foreach (var iId in SceanrioLoader.ItemStateDict.Keys)
+            {
+                HoldingItems.Add(iId,new List<Item>());
+            }
+        }
 
         public AGVStatus GetStatus()
         {
-            throw new NotImplementedException();
+            return new AGVStatus(_rigidbody, HoldingItems, CurrentTarget);
         }
 
         #region ItemHolderImplement
         public Item GetItem(string id)
         {
-            foreach (var item in HoldingItems)
+            if (!HoldingItems.ContainsKey(id) 
+                || HoldingItems[id].Count <= 0)
             {
-                if (id.Equals(item.itemState.id))
-                {
-                    return item;
-                }
+                return null;
             }
-            return null;
+            return HoldingItems[id][0];
         }
 
         public bool Store(Item item)
         {
-            HoldingItems.Add(item);
+            if (!HoldingItems.ContainsKey(item.itemState.id))
+                return false;
+            HoldingItems[item.itemState.id].Add(item);
             PlaceItems();
             return true;
         }
 
         public bool Remove(Item item)
         {
-            if (!HoldingItems.Contains(item))
-            {
+            if (!HoldingItems.ContainsKey(item.itemState.id))
                 return false;
-            }
-            HoldingItems.Remove(item);
+            
+            if (!HoldingItems[item.itemState.id].Remove(item))
+                return false;
+            
             PlaceItems();
             return true;
         }
 
-        public ExchangeMessage CheckReceivable(IExchangable giver, Item item)
+        public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
         {
-            if (HoldingItems.Count<agv.capacity)
+            if (item==null
+                || !HoldingItems.ContainsKey(item.itemState.id))
             {
-                return ExchangeMessage.Ok;
+                return ExchangeMessage.WrongType;
             }
-            return ExchangeMessage.Overload;
+            if(agv.capacitySpecified
+               && ItemOdUtils.ListsSumCount(HoldingItems.Values)>=agv.capacity)
+            {
+                return ExchangeMessage.Overload;
+            }
+            return ExchangeMessage.Ok;
         }
 
-        public ExchangeMessage CheckGivable(IExchangable receiver, Item item)
+        public ExchangeMessage CheckGivable(IExchangeable receiver, Item item)
         {
-            if (HoldingItems.Contains(item))
+            if (item != null 
+                && HoldingItems.ContainsKey(item.itemState.id)
+                && HoldingItems[item.itemState.id].Contains(item))
             {
                 return ExchangeMessage.Ok;
             }
@@ -72,24 +110,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// </summary>
         private void PlaceItems()
         {
-            for (int i = 0; i < HoldingItems.Count; i++)
+            int i = 1;
+            foreach (var list in HoldingItems.Values)
             {
-                HoldingItems[i].transform.position = transform.position
-                                                     + Vector3.up * itemInterval * i;
+                foreach (var item in list)
+                {
+                    item.gameObject.transform.localPosition = Vector3.up * itemInterval * i;
+                    i++;
+                }
             }
         }
-        
-        public AGVMoveAgent agvMoveAgent;
-        //public AGVDispatcherAgent agvDispatcherAgent;
-        
-        private Rigidbody _rigidbody;
-        
-        public bool activateAward = false;
 
-        public float noTargetHoldTime = 1f;
-        private float noTargetTime = 0f;
-
-        public Target target = PConsts.NullTarget;
+        public Target CurrentTarget = null;
         
         public bool fixDecision = true;
 
@@ -97,78 +129,31 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public float moveSpeed = 5;
         public float rotateSpeed = 3;
         
-        public Vector2 polarVelocity { get; private set; }
-        public Vector2 polarTargetPos { get; private set; }
-        
-        public Dictionary<GameObject,ItemHolder> TargetableGameObjectItemHolderDict { get; private set; }
-        public List<GameObject> targetableGameObjects;
-        private List<Target> _availableTargetCombinations;
+        public Vector2 PolarVelocity { get; private set; }
+        public Vector2 PolarTargetPos { get; private set; }
 
-        public int autoDispatcherRequestStep = 100;
-        private int dispatcherAcademicStep = 0;
 
-        // public AGVStatus GetStatus()
-        // {
-        //     string holdingItemType = holdingItem != null ? holdingItem.itemType : PConsts.NullItem;
-        //     return new AGVStatus(
-        //         _rigidbody,
-        //         PlaneController.ItemTypeIndexDict[holdingItemType],
-        //         PlaneController.TargetCombinationIndexDict[target]);
-        // }
-
-        #region MonoBehaviorInitialization
-
-        private void Awake()
+        private void FixedUpdate()
         {
-            _rigidbody = GetComponentInParent<Rigidbody>();
-            //agvDispatcherAgent = GetComponentInChildren<AGVDispatcherAgent>();
-            agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
+            UpdatePolarPosAndPolarVelocity();
         }
 
-        // private void Start()
-        // {
-        //     TargetableGameObjectItemHolderDict = PlaneController.GameObjectItemHolderDict;
-        //     targetableGameObjects = new List<GameObject>(TargetableGameObjectItemHolderDict.Keys);
-        //     _availableTargetCombinations = PlaneController.TargetCombinationList;
-        //     agvDispatcherAgent.RequestTargetDecision();
-        // }
+        private void UpdatePolarPosAndPolarVelocity()
+        {
 
-        // private void FixedUpdate()
-        // {            
-        //     Vector3 position = transform.position;
-        //     polarVelocity = new Vector2(_rigidbody.velocity.magnitude/moveSpeed, _rigidbody.angularVelocity.y/rotateSpeed);
-        //
-        //     Vector3 targetPos = Vector3.zero;
-        //     if (target.GameObject != null)
-        //     {
-        //         targetPos = (target.GameObject.transform.position - position) / PlaneController.MAXDiameter;
-        //         Vector3 cross = Vector3.Cross(targetPos, transform.forward);
-        //         float angle = Vector3.Angle(targetPos, transform.forward) / 180f;
-        //         polarTargetPos = new Vector2(cross.y > 0 ? -angle : angle, targetPos.magnitude);
-        //     }
-        //     
-        //     //如果没有指派任何目标且距离上一次分配目标已经超过闲置时间
-        //     if (target.GameObject == null)
-        //     {
-        //         if (noTargetTime > noTargetHoldTime)
-        //         {
-        //             agvDispatcherAgent.RequestTargetDecision();
-        //         }
-        //         else
-        //         {
-        //             noTargetTime += Time.deltaTime;
-        //         }
-        //     }
-        //     if (fixDecision)
-        //     {
-        //         return;
-        //     }
-        //     dispatcherAcademicStep++;
-        //     if (dispatcherAcademicStep > autoDispatcherRequestStep)
-        //     {
-        //         agvDispatcherAgent.RequestTargetDecision();
-        //     }
-        // }
+            PolarVelocity = new Vector2(
+                _rigidbody.velocity.magnitude / moveSpeed,
+                _rigidbody.angularVelocity.y / rotateSpeed);
+
+            if (CurrentTarget.GameObject != null)
+            {
+                PolarTargetPos = Utils.NormalizedPolarRelativePosition(
+                    transform,
+                    CurrentTarget.GameObject.transform,
+                    planeController.normDistanceMaxValue);
+            }
+        }
+
         private void Update()
         {
 
@@ -179,9 +164,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             // }
         }
 
-        #endregion
-        
-        
+
         public void EpisodeReset()
         {
             transform.rotation = Quaternion.identity;
@@ -193,28 +176,24 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         public void ResetHolder()
         {
-            foreach (var holdingItem in HoldingItems)
-            {
-                Destroy(holdingItem.gameObject);
-            }
-            HoldingItems.Clear();
+            ItemOdUtils.DestroyAndClearLists(HoldingItems.Values,Destroy);
         }
         
-        // private void OnTriggerEnter(Collider other)
-        // {
-        //     GameObject otherGameObject = other.gameObject;
-        //     if (otherGameObject == null)
-        //     {
-        //         return;
-        //     }
-        //     //到达当前设定的target
-        //     if (otherGameObject == target.GameObject)
-        //     {
-        //         agvMoveAgent.arriveTargetTrain();
-        //         arriveTarget();
-        //         agvDispatcherAgent.RequestTargetDecision();
-        //     }
-        // }
+        private void OnTriggerEnter(Collider other)
+        {
+            GameObject otherGameObject = other.gameObject;
+            if (otherGameObject == null)
+            {
+                return;
+            }
+            //到达当前设定的target
+            if (otherGameObject == CurrentTarget.GameObject)
+            {
+                
+                ArriveTarget();
+                agvDispatcherAgent.RequestTargetDecision();
+            }
+        }
         private void OnCollisionEnter(Collision other)
         {
             agvMoveAgent.collideTrain();
@@ -225,17 +204,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             agvMoveAgent.collideTrain();
         }
         
-        public void AssignNewTarget(Target target)
+        public void AssignNewTarget(Target newTarget)
         {
-            noTargetTime = 0f;
-            dispatcherAcademicStep = 0;
-            target = target;
+            CurrentTarget = newTarget;
+            if (CurrentTarget == null)
+            {
+                StartCoroutine(nameof(Hold));
+            }
         }
-
 
         public void Move(float forward, float rotate)
         {
-            if (target == PConsts.NullTarget)
+            if (CurrentTarget == PConsts.NullTarget)
             {
                 _rigidbody.velocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
@@ -246,42 +226,58 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             _rigidbody.velocity = movement * moveSpeed;
             _rigidbody.angularVelocity = rotation * rotateSpeed;
         }
-        
-        // public void AssignNewTarget(int targetIndex)
-        // {
-        //     noTargetTime = 0f;
-        //     dispatcherAcademicStep = 0;
-        //     target = PlaneController.TargetCombinationList[targetIndex];
-        //     
-        // }
+        public float holdActionDuration = 1f;
+        IEnumerator Hold()
+        {
+            CurrentTarget = null;
+            yield return new WaitForSeconds(holdActionDuration);
+            Done();
+        }
         private void OnDrawGizmosSelected()
         {
-            if (target.GameObject != null)
+            if (CurrentTarget.GameObject != null)
             {
                 Gizmos.color = Color.blue;
-                Gizmos.DrawLine(transform.position,target.GameObject.transform.position);
+                Gizmos.DrawLine(transform.position,CurrentTarget.GameObject.transform.position);
             }
         }
-        //
-        // private void arriveTarget()
-        // {
-        //     ExchangeMessage exchangeMessage = ExchangeMessage.Fail;
-        //     if (target.TargetAction == TargetAction.Give)
-        //     {
-        //         //把holdingItem给targetItemHolder
-        //         exchangeMessage = ItemController.PassItem(this, TargetableGameObjectItemHolderDict[target.GameObject], holdingItem);
-        //     }
-        //     else if(target.TargetAction == TargetAction.Get)
-        //     {
-        //         //从targetItemHolder拿一个targetItemType类型的Item
-        //         exchangeMessage = ItemController.PassItem(TargetableGameObjectItemHolderDict[target.GameObject], this, target.ItemType);
-        //     }
-        //     //交换成功，重置target
-        //     if (exchangeMessage == ExchangeMessage.Ok)
-        //     {
-        //         target = PConsts.NullTarget;
-        //     }
-        // }
+        
+        private void ArriveTarget()
+        {
+            agvMoveAgent.ArriveTarget();
+            ExchangeMessage exchangeMessage = ExchangeMessage.Fail;
+            if (CurrentTarget.TargetAction == TargetAction.Give)
+            {
+                //把holdingItem给targetItemHolder
+                exchangeMessage = ItemControlHost.PassItem(
+                    this, 
+                    planeController.GameObjectExchangeableDict[CurrentTarget.GameObject], 
+                    CurrentTarget.ItemStateId);
+            }
+            else if(CurrentTarget.TargetAction == TargetAction.Get)
+            {
+                //从targetItemHolder拿一个targetItemType类型的Item
+                exchangeMessage = ItemControlHost.PassItem(
+                    planeController.GameObjectExchangeableDict[CurrentTarget.GameObject], 
+                    this, 
+                    CurrentTarget.ItemStateId);
+            }
+            //交换成功，重置target
+            if (exchangeMessage == ExchangeMessage.Ok)
+            {
+                Done();
+            }
+            else
+            {
+                Debug.LogWarning("Arrived at target but failed to exchange");
+            }
+        }
+
+        private void Done()
+        {
+            CurrentTarget = null;
+            agvDispatcherAgent.RequestTargetDecision();
+        }
 
     }
 }

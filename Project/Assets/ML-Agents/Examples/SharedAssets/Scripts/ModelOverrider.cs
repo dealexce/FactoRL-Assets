@@ -208,9 +208,9 @@ namespace Unity.MLAgentsExamples
         {
             if (m_MaxEpisodes > 0)
             {
-                // For Agents without maxSteps, exit as soon as we've hit the target number of episodes.
+                // For Agents without maxSteps, exit as soon as we've hit the currentTarget number of episodes.
                 // For Agents that specify MaxStep, also make sure we've gone at least that many steps.
-                // Since we exit as soon as *any* Agent hits its target, the maxSteps condition keeps us running
+                // Since we exit as soon as *any* Agent hits its currentTarget, the maxSteps condition keeps us running
                 // a bit longer in case there's an early failure.
                 if (TotalCompletedEpisodes >= m_MaxEpisodes && TotalNumSteps > m_MaxEpisodes * m_Agent.MaxStep)
                 {

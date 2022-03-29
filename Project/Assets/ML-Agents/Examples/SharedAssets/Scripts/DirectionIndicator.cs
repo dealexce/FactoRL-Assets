@@ -7,7 +7,7 @@ namespace Unity.MLAgentsExamples
 
         public bool updatedByAgent; //should this be updated by the agent? If not, it will use local settings
         public Transform transformToFollow; //ex: hips or body
-        public Transform targetToLookAt; //target in the scene the indicator will point to
+        public Transform targetToLookAt; //currentTarget in the scene the indicator will point to
         public float heightOffset;
         private float m_StartingYPos;
 

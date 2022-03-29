@@ -118,7 +118,7 @@ namespace Multi
         /// <summary>
         /// Total Observation:
         /// 2 (polar velocity x,z)
-        /// 2 (target relative position x,z)
+        /// 2 (currentTarget relative position x,z)
         /// = 4 continuous
         /// </summary>
         /// <param name="sensor"></param>

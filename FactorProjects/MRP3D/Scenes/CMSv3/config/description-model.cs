@@ -405,12 +405,11 @@ public partial class Workstation {
     
     private int inputCapacityField;
     
+    private bool inputCapacityFieldSpecified;
+    
     private int outputCapacityField;
     
-    public Workstation() {
-        this.inputCapacityField = 10;
-        this.outputCapacityField = 10;
-    }
+    private bool outputCapacityFieldSpecified;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
@@ -459,7 +458,6 @@ public partial class Workstation {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    [System.ComponentModel.DefaultValueAttribute(10)]
     public int inputCapacity {
         get {
             return this.inputCapacityField;
@@ -470,14 +468,35 @@ public partial class Workstation {
     }
     
     /// <remarks/>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool inputCapacitySpecified {
+        get {
+            return this.inputCapacityFieldSpecified;
+        }
+        set {
+            this.inputCapacityFieldSpecified = value;
+        }
+    }
+    
+    /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    [System.ComponentModel.DefaultValueAttribute(10)]
     public int outputCapacity {
         get {
             return this.outputCapacityField;
         }
         set {
             this.outputCapacityField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool outputCapacitySpecified {
+        get {
+            return this.outputCapacityFieldSpecified;
+        }
+        set {
+            this.outputCapacityFieldSpecified = value;
         }
     }
 }
@@ -692,9 +711,7 @@ public partial class Agv {
     
     private int capacityField;
     
-    public Agv() {
-        this.capacityField = 1;
-    }
+    private bool capacityFieldSpecified;
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute("move-speed")]
@@ -720,13 +737,23 @@ public partial class Agv {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
-    [System.ComponentModel.DefaultValueAttribute(1)]
     public int capacity {
         get {
             return this.capacityField;
         }
         set {
             this.capacityField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlIgnoreAttribute()]
+    public bool capacitySpecified {
+        get {
+            return this.capacityFieldSpecified;
+        }
+        set {
+            this.capacityFieldSpecified = value;
         }
     }
 }

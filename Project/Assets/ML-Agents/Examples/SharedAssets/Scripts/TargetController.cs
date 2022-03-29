@@ -6,9 +6,9 @@ using UnityEngine.Events;
 namespace Unity.MLAgentsExamples
 {
     /// <summary>
-    /// Utility class to allow target placement and collision detection with an agent
-    /// Add this script to the target you want the agent to touch.
-    /// Callbacks will be triggered any time the target is touched with a collider tagged as 'tagToDetect'
+    /// Utility class to allow currentTarget placement and collision detection with an agent
+    /// Add this script to the currentTarget you want the agent to touch.
+    /// Callbacks will be triggered any time the currentTarget is touched with a collider tagged as 'tagToDetect'
     /// </summary>
     public class TargetController : MonoBehaviour
     {
@@ -17,16 +17,16 @@ namespace Unity.MLAgentsExamples
         public string tagToDetect = "agent"; //collider tag to detect 
 
         [Header("Target Placement")]
-        public float spawnRadius; //The radius in which a target can be randomly spawned.
-        public bool respawnIfTouched; //Should the target respawn to a different position when touched
+        public float spawnRadius; //The radius in which a currentTarget can be randomly spawned.
+        public bool respawnIfTouched; //Should the currentTarget respawn to a different position when touched
 
         [Header("Target Fell Protection")]
-        public bool respawnIfFallsOffPlatform = true; //If the target falls off the platform, reset the position.
+        public bool respawnIfFallsOffPlatform = true; //If the currentTarget falls off the platform, reset the position.
         public float fallDistance = 5; //distance below the starting height that will trigger a respawn 
 
 
-        private Vector3 m_startingPos; //the starting position of the target
-        private Agent m_agentTouching; //the agent currently touching the target
+        private Vector3 m_startingPos; //the starting position of the currentTarget
+        private Agent m_agentTouching; //the agent currently touching the currentTarget
 
         [System.Serializable]
         public class TriggerEvent : UnityEvent<Collider>
@@ -71,7 +71,7 @@ namespace Unity.MLAgentsExamples
         }
 
         /// <summary>
-        /// Moves target to a random position within specified radius.
+        /// Moves currentTarget to a random position within specified radius.
         /// </summary>
         public void MoveTargetToRandomPosition()
         {

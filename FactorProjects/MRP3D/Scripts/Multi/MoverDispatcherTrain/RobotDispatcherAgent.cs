@@ -174,7 +174,7 @@ namespace Multi
             
             // Buffer Sensor: variable observation for other agents:
             // one-hot holding item type(6+1), null for last digit
-            // agent polarVelocity(2)
+            // agent PolarVelocity(2)
             // agent polar relative position(2)
             // = 11 for each agent
             int enumLength = Enum.GetNames(typeof(ItemType)).Length;

@@ -15,7 +15,7 @@ namespace Unity.MLAgentsExamples
             var lookRot =
                 dirVector == Vector3.zero
                     ? Quaternion.identity
-                    : Quaternion.LookRotation(dirVector); //get our look rot to the target
+                    : Quaternion.LookRotation(dirVector); //get our look rot to the currentTarget
 
             //UPDATE ORIENTATION CUBE POS & ROT
             transform.SetPositionAndRotation(rootBP.position, lookRot);

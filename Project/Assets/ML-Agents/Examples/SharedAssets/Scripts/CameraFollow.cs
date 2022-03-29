@@ -4,7 +4,7 @@ namespace Unity.MLAgentsExamples
 {
     public class CameraFollow : MonoBehaviour
     {
-        [Tooltip("The target to follow")] public Transform target;
+        [Tooltip("The currentTarget to follow")] public Transform target;
 
         [Tooltip("The time it takes to move to the new position")]
         public float smoothingTime; //The time it takes to move to the new position

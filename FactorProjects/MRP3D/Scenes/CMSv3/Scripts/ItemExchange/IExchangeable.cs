@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public interface IExchangable
+    public interface IExchangeable
     {
         public Item GetItem(string id);
 
@@ -17,8 +17,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             
         }
 
-        public  ExchangeMessage CheckReceivable(IExchangable giver, Item item);
-        public  ExchangeMessage CheckGivable(IExchangable receiver, Item item);
+        public  ExchangeMessage CheckReceivable(IExchangeable giver, Item item);
+        public  ExchangeMessage CheckGivable(IExchangeable receiver, Item item);
         
         public bool Store(Item item);
         public bool Remove(Item item);

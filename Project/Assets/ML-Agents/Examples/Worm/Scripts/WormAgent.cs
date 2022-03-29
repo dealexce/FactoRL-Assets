@@ -21,7 +21,7 @@ public class WormAgent : Agent
     //Because ragdolls can move erratically during training, using a stabilized reference transform improves learning
     OrientationCubeController m_OrientationCube;
 
-    //The indicator graphic gameobject that points towards the target
+    //The indicator graphic gameobject that points towards the currentTarget
     DirectionIndicator m_DirectionIndicator;
     JointDriveController m_JdController;
 
@@ -29,7 +29,7 @@ public class WormAgent : Agent
 
     public override void Initialize()
     {
-        SpawnTarget(TargetPrefab, transform.position); //spawn target
+        SpawnTarget(TargetPrefab, transform.position); //spawn currentTarget
 
         m_StartingPos = bodySegment0.position;
         m_OrientationCube = GetComponentInChildren<OrientationCubeController>();
@@ -47,7 +47,7 @@ public class WormAgent : Agent
 
 
     /// <summary>
-    /// Spawns a target prefab at pos
+    /// Spawns a currentTarget prefab at pos
     /// </summary>
     /// <param name="prefab"></param>
     /// <param name="pos"></param>
@@ -116,7 +116,7 @@ public class WormAgent : Agent
                                   m_JdController.bodyPartsDict[bodySegment0].rb.rotation) / 180);
         sensor.AddObservation(Quaternion.FromToRotation(bodySegment0.forward, cubeForward));
 
-        //Add pos of target relative to orientation cube
+        //Add pos of currentTarget relative to orientation cube
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(m_Target.transform.position));
 
         foreach (var bodyPart in m_JdController.bodyPartsList)
@@ -126,7 +126,7 @@ public class WormAgent : Agent
     }
 
     /// <summary>
-    /// Agent touched the target
+    /// Agent touched the currentTarget
     /// </summary>
     public void TouchedTarget()
     {
@@ -140,7 +140,7 @@ public class WormAgent : Agent
 
         var i = -1;
         var continuousActions = actionBuffers.ContinuousActions;
-        // Pick a new target joint rotation
+        // Pick a new currentTarget joint rotation
         bpDict[bodySegment0].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[bodySegment1].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[bodySegment2].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
@@ -170,13 +170,13 @@ public class WormAgent : Agent
         var rotAngle = Quaternion.Angle(m_OrientationCube.transform.rotation,
             m_JdController.bodyPartsDict[bodySegment0].rb.rotation);
 
-        //The reward for facing the target
+        //The reward for facing the currentTarget
         var facingRew = 0f;
-        //If we are within 30 degrees of facing the target
+        //If we are within 30 degrees of facing the currentTarget
         if (rotAngle < 30)
         {
             //Set normalized facingReward
-            //Facing the target perfectly yields a reward of 1
+            //Facing the currentTarget perfectly yields a reward of 1
             facingRew = 1 - (rotAngle / 180);
         }
 

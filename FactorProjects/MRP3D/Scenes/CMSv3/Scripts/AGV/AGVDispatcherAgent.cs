@@ -13,36 +13,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         private AgvController _AGVController;
         private PlaneController _planeController;
-        private int cur = 1;
-        public bool showDebug = false;
-        private BufferSensorComponent _bufferSensor;
 
         private List<Target> actionSpace;
 
         private void Awake()
         {
             _AGVController = GetComponentInParent<AgvController>();
-            _planeController = _AGVController.planeController;
-            actionSpace = _planeController.AgvDispatcherActionSpace;
-            _bufferSensor = GetComponent<BufferSensorComponent>();
         }
 
         private void Start()
         {
-
+            _planeController = _AGVController.planeController;
+            actionSpace = _planeController.AgvDispatcherActionSpace;
         }
 
-
+        
         public override void OnActionReceived(ActionBuffers actions)
         {
             var action = actions.DiscreteActions[0];
             _AGVController.AssignNewTarget(actionSpace[action]);
-        }
-
-
-        public int RequestNewRandomTarget()
-        {
-            return Random.Range(0, actionSpace.Count);
         }
 
         public void RequestTargetDecision()
@@ -50,16 +39,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             RequestDecision();
         }
 
-        //Mask invalid actions based on AGV's holding item
+        public bool useMask = false;
+        // TODO:Mask invalid actions based on AGV's holding item
         public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
         {
-            // foreach (var target in actionSpace)
+            if (useMask)
+                throw new NotImplementedException();
+            // if(!useMask)
+            //     return;
+            // for (int i = 0; i < actionSpace.Count; i++)
             // {
-            //     if (target == TargetAction.Get)
+            //     var currentTarget = actionSpace[i];
+            //     if (currentTarget == TargetAction.Get)
             //     {
-            //         
+            //         if(currentTarget.)
             //     }
             // }
+
+
+
             // int mc = 0;
             // List<Target> comb = _AGVController.PlaneController.TargetCombinationList;
             // //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
@@ -98,18 +96,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <summary>
         /// How many orders can be observed
         /// </summary>
-        public int orderObservationLength;
+        public int orderObservationLength = 5;
+        public int normItemCountMaxValue = 5;
+        public float normTimeLeftMaxValue = 120f;
 
         //collect relative position of all workstations
         //collect status of all workstations (input/output buffer capacity ratio)
         //collect relative position of all AGVs
-        //collect target of all AGVs in one-hot
+        //collect currentTarget of all AGVs in one-hot
         //SIZE = TargetableGameObjectItemHolderDict.Keys.Count*2+MFWSControllers.Count*2+AGVControllers.Count*TargetCombinationList.Count
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
         {
             //collect relative position and status of all workstations
-            foreach (var (wsObj,wsController) in _planeController.workstationControllerDict)
+            foreach (var (wsObj,wsController) in _planeController.WorkstationControllerDict)
             {
                 Vector2 polarTargetPos = new Vector2();
                 if (wsObj != null)
@@ -117,16 +117,30 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     polarTargetPos = Utils.NormalizedPolarRelativePosition(
                         transform,
                         wsObj.transform,
-                        _AGVController.planeController.normalizationMaxDiameter);
+                        _AGVController.planeController.normDistanceMaxValue);
                 }
                 sensor.AddObservation(polarTargetPos);
                 
                 var s = wsController.GetStatus();
-                throw new NotImplementedException();
+                foreach (var list in s.InputBufferItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                }
+                foreach (var list in s.OutputBufferItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                }
+                // If current process != null, pOneHot = index of current process in workstation.supportProcessesRef
+                // else, pOneHot = workstation.supportProcessesRef.Count
+                var supportProcessesRef = wsController.workstation.supportProcessesRef;
+                foreach(var pRef in supportProcessesRef)
+                {
+                    sensor.AddObservation(s.CurrentProcess.id == pRef.idref ? 1.0f : 0.0f);
+                }
             }
             
             // collect relative position and status of other AGVs
-            foreach (var (agvObj,agvController) in _planeController.agvControllerDict)
+            foreach (var (agvObj,agvController) in _planeController.AgvControllerDict)
             {
                 if (agvController == _AGVController)
                 {
@@ -138,37 +152,57 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     polarTargetPos = Utils.NormalizedPolarRelativePosition(
                         transform,
                         agvObj.transform,
-                        _AGVController.planeController.normalizationMaxDiameter);
+                        _AGVController.planeController.normDistanceMaxValue);
                 }
                 sensor.AddObservation(polarTargetPos);
                 
                 var s = agvController.GetStatus();
-                throw new NotImplementedException();
+                // Collect current currentTarget information
+                foreach (var target in _planeController.AgvDispatcherActionSpace)
+                {
+                    sensor.AddObservation(s.Target == target ? 1.0f : 0.0f);
+                }
+                // Collect holding item information
+                foreach (var list in s.HoldingItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                }
             }
 
             // Collect product stock info
             foreach (var stock in _planeController.productStockDict.Values)
             {
-                sensor.AddObservation(Utils.NormalizeValue(stock,0,_planeController.normalizationMaxStock));
+                sensor.AddObservation(Utils.NormalizeValue(stock,0,_planeController.normStockCountMaxValue));
             }
             
             // Collect order info
             int orderCount = 0;
             foreach (var (ddl,order) in _planeController.orderList)
             {
-                throw new NotImplementedException();
-                orderCount++;
-                if (orderCount >= orderObservationLength)
+                sensor.AddObservation((ddl-Time.fixedTime)/normTimeLeftMaxValue);
+                foreach (var itemState in SceanrioLoader.ProductItemStates)
                 {
-                    break;
+                    sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
                 }
+                orderCount++;
+                if(orderCount>=orderObservationLength)
+                    break;
             }
+            // Padding
+            int padSize = Math.Clamp((orderObservationLength - orderCount), 0, orderObservationLength) *
+                          (1 + SceanrioLoader.ProductItemStates.Count);
+            sensor.AddObservation(new float[padSize]);
         }
         
-        //give a random valid target
+        //give a random valid currentTarget
+        public int GenerateRandomActionIndex()
+        {
+            return Random.Range(0, actionSpace.Count);
+        }
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            throw new NotImplementedException();
+            var act = actionsOut.DiscreteActions;
+            act[0] = GenerateRandomActionIndex();
         }
     }
 }

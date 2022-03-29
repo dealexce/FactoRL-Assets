@@ -87,7 +87,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
 
         //collect relative position of all workstations
         //collect status of all workstations (input/output buffer capacity ratio)
-        //collect target of all AGVs in one-hot
+        //collect currentTarget of all AGVs in one-hot
         //SIZE = TargetableGameObjectItemHolderDict.Keys.Count*2+MFWSControllers.Count*2+AGVControllers.Count*TargetCombinationList.Count
         // *collect received broadcast info from other agents
         public override void CollectObservations(VectorSensor sensor)
@@ -127,7 +127,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             }
             int targetCount = _agvController._planeController.TargetCombinationList.Count;
             int itemTypeCount = _agvController._planeController.ItemTypeList.Count;
-            //collect target and relative position of all AGVs in one-hot
+            //collect currentTarget and relative position of all AGVs in one-hot
             foreach (var agv in _agvController._planeController.AGVControllers)
             {
                 if (agv == _agvController)
@@ -144,7 +144,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv2.Scripts
             sensor.AddOneHotObservation(thisStatus.HoldingItemIndex,itemTypeCount);
         }
         
-        //give a random valid target
+        //give a random valid currentTarget
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             List<int> availableTarget = new List<int>{0};

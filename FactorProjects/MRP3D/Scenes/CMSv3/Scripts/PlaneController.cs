@@ -17,24 +17,41 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     productStockDict.Add(itemState.id,0);
                 }
             }
+            InitRl();
+        }
+
+        public Dictionary<GameObject, IExchangeable> GameObjectExchangeableDict;
+        public void InitGameObjectExchangeableDict()
+        {
+            GameObjectExchangeableDict = new Dictionary<GameObject, IExchangeable>();
+            ItemOdUtils.IterateLists(
+                EntityGameObjectsDict.Values,
+                itemAction: o =>
+                {
+                    var exchangable = (IExchangeable) o.GetComponent(typeof(IExchangeable));
+                    if(exchangable!=null)
+                        GameObjectExchangeableDict.Add(o,exchangable);
+                });
         }
 
         #region RL
 
-        public float normalizationMaxDiameter = 50f;
-        public float normalizationMaxStock = 10;
+        public float normDistanceMaxValue = 50f;
+        public float normStockCountMaxValue = 10;
 
-        public Dictionary<GameObject, WorkstationController> workstationControllerDict;
-        public Dictionary<GameObject, AgvController> agvControllerDict;
+        public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
+        public Dictionary<GameObject, AgvController> AgvControllerDict;
         private void InitRl()
         {
+            WorkstationControllerDict = new Dictionary<GameObject, WorkstationController>();
+            AgvControllerDict = new Dictionary<GameObject, AgvController>();
             foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
             {
-                workstationControllerDict.Add(wsObj,wsObj.GetComponent<WorkstationController>());
+                WorkstationControllerDict.Add(wsObj,wsObj.GetComponent<WorkstationController>());
             }
             foreach (var agvObj in EntityGameObjectsDict[typeof(Agv)])
             {
-                agvControllerDict.Add(agvObj,agvObj.GetComponent<AgvController>());
+                AgvControllerDict.Add(agvObj,agvObj.GetComponent<AgvController>());
             }
             
             InitActionSpaces();
@@ -53,23 +70,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 // possible [give x input item state] actions to workstation
                 var controller = wsObj.GetComponent<WorkstationController>();
-                foreach (var itemState in controller.receivableInputItemStates)
+                foreach (var itemStateId in controller.InputBufferItems.Keys)
                 {
                     AgvDispatcherActionSpace.Add(new Target(
                         controller.inputPlateGameObject,
                         TargetAction.Give,
-                        itemState.id));
+                        itemStateId));
                 }
                 // possible [get x output item state] actions to workstation
-                foreach (var pRef in controller.workstation.supportProcessesRef)
+                foreach (var itemStateId in controller.OutputBufferItems.Keys)
                 {
-                    foreach (var iRef in SceanrioLoader.getProcess(pRef.idref).outputItemsRef)
-                    {
-                        AgvDispatcherActionSpace.Add(new Target(
-                            controller.outputPlateGameObject,
-                            TargetAction.Get,
-                            iRef.idref));
-                    }
+                    AgvDispatcherActionSpace.Add(new Target(
+                        controller.outputPlateGameObject,
+                        TargetAction.Get,
+                        itemStateId));
                 }
             }
             

@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using OD;
+using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
@@ -71,65 +73,69 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
     #region Status
 
-    public struct AGVStatus
+    public record AGVStatus
     {
+        /// <summary>
+        /// for velocity information
+        /// </summary>
         public Rigidbody Rigidbody;
-        public int HoldingItemIndex;
-        public int TargetIndex;
+        public OrderedDictionary<string,List<Item>> HoldingItems;
+        public Target Target;
 
-        public AGVStatus(Rigidbody rigidbody, int holdingItemIndex, int targetIndex)
+        public AGVStatus(Rigidbody rigidbody, OrderedDictionary<string,List<Item>> holdingItems, Target target)
         {
             Rigidbody = rigidbody;
-            HoldingItemIndex = holdingItemIndex;
-            TargetIndex = targetIndex;
+            HoldingItems = holdingItems;
+            Target = target;
         }
     }
 
-    public struct MFWSSimpleStatus
+    public record WorkstationStatus
     {
-        public float[] SelfInputItemQuantityArray;
-        public float[] SelfOutputItemQuantityArray;
-        public float[] SelfCurrentProcessOneHot;
+        public Process CurrentProcess;
+        public OrderedDictionary<string,List<Item>> InputBufferItems;
+        public OrderedDictionary<string,List<Item>> OutputBufferItems;
 
-        public MFWSSimpleStatus(float[] selfInputItemQuantityArray, float[] selfOutputItemQuantityArray, float[] selfCurrentProcessOneHot)
+        public WorkstationStatus(Process currentProcess, OrderedDictionary<string, List<Item>> inputBufferItems, OrderedDictionary<string, List<Item>> outputBufferItems)
         {
-            SelfInputItemQuantityArray = selfInputItemQuantityArray;
-            SelfOutputItemQuantityArray = selfOutputItemQuantityArray;
-            SelfCurrentProcessOneHot = selfCurrentProcessOneHot;
+            CurrentProcess = currentProcess;
+            InputBufferItems = inputBufferItems;
+            OutputBufferItems = outputBufferItems;
         }
     }
-    public struct WorkstationStatus
-    {
-        /// <summary>
-        /// this should be number of items in input buffer/max capacity of input buffer
-        /// </summary>
-        public float InputLoadRatio;
-        /// <summary>
-        /// 输入口各类物料的数量/全局最大缓冲区容量
-        /// </summary>
-        public float[] InputItemQuantityArray;
-        /// <summary>
-        /// this should be number of items in output buffer/max capacity of output buffer
-        /// </summary>
-        public float OutputLoadRatio;
-        /// <summary>
-        /// 输出口各类物料的数量/全局最大缓冲区容量
-        /// </summary>
-        public float[] OutputItemQuantityArray;
-        /// <summary>
-        /// Index of current process in PlaneController.ProcessList
-        /// </summary>
-        public int CurrentProcessIndex;
-
-        public WorkstationStatus(float inputLoadRatio, float[] inputItemQuantityArray, float outputLoadRatio, float[] outputItemQuantityArray, int currentProcessIndex)
-        {
-            InputLoadRatio = inputLoadRatio;
-            InputItemQuantityArray = inputItemQuantityArray;
-            OutputLoadRatio = outputLoadRatio;
-            OutputItemQuantityArray = outputItemQuantityArray;
-            CurrentProcessIndex = currentProcessIndex;
-        }
-    }
+    
+    // public record WorkstationStatus
+    // {
+    //     /// <summary>
+    //     /// this should be number of items in input buffer/max capacity of input buffer
+    //     /// </summary>
+    //     public float InputLoadRatio;
+    //     /// <summary>
+    //     /// 输入口各类物料的数量/全局最大缓冲区容量
+    //     /// </summary>
+    //     public float[] InputItemQuantityArray;
+    //     /// <summary>
+    //     /// this should be number of items in output buffer/max capacity of output buffer
+    //     /// </summary>
+    //     public float OutputLoadRatio;
+    //     /// <summary>
+    //     /// 输出口各类物料的数量/全局最大缓冲区容量
+    //     /// </summary>
+    //     public float[] OutputItemQuantityArray;
+    //     /// <summary>
+    //     /// Index of current process in PlaneController.ProcessList
+    //     /// </summary>
+    //     public int CurrentProcess;
+    //
+    //     public WorkstationStatus(float inputLoadRatio, float[] inputItemQuantityArray, float outputLoadRatio, float[] outputItemQuantityArray, int currentProcessIndex)
+    //     {
+    //         InputLoadRatio = inputLoadRatio;
+    //         InputItemQuantityArray = inputItemQuantityArray;
+    //         OutputLoadRatio = outputLoadRatio;
+    //         OutputItemQuantityArray = outputItemQuantityArray;
+    //         CurrentProcess = currentProcessIndex;
+    //     }
+    // }
 
     #endregion
 

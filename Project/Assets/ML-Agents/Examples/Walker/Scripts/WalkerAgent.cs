@@ -54,7 +54,7 @@ public class WalkerAgent : Agent
     //Because ragdolls can move erratically during training, using a stabilized reference transform improves learning
     OrientationCubeController m_OrientationCube;
 
-    //The indicator graphic gameobject that points towards the target
+    //The indicator graphic gameobject that points towards the currentTarget
     DirectionIndicator m_DirectionIndicator;
     JointDriveController m_JdController;
     EnvironmentParameters m_ResetParams;
@@ -157,7 +157,7 @@ public class WalkerAgent : Agent
         sensor.AddObservation(Quaternion.FromToRotation(hips.forward, cubeForward));
         sensor.AddObservation(Quaternion.FromToRotation(head.forward, cubeForward));
 
-        //Position of target position relative to cube
+        //Position of currentTarget position relative to cube
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(target.transform.position));
 
         foreach (var bodyPart in m_JdController.bodyPartsList)
@@ -223,7 +223,7 @@ public class WalkerAgent : Agent
         var cubeForward = m_OrientationCube.transform.forward;
 
         // Set reward for this step according to mixture of the following elements.
-        // a. Match target speed
+        // a. Match currentTarget speed
         //This reward will approach 1 if it matches perfectly and approach zero as it deviates
         var matchSpeedReward = GetMatchingVelocityReward(cubeForward * MTargetWalkingSpeed, GetAvgVelocity());
 
@@ -238,8 +238,8 @@ public class WalkerAgent : Agent
             );
         }
 
-        // b. Rotation alignment with target direction.
-        //This reward will approach 1 if it faces the target direction perfectly and approach zero as it deviates
+        // b. Rotation alignment with currentTarget direction.
+        //This reward will approach 1 if it faces the currentTarget direction perfectly and approach zero as it deviates
         var lookAtTargetReward = (Vector3.Dot(cubeForward, head.forward) + 1) * .5F;
 
         //Check for NaNs
@@ -286,7 +286,7 @@ public class WalkerAgent : Agent
     }
 
     /// <summary>
-    /// Agent touched the target
+    /// Agent touched the currentTarget
     /// </summary>
     public void TouchedTarget()
     {
