@@ -61,16 +61,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             InitAgvDispatcherActionSpace();
         }
 
+        // At present, all AGVs have identical action spaces,
+        // therefore initiate it at PlaneController once for all.
         public List<Target> AgvDispatcherActionSpace { get; private set; }
         private void InitAgvDispatcherActionSpace()
         {
             AgvDispatcherActionSpace = new List<Target>();
-            AgvDispatcherActionSpace.Add(PConsts.NullTarget);
+            // Target==null refers to no target
+            AgvDispatcherActionSpace.Add(null);
             foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
             {
                 // possible [give x input item state] actions to workstation
                 var controller = wsObj.GetComponent<WorkstationController>();
-                foreach (var itemStateId in controller.InputBufferItems.Keys)
+                foreach (var itemStateId in controller.InputBufferItemsDict.Keys)
                 {
                     AgvDispatcherActionSpace.Add(new Target(
                         controller.inputPlateGameObject,
@@ -78,7 +81,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         itemStateId));
                 }
                 // possible [get x output item state] actions to workstation
-                foreach (var itemStateId in controller.OutputBufferItems.Keys)
+                foreach (var itemStateId in controller.OutputBufferItemsDict.Keys)
                 {
                     AgvDispatcherActionSpace.Add(new Target(
                         controller.outputPlateGameObject,
@@ -111,6 +114,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 }
             }
         }
+        
+        // Different type of workstations have different action spaces,
+        // therefore it is initiated in Start() at each WorkstationAgent.
+        private void InitWorkstationActionSpace(){}
         
 
         #endregion

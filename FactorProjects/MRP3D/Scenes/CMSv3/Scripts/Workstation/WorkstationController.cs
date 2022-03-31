@@ -20,35 +20,35 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject outputPlateGameObject;
         
         public Workstation workstation;
-        public GameObject nameText;
-        public GameObject processText;
+        public GameObject nameTextMesh;
+        public GameObject processTextMesh;
 
-        public OrderedDictionary<string,List<Item>> InputBufferItems;
-        public OrderedDictionary<string,List<Item>> ProcessingInputItems;
-        public OrderedDictionary<string,List<Item>> OutputBufferItems;
+        public OrderedDictionary<string,List<Item>> InputBufferItemsDict;
+        public OrderedDictionary<string,List<Item>> ProcessingInputItemsDict;
+        public OrderedDictionary<string,List<Item>> OutputBufferItemsDict;
 
         public WorkstationStatus GetStatus()
         {
             return new WorkstationStatus(
                 CurrentProcess,
-                InputBufferItems,
-                OutputBufferItems);
+                InputBufferItemsDict,
+                OutputBufferItemsDict);
         }
 
         #region IExchangeable Implement
         public Item GetItem(string id)
         {
-            if (!OutputBufferItems.ContainsKey(id))
+            if (!OutputBufferItemsDict.ContainsKey(id))
                 return null;
-            if (!(OutputBufferItems[id].Count>0))
+            if (!(OutputBufferItemsDict[id].Count>0))
                 return null;
-            return OutputBufferItems[id][0];
+            return OutputBufferItemsDict[id][0];
         }
         public ExchangeMessage CheckGivable(IExchangeable receiver, Item item)
         {
             if (item != null 
-                && OutputBufferItems.ContainsKey(item.itemState.id)
-                && OutputBufferItems[item.itemState.id].Contains(item))
+                && OutputBufferItemsDict.ContainsKey(item.itemState.id)
+                && OutputBufferItemsDict[item.itemState.id].Contains(item))
             {
                 return ExchangeMessage.Ok;
             }
@@ -58,12 +58,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
         {
             if (item==null
-                || !InputBufferItems.ContainsKey(item.itemState.id))
+                || !InputBufferItemsDict.ContainsKey(item.itemState.id))
             {
                 return ExchangeMessage.WrongType;
             }
             if(workstation.inputCapacitySpecified
-               &&ItemOdUtils.ListsSumCount(InputBufferItems.Values)>=workstation.inputCapacity)
+               &&ItemOdUtils.ListsSumCount(InputBufferItemsDict.Values)>=workstation.inputCapacity)
             {
                 return ExchangeMessage.Overload;
             }
@@ -72,21 +72,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         
         public bool Store(Item item)
         {
-            if (!InputBufferItems.ContainsKey(item.itemState.id))
+            if (!InputBufferItemsDict.ContainsKey(item.itemState.id))
                 return false;
-            InputBufferItems[item.itemState.id].Add(item);
-            PlaceItemList(InputBufferItems.Values);
+            InputBufferItemsDict[item.itemState.id].Add(item);
+            PlaceItemList(InputBufferItemsDict.Values);
             return true;
         }
 
         public bool Remove(Item item)
         {
-            if (!OutputBufferItems.ContainsKey(item.itemState.id))
+            if (!OutputBufferItemsDict.ContainsKey(item.itemState.id))
                 return false;
 
-            if (!OutputBufferItems[item.itemState.id].Remove(item))
+            if (!OutputBufferItemsDict[item.itemState.id].Remove(item))
                 return false;
-            PlaceItemList(OutputBufferItems.Values);
+            PlaceItemList(OutputBufferItemsDict.Values);
             return true;
         }
 
@@ -98,9 +98,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             StopCoroutine(nameof(ProcessItemToOutput));
             Done();
-            ItemOdUtils.DestroyAndClearLists(InputBufferItems.Values,Destroy);
-            ItemOdUtils.DestroyAndClearLists(ProcessingInputItems.Values,Destroy);
-            ItemOdUtils.DestroyAndClearLists(OutputBufferItems.Values,Destroy);
+            ItemOdUtils.DestroyAndClearLists(InputBufferItemsDict.Values,Destroy);
+            ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
+            ItemOdUtils.DestroyAndClearLists(OutputBufferItemsDict.Values,Destroy);
         }
 
         #endregion
@@ -108,43 +108,60 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         #region Workstation Process Implement
         
         public Process CurrentProcess { get; private set; } = null;
-        public void StartProcess(string processId)
+        public void StartProcess(Process process)
         {
-            ItemOdUtils.ClearLists(ProcessingInputItems.Values);
-            Process process = SceanrioLoader.getProcess(processId);
+            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
             CurrentProcess = process;
             if (process==null)
             {
                 StartCoroutine(nameof(Hold));
                 return;
             }
+            if (CheckProcessIsExecutable(process))
+                StartCoroutine(nameof(ProcessItemToOutput),(ProcessingInputItemsDict,process));
+        }
+
+        /// <summary>
+        /// Check whether a process can be executed at present.
+        /// If yes, load required input items into ProcessingInputItemsDict.
+        /// Else, clear the ProcessingInputItemsDict
+        /// </summary>
+        /// <param name="process"></param>
+        /// <returns></returns>
+        public bool CheckProcessIsExecutable(Process process)
+        {
+            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+            if (process == null)
+                return true;
             // Find required input items in input buffer
             foreach (var iRef in process.inputItemsRef)
             {
-                if (!InputBufferItems.ContainsKey(iRef.idref))
+                if (!InputBufferItemsDict.ContainsKey(iRef.idref))
                 {
-                    Debug.LogWarning(workstation.name+": Cannot start chosen process: " +
-                                     "unsupported process");
-                    return;
+                    ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+                    // Debug.LogWarning(workstation.name + ": Cannot start chosen process: " +
+                    //                  "contains unsupported input(s)");
+                    
+                    return false;
                 }
-                var itemList = InputBufferItems[iRef.idref];
+                var itemList = InputBufferItemsDict[iRef.idref];
                 if (itemList.Count > 0)
                 {
                     // Copy input item reference from input buffer to processing item list
                     var item = itemList[0];
                     item.transform.parent = processPlateGameObject.transform;
-                    ProcessingInputItems[iRef.idref].Add(item);
+                    ProcessingInputItemsDict[iRef.idref].Add(item);
                 }
                 else
                 {
                     // Input buffer does not have required input item
-                    ItemOdUtils.ClearLists(ProcessingInputItems.Values);
-                    Debug.LogWarning(workstation.name+": Cannot start chosen process: " +
-                                     "some required input items are not found in input buffer");
-                    return;
+                    // ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+                    // Debug.LogWarning(workstation.name + ": Cannot start chosen process: " +
+                    //                  "some required input items are not found in input buffer");
+                    return false;
                 }
             }
-            StartCoroutine(nameof(ProcessItemToOutput),(ProcessingInputItems,process));
+            return true;
         }
 
         public float holdActionDuration = 1f;
@@ -158,20 +175,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             // Simulate process time
             yield return new WaitForSeconds(p.duration);
-            // Remove and destroy items in ProcessingInputItems
-            foreach (var list in ProcessingInputItems.Values)
+            // Remove and destroy items in ProcessingInputItemsDict
+            foreach (var list in ProcessingInputItemsDict.Values)
             {
                 foreach (var item in list)
                 {
-                    InputBufferItems[item.itemState.id].Remove(item);
+                    InputBufferItemsDict[item.itemState.id].Remove(item);
                 }
             }
-            ItemOdUtils.DestroyAndClearLists(ProcessingInputItems.Values,Destroy);
+            ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
             // Generate output items
             foreach (var itemStateRef in p.outputItemsRef)
             {
                 var item = planeController.InstantiateItem(itemStateRef.idref,outputPlateGameObject);
-                OutputBufferItems[item.itemState.id].Add(item);
+                OutputBufferItemsDict[item.itemState.id].Add(item);
             }
             PlaceAllItems();
             Done();
@@ -205,9 +222,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         
         private void PlaceAllItems()
         {
-            PlaceItemList(InputBufferItems.Values);
-            PlaceItemList(ProcessingInputItems.Values);
-            PlaceItemList(OutputBufferItems.Values);
+            PlaceItemList(InputBufferItemsDict.Values);
+            PlaceItemList(ProcessingInputItemsDict.Values);
+            PlaceItemList(OutputBufferItemsDict.Values);
         }
 
         /// <summary>
@@ -215,7 +232,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// </summary>
         private void RefreshText()
         {
-            nameText.GetComponent<TextMeshPro>().text = workstation.name;
+            nameTextMesh.GetComponent<TextMeshPro>().text = workstation.name;
             StringBuilder sb = new StringBuilder();
             foreach (var pref in workstation.supportProcessesRef)
             {
@@ -235,27 +252,27 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append('\n');
             }
-            processText.GetComponent<TextMeshPro>().text = sb.ToString();
+            processTextMesh.GetComponent<TextMeshPro>().text = sb.ToString();
         }
 
         #endregion
 
         private void InitInputOutputItems()
         {
-            InputBufferItems = new OrderedDictionary<string,List<Item>>();
-            OutputBufferItems = new OrderedDictionary<string,List<Item>>();
+            InputBufferItemsDict = new OrderedDictionary<string,List<Item>>();
+            OutputBufferItemsDict = new OrderedDictionary<string,List<Item>>();
             foreach (var pRef in workstation.supportProcessesRef)
             {
                 var p = SceanrioLoader.getProcess(pRef.idref);
                 foreach (var iRef in p.inputItemsRef)
                 {
-                    if(!InputBufferItems.ContainsKey(iRef.idref))
-                        InputBufferItems.Add(iRef.idref,new List<Item>());
+                    if(!InputBufferItemsDict.ContainsKey(iRef.idref))
+                        InputBufferItemsDict.Add(iRef.idref,new List<Item>());
                 }
                 foreach (var iRef in p.outputItemsRef)
                 {
-                    if(!OutputBufferItems.ContainsKey(iRef.idref))
-                        OutputBufferItems.Add(iRef.idref,new List<Item>());
+                    if(!OutputBufferItemsDict.ContainsKey(iRef.idref))
+                        OutputBufferItemsDict.Add(iRef.idref,new List<Item>());
                 }
             }
         }

@@ -215,7 +215,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void Move(float forward, float rotate)
         {
-            if (CurrentTarget == PConsts.NullTarget)
+            if (CurrentTarget == null)
             {
                 _rigidbody.velocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
