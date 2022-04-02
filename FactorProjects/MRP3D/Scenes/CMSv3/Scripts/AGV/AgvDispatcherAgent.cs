@@ -9,7 +9,7 @@ using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class AGVDispatcherAgent : Agent
+    public class AgvDispatcherAgent : Agent
     {
         private AgvController _agvController;
         private PlaneController _planeController;
@@ -19,11 +19,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private void Awake()
         {
             _agvController = GetComponentInParent<AgvController>();
+            _planeController = GetComponentInParent<PlaneController>();
         }
 
         private void Start()
         {
-            _planeController = _agvController.planeController;
             _actionSpace = _planeController.AgvDispatcherActionSpace;
         }
 
@@ -43,62 +43,34 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         // TODO:Mask invalid actions based on AGV's holding item
         public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
         {
-            if (useMask)
-                throw new NotImplementedException();
-            // if(!useMask)
-            //     return;
-            // for (int i = 0; i < _actionSpace.Count; i++)
-            // {
-            //     var currentTarget = _actionSpace[i];
-            //     if (currentTarget == TargetAction.Get)
-            //     {
-            //         if(currentTarget.)
-            //     }
-            // }
-
-
-
-            // int mc = 0;
-            // List<Target> comb = _agvController.PlaneController.TargetCombinationList;
-            // //手里没有物体，只能拿不能给，屏蔽所有给的动作（comb.ItemType==null）
-            // if (_agvController.holdingItem == null)
-            // {
-            //     for (int i = 1; i < comb.Count; i++)
-            //     {
-            //         if (comb[i].TargetAction != TargetAction.Get
-            //             || _agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject].GetItem(comb[i].ItemStateId)==null)
-            //         {
-            //             actionMask.SetActionEnabled(0, i, false);
-            //             mc++;
-            //         }
-            //     }
-            // }
-            // //手里有一个itemType的物体，不能再拿只能给，TODO:屏蔽掉所有拿的动作和收不了的target
-            // else
-            // {
-            //     for (int i = 1; i < comb.Count; i++)
-            //     {
-            //         if (comb[i].TargetAction != TargetAction.Give||
-            //             !_agvController.TargetableGameObjectItemHolderDict[comb[i].GameObject]
-            //                 .supportInputs.Contains(_agvController.holdingItem.itemType))
-            //         {
-            //             actionMask.SetActionEnabled(0, i, false);
-            //             mc++;
-            //         }
-            //     }
-            // }
-            // if (mc < comb.Count - 1)
-            // {
-            //     actionMask.SetActionEnabled(0, 0, false);
-            // }
+            if(!useMask)
+                return;
+            for (int i = 0; i < _actionSpace.Count; i++)
+            {
+                var target = _actionSpace[i];
+                if(target==null)
+                    continue;
+                var other = _planeController.GameObjectExchangeableDict[target.GameObject];
+                if (target.TargetAction == TargetAction.Get)
+                {
+                    var item = other.GetItem(target.ItemStateId);
+                    // Disable action if other is not givable or this is not receivable
+                    if(other.CheckGivable(_agvController,item)!=ExchangeMessage.Ok
+                       ||_agvController.CheckReceivable(other,item)!=ExchangeMessage.Ok)
+                        actionMask.SetActionEnabled(0,i,false);
+                }
+                if (target.TargetAction == TargetAction.Give)
+                {
+                    var item = _agvController.GetItem(target.ItemStateId);
+                    // Disable action if other is not receivable or this is not givable
+                    if(other.CheckReceivable(_agvController,item)!=ExchangeMessage.Ok
+                       ||_agvController.CheckGivable(other,item)!=ExchangeMessage.Ok)
+                        actionMask.SetActionEnabled(0,i,false);
+                }
+            }
         }
         
-        /// <summary>
-        /// How many orders can be observed
-        /// </summary>
-        public int orderObservationLength = 5;
-        public int normItemCountMaxValue = 5;
-        public float normTimeLeftMaxValue = 120f;
+
 
         //collect relative position of all workstations
         //collect status of all workstations (input/output buffer capacity ratio)
@@ -117,18 +89,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     polarTargetPos = Utils.NormalizedPolarRelativePosition(
                         transform,
                         wsObj.transform,
-                        _agvController.planeController.normDistanceMaxValue);
+                        NormValues.DistanceMaxValue);
                 }
                 sensor.AddObservation(polarTargetPos);
                 
                 var s = wsController.GetStatus();
                 foreach (var list in s.InputBufferItems.Values)
                 {
-                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
                 }
                 foreach (var list in s.OutputBufferItems.Values)
                 {
-                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
                 }
                 // If current process != null, pOneHot = index of current process in workstation.supportProcessesRef
                 // else, pOneHot = workstation.supportProcessesRef.Count
@@ -152,7 +124,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     polarTargetPos = Utils.NormalizedPolarRelativePosition(
                         transform,
                         agvObj.transform,
-                        _agvController.planeController.normDistanceMaxValue);
+                        NormValues.DistanceMaxValue);
                 }
                 sensor.AddObservation(polarTargetPos);
                 
@@ -165,31 +137,31 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 // Collect holding item information
                 foreach (var list in s.HoldingItems.Values)
                 {
-                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,normItemCountMaxValue));
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
                 }
             }
 
             // Collect product stock info
             foreach (var stock in _planeController.productStockDict.Values)
             {
-                sensor.AddObservation(Utils.NormalizeValue(stock,0,_planeController.normStockCountMaxValue));
+                sensor.AddObservation(Utils.NormalizeValue(stock,0,NormValues.StockCountMaxValue));
             }
             
             // Collect order info
             int orderCount = 0;
             foreach (var (ddl,order) in _planeController.orderList)
             {
-                sensor.AddObservation((ddl-Time.fixedTime)/normTimeLeftMaxValue);
+                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.TimeLeftMaxValue);
                 foreach (var itemState in SceanrioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
                 }
                 orderCount++;
-                if(orderCount>=orderObservationLength)
+                if(orderCount>=NormValues.OrderObservationLength)
                     break;
             }
-            // Padding
-            int padSize = Math.Clamp((orderObservationLength - orderCount), 0, orderObservationLength) *
+            // Padding order observation
+            int padSize = Math.Clamp((NormValues.OrderObservationLength - orderCount), 0, NormValues.OrderObservationLength) *
                           (1 + SceanrioLoader.ProductItemStates.Count);
             sensor.AddObservation(new float[padSize]);
         }

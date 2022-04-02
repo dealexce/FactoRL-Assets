@@ -4,18 +4,25 @@ using Multi;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class WorkstationAgent : Agent
+    public class WorkstationAgent : Agent, ILinkedToPlane
     {
         private WorkstationController _workstationController;
         private List<Process> _actionSpace;
+        public PlaneController planeController { get; set; }
 
         private void Awake()
         {
             _workstationController = GetComponentInParent<WorkstationController>();
+        }
+
+        private void Start()
+        {
+            planeController = _workstationController.planeController;
         }
 
         private void InitActionSpace()
@@ -54,32 +61,94 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <param name="sensor"></param>
         public override void CollectObservations(VectorSensor sensor)
         {
-            throw new NotImplementedException();
-            // int processCount = _workstationController._planeController.ProcessList.Count;
-            // float maxDiameter = _workstationController._planeController.MAXDiameter;
-            // foreach (var mc in _workstationController._planeController.MFWSControllers)
-            // {
-            //     //相对位置
-            //     sensor.AddObservation(Utils.PolarRelativePosition(transform,mc.transform,maxDiameter));
-            //     MFWSStatus s = mc.GetStatus();
-            //     sensor.AddObservation(s.InputLoadRatio);
-            //     sensor.AddObservation(s.OutputLoadRatio);
-            //     sensor.AddObservation(s.InputItemQuantityArray);
-            //     sensor.AddObservation(s.OutputItemQuantityArray);
-            //     sensor.AddOneHotObservation(s.CurrentProcessIndex,processCount);
-            // }
-            //
-            // int targetCount = _workstationController._planeController.TargetCombinationList.Count;
-            // int itemTypeCount = _workstationController._planeController.ItemTypeList.Count;
-            // foreach (var ac in _workstationController._planeController.AGVControllers)
-            // {
-            //     sensor.AddObservation(Utils.PolarRelativePosition(transform,ac.transform,maxDiameter));
-            //     AGVStatus s = ac.GetStatus();
-            //     sensor.AddObservation(s.Rigidbody.velocity);
-            //     sensor.AddObservation(s.Rigidbody.angularVelocity);
-            //     sensor.AddOneHotObservation(s.TargetIndex,targetCount);
-            //     sensor.AddOneHotObservation(s.HoldingItemIndex,itemTypeCount);
-            // }
+            //throw new NotImplementedException();
+            //collect relative position and status of all workstations
+            foreach (var (wsObj,wsController) in planeController.WorkstationControllerDict)
+            {
+                if (wsController == _workstationController)
+                {
+                    continue;
+                }
+                Vector2 polarTargetPos = new Vector2();
+                if (wsObj != null)
+                {
+                    polarTargetPos = Utils.NormalizedPolarRelativePosition(
+                        transform,
+                        wsObj.transform,
+                        NormValues.DistanceMaxValue);
+                }
+                sensor.AddObservation(polarTargetPos);
+                
+                var s = wsController.GetStatus();
+                foreach (var list in s.InputBufferItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
+                }
+                foreach (var list in s.OutputBufferItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
+                }
+                // If current process != null, pOneHot = index of current process in workstation.supportProcessesRef
+                // else, pOneHot = workstation.supportProcessesRef.Count
+                var supportProcessesRef = wsController.workstation.supportProcessesRef;
+                foreach(var pRef in supportProcessesRef)
+                {
+                    sensor.AddObservation(s.CurrentProcess.id == pRef.idref ? 1.0f : 0.0f);
+                }
+            }
+            
+            // collect relative position and status of other AGVs
+            foreach (var (agvObj,agvController) in planeController.AgvControllerDict)
+            {
+                Vector2 polarTargetPos = new Vector2();
+                if (agvObj != null)
+                {
+                    polarTargetPos = Utils.NormalizedPolarRelativePosition(
+                        transform,
+                        agvObj.transform,
+                        NormValues.DistanceMaxValue);
+                }
+                sensor.AddObservation(polarTargetPos);
+                
+                var s = agvController.GetStatus();
+                // Collect current currentTarget information
+                foreach (var target in planeController.AgvDispatcherActionSpace)
+                {
+                    sensor.AddObservation(s.Target == target ? 1.0f : 0.0f);
+                }
+                // Collect holding item information
+                foreach (var list in s.HoldingItems.Values)
+                {
+                    sensor.AddObservation(Utils.NormalizeValue(list.Count,0,NormValues.ItemCountMaxValue));
+                }
+            }
+
+            // Collect product stock info
+            foreach (var stock in planeController.productStockDict.Values)
+            {
+                sensor.AddObservation(Utils.NormalizeValue(stock,0,NormValues.StockCountMaxValue));
+            }
+            
+            // Collect order info
+            int orderCount = 0;
+            foreach (var (ddl,order) in planeController.orderList)
+            {
+                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.TimeLeftMaxValue);
+                foreach (var itemState in SceanrioLoader.ProductItemStates)
+                {
+                    sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
+                }
+                orderCount++;
+                if(orderCount>=NormValues.OrderObservationLength)
+                    break;
+            }
+            // Padding order observation
+            int padSize = Math.Clamp(
+                              (NormValues.OrderObservationLength - orderCount), 
+                              0, 
+                              NormValues.OrderObservationLength)
+                          * (1 + SceanrioLoader.ProductItemStates.Count);
+            sensor.AddObservation(new float[padSize]);
         }
 
         public void DecideProcess()
@@ -90,7 +159,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             var act = actionsOut.DiscreteActions;
-            
+            act[0] = GetRandomExecutableProcessIndex();
+
         }
 
         /// <summary>

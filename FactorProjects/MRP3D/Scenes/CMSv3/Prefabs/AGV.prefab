@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6385131209887719093}
+  - component: {fileID: 4722643332102197537}
+  - component: {fileID: 2183408822918589266}
   m_Layer: 0
   m_Name: Dispatcher
   m_TagString: Untagged
@@ -31,6 +33,53 @@ Transform:
   m_Father: {fileID: 7253112251610864799}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4722643332102197537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 361546378755540507}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_BrainParameters:
+    VectorObservationSize: 1
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 0
+      BranchSizes: 01000000
+    VectorActionSize: 01000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 0
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: CMSv3AD_WS
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_ObservableAttributeHandling: 0
+--- !u!114 &2183408822918589266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 361546378755540507}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7d6ad27f6e0432ba6c1b648c66f64e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  useMask: 0
 --- !u!1 &3138914704657889545
 GameObject:
   m_ObjectHideFlags: 0
@@ -41,7 +90,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7253112251610864799}
   - component: {fileID: 8510106561756024528}
-  - component: {fileID: 975534969285501921}
+  - component: {fileID: 4633030942523245412}
   m_Layer: 0
   m_Name: AGV
   m_TagString: Untagged
@@ -82,7 +131,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 84
   m_CollisionDetection: 0
---- !u!114 &975534969285501921
+--- !u!114 &4633030942523245412
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -91,11 +140,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 3138914704657889545}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 540037fdf0c247aa89b30c922a2452f9, type: 3}
+  m_Script: {fileID: 11500000, guid: cc37becf027d46908a99b76becc7e4c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  agvDispatcherAgent: {fileID: 0}
+  agvMoveAgent: {fileID: 0}
+  itemInterval: 1
+  fixDecision: 1
   moveSpeed: 5
   rotateSpeed: 3
+  holdActionDuration: 1
 --- !u!1 &5982305529670172846
 GameObject:
   m_ObjectHideFlags: 0
@@ -312,6 +366,57 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6414437736524766740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5828576488224440954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_BrainParameters:
+    VectorObservationSize: 1
+    NumStackedVectorObservations: 1
+    m_ActionSpec:
+      m_NumContinuousActions: 0
+      BranchSizes: 01000000
+    VectorActionSize: 01000000
+    VectorActionDescriptions: []
+    VectorActionSpaceType: 0
+    hasUpgradedBrainParametersWithActionSpec: 1
+  m_Model: {fileID: 0}
+  m_InferenceDevice: 0
+  m_BehaviorType: 0
+  m_BehaviorName: CMSv3Move
+  TeamId: 0
+  m_UseChildSensors: 1
+  m_UseChildActuators: 1
+  m_ObservableAttributeHandling: 0
+--- !u!114 &1530490451625291897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5828576488224440954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5721f682edb74960b84648f66c116044, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  trainingMode: 1
+  showObsDebugInfo: 0
+  activateReward: 1
+  arriveReward: 1
+  collisionReward: -0.01
 --- !u!4 &6889539904836143313 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3272909342327498059, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}

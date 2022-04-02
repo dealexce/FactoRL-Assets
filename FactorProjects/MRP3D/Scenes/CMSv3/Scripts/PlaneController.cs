@@ -28,16 +28,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 EntityGameObjectsDict.Values,
                 itemAction: o =>
                 {
-                    var exchangable = (IExchangeable) o.GetComponent(typeof(IExchangeable));
-                    if(exchangable!=null)
-                        GameObjectExchangeableDict.Add(o,exchangable);
+                    var exchangeable = (IExchangeable) o.GetComponent(typeof(IExchangeable));
+                    if(exchangeable!=null)
+                        GameObjectExchangeableDict.Add(o,exchangeable);
                 });
         }
+        
 
         #region RL
 
-        public float normDistanceMaxValue = 50f;
-        public float normStockCountMaxValue = 10;
+
 
         public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
         public Dictionary<GameObject, AgvController> AgvControllerDict;

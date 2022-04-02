@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 using TMPro;
 using UnityEngine;
@@ -9,8 +10,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class ScenarioEditor : ScenarioGenerator
     {
-        public GameObject uiCanvas;
-        public void Start()
+        public TMP_Dropdown workstationTypeDropdown;
+        new void Start()
         {
             base.Start();
             InitPanel();
@@ -18,61 +19,38 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         
         private void InitPanel()
         {
-            InitDropdown();
+            InitWorkstationTypeDropdown();
         }
-        
-        private TMP_Dropdown _dropdown;
-        private Workstation[] _workstationsForDropDown;
 
-        private void InitDropdown()
+        private void InitWorkstationTypeDropdown()
         {
-            _dropdown = uiCanvas.GetComponentInChildren<TMP_Dropdown>();
-            _workstationsForDropDown = _scenario.model.workstations;
-            _dropdown.options.Clear();
-            TMP_Dropdown.OptionData tempData;
-            foreach (var ws in _workstationsForDropDown)
-            {
-                tempData = new TMP_Dropdown.OptionData();
-                tempData.text = ws.name;
-                _dropdown.options.Add(tempData);
-            }
-            _dropdown.captionText.text = _workstationsForDropDown[0].name;
+            workstationTypeDropdown.options.Clear();
+            workstationTypeDropdown.AddOptions(
+                _scenario.model.workstations.Select(workstation => new TMP_Dropdown.OptionData{text = workstation.name}).ToList());
+            //workstationTypeDropdown.captionText.text = workstationTypeDropdown.options[0].text;
+            workstationTypeDropdown.RefreshShownValue();
         }
 
         public void OnAddWorkstationClicked()
         {
-            InstantiateWorkstation(_workstationsForDropDown[_dropdown.value].id,0f,0f);
+            InstantiateWorkstation(_scenario.model.workstations[workstationTypeDropdown.value].id,0f,0f);
         }
 
         public string scenarioXmlOutputPath = "Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios";
         public void OnSaveClicked()
         {
-            //TODO: Save Ground Size
-            
-            List<WorkstationInstance> wsiList = new List<WorkstationInstance>();
-            foreach (var wsc in GetComponentsInChildren<WorkstationController>())
-            {
-                Workstation w = new Workstation();
-                w.idref = wsc.workstation.id;
-                wsiList.Add(new WorkstationInstance()
-                {
-                    workstationRef = w,
-                    x=wsc.transform.position.x,
-                    y=wsc.transform.position.z
-                });
-            }
-            _scenario.layout.workstationInstances = wsiList.ToArray();
+            _scenario.layout.groundSize.x = Ground.x;
+            _scenario.layout.groundSize.y = Ground.z;
 
-            List<AgvInstance> agviList = new List<AgvInstance>();
-            foreach (var agvc in GetComponentsInChildren<AgvController>())
-            {
-                agviList.Add(new AgvInstance()
-                {
-                    x=agvc.transform.position.x,
-                    y=agvc.transform.position.z
-                });
-            }
-            _scenario.layout.agvInstances = agviList.ToArray();
+            _scenario.layout.workstationInstances = (
+                from workstationController in GetComponentsInChildren<WorkstationController>() 
+                let pos = workstationController.transform.position 
+                select new WorkstationInstance {workstationRef = new Workstation {idref = workstationController.workstation.id}, x = pos.x, y = pos.z}).ToArray();
+
+            _scenario.layout.agvInstances = GetComponentsInChildren<AgvController>()
+                .Select(agvController => agvController.transform.position)
+                .Select(pos => new AgvInstance() {x = pos.x, y = pos.z}).ToArray();
+            
             var it = GetComponentInChildren<ImportControllerBase>().transform.position;
             _scenario.layout.importStation = new ImportStation()
             {
@@ -86,16 +64,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 y = ot.z
             };
 
-            XmlSerializer serializer = new XmlSerializer(typeof(Scenario));
-            String path = scenarioXmlOutputPath
+            // Save scenario to XML file
+            var serializer = new XmlSerializer(typeof(Scenario));
+            var path = scenarioXmlOutputPath
                           + "/Scenario"
                           + DateTime.Now.ToString("yyMMddHHmmss")
                           + ".xml";
-            using (StreamWriter writer = new StreamWriter(path))
-            {
-                serializer.Serialize(writer,_scenario);
-                Debug.Log("Successfully saved scenario at "+path);
-            }
+            using var writer = new StreamWriter(path);
+            serializer.Serialize(writer,_scenario);
+            Debug.Log("Successfully saved scenario at "+path);
         }
     }
 }

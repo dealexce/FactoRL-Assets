@@ -7,8 +7,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     public class ExportController : MonoBehaviour, IExchangeable, ILinkedToPlane, IResetable
     {
         public PlaneController planeController { get; set; }
-        public GameObject FloatingTextObject;
-        private TextMeshPro _textMesh;
+        //public GameObject FloatingTextObject;
+        //private TextMeshPro _textMesh;
 
         public void EpisodeReset()
         {
@@ -17,7 +17,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void Awake()
         {
-            _textMesh = FloatingTextObject.GetComponent<TextMeshPro>();
+            //_textMesh = FloatingTextObject.GetComponent<TextMeshPro>();
         }
 
         public Item GetItem(string itemType)

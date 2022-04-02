@@ -12,7 +12,7 @@
       <itemState id="CR1" name="C-Raw1" />
       <itemState id="C1" name="C-1" />
       <itemState id="CR2" name="C-Raw2" />
-      <itemState id="CP" name="C-Product" />
+      <itemState id="CP" name="C-Product"/>
       <itemState id="S1" name="ScrewT1" />
       <itemState id="S2" name="ScrewT2" />
       <itemState id="G" name="Glue" />

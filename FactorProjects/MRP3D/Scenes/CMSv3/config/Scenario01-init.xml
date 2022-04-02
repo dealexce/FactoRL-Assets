@@ -4,7 +4,7 @@
     <model>
         <modelName>Scenario01</modelName>
         <itemStates>
-            <itemState id="AR" name="A-Raw"/>
+            <itemState id="AR" name="A-Raw" type="Raw"/>
             <itemState id="A1" name="A-1"/>
             <itemState id="AP" name="A-Product"/>
             <itemState id="BR" name="B-Raw"/>
@@ -13,90 +13,90 @@
             <itemState id="CR1" name="C-Raw1"/>
             <itemState id="C1" name="C-1"/>
             <itemState id="CR2" name="C-Raw2"/>
-            <itemState id="CP" name="C-Product"/>
+            <itemState id="CP" name="C-Product" type="Product"/>
             <itemState id="S1" name="ScrewT1"/>
             <itemState id="S2" name="ScrewT2"/>
             <itemState id="G" name="Glue"/>
         </itemStates>
         <processes>
             <process id="PA1">
-                <inputs>
-                    <inputItemState idref="AR"/>
-                    <inputItemState idref="S1"/>
-                    <inputItemState idref="G"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="A1"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="AR"/>
+                    <inputItemRef idref="S1"/>
+                    <inputItemRef idref="G"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="A1"/>
+                </outputItemsRef>
             </process>
             <process id="PA2">
-                <inputs>
-                    <inputItemState idref="A1"/>
-                    <inputItemState idref="S2"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="AP"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="A1"/>
+                    <inputItemRef idref="S2"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="AP"/>
+                </outputItemsRef>
             </process>
             <process id="PB1">
-                <inputs>
-                    <inputItemState idref="BR"/>
-                    <inputItemState idref="S1"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="B1"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="BR"/>
+                    <inputItemRef idref="S1"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="B1"/>
+                </outputItemsRef>
             </process>
             <process id="PB2">
-                <inputs>
-                    <inputItemState idref="B1"/>
-                    <inputItemState idref="S2"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="BP"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="B1"/>
+                    <inputItemRef idref="S2"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="BP"/>
+                </outputItemsRef>
             </process>
             <process id="PC1">
-                <inputs>
-                    <inputItemState idref="CR1"/>
-                    <inputItemState idref="S1"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="C1"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="CR1"/>
+                    <inputItemRef idref="S1"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="C1"/>
+                </outputItemsRef>
             </process>
             <process id="PC2">
-                <inputs>
-                    <inputItemState idref="C1"/>
-                    <inputItemState idref="G"/>
-                </inputs>
-                <outputs>
-                    <outputItemState idref="CP"/>
-                </outputs>
+                <inputItemsRef>
+                    <inputItemRef idref="C1"/>
+                    <inputItemRef idref="G"/>
+                </inputItemsRef>
+                <outputItemsRef>
+                    <outputItemRef idref="CP"/>
+                </outputItemsRef>
             </process>
         </processes>
         <workstations>
             <workstation name="A-1 Assembler" id="W1">
-                <supportProcesses>
-                    <supportProcess idref="PA1"/>
-                </supportProcesses>
+                <supportProcessesRef>
+                    <supportProcessRef idref="PA1"/>
+                </supportProcessesRef>
             </workstation>
             <workstation name="ScrewT1 Adder" id="W2">
-                <supportProcesses>
-                    <supportProcess idref="PB1"/>
-                    <supportProcess idref="PC1"/>
-                </supportProcesses>
+                <supportProcessesRef>
+                    <supportProcessRef idref="PB1"/>
+                    <supportProcessRef idref="PC1"/>
+                </supportProcessesRef>
             </workstation>
             <workstation name="ScrewT2 Adder" id="W3">
-                <supportProcesses>
-                    <supportProcess idref="PA2"/>
-                    <supportProcess idref="PB2"/>
-                </supportProcesses>
+                <supportProcessesRef>
+                    <supportProcessRef idref="PA2"/>
+                    <supportProcessRef idref="PB2"/>
+                </supportProcessesRef>
             </workstation>
             <workstation name="C-Product Assembler" id="W4">
-                <supportProcesses>
-                    <supportProcess idref="PC2"/>
-                </supportProcesses>
+                <supportProcessesRef>
+                    <supportProcessRef idref="PC2"/>
+                </supportProcessesRef>
             </workstation>
         </workstations>
         <agv move-speed="5" rotate-speed="5" capacity="1"/>
@@ -105,16 +105,16 @@
         <groundSize x="50" y="50"/>
         <workstationInstances>
             <workstationInstance x="0" y="0">
-                <workstationModel idref="W1"/>
+                <workstationRef idref="W1"/>
             </workstationInstance>
             <workstationInstance x="0" y="0">
-                <workstationModel idref="W2"/>
+                <workstationRef idref="W2"/>
             </workstationInstance>
             <workstationInstance x="0" y="0">
-                <workstationModel idref="W3"/>
+                <workstationRef idref="W3"/>
             </workstationInstance>
             <workstationInstance x="0" y="0">
-                <workstationModel idref="W4"/>
+                <workstationRef idref="W4"/>
             </workstationInstance>
         </workstationInstances>
         <agvInstances>

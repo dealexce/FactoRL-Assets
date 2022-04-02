@@ -22,7 +22,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         
         protected Scenario _scenario;
 
-        private Ground _ground;
+        protected Ground Ground;
 
         public GameObject workstationPrefab;
         public string machinePrefabPath = "Machines";
@@ -44,7 +44,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void Start()
         {
-            _ground = GetComponentInChildren<Ground>();
             SceanrioLoader.Load(scenarioXmlPath);
             _scenario = SceanrioLoader.getScenario();
             Assert.IsNotNull(_scenario);
@@ -58,7 +57,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         protected void InitLayout()
         {
             //change ground size
-            _ground.changeSize(_scenario.layout.groundSize.x, _scenario.layout.groundSize.y);
+            Ground.changeSize(_scenario.layout.groundSize.x, _scenario.layout.groundSize.y);
 
             //instantiate workstation instances according to layout
             WorkstationUtil.Init(_scenario.model.workstations, machinePrefabPath);
@@ -86,7 +85,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             float randomX = Random.Range(minGroundX, maxGroundX);
             float randomY = Random.Range(minGroundY, maxGroundY);
-            _ground.changeSize(randomX, randomY);
+            Ground.changeSize(randomX, randomY);
 
             // Deactivate objects before reset position for better position randomization
             // TODO: Check whether this will cause problems

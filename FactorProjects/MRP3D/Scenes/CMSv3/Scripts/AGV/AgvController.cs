@@ -11,16 +11,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public PlaneController planeController { get; set; }
         public Agv agv;
-        public OrderedDictionary<string,List<Item>> HoldingItems;
+        public OrderedDictionary<string,List<Item>> HoldingItemsDict;
 
-        public AGVDispatcherAgent agvDispatcherAgent;
+        [HideInInspector]
+        public AgvDispatcherAgent agvDispatcherAgent;
+        [HideInInspector]
         public AGVMoveAgent agvMoveAgent;
         
         private Rigidbody _rigidbody;
         private void Awake()
         {
             _rigidbody = GetComponentInParent<Rigidbody>();
-            agvDispatcherAgent = GetComponentInChildren<AGVDispatcherAgent>();
+            agvDispatcherAgent = GetComponentInChildren<AgvDispatcherAgent>();
             agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
         }
 
@@ -33,44 +35,44 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void InitHoldingItems()
         {
-            HoldingItems = new OrderedDictionary<string,List<Item>>();
+            HoldingItemsDict = new OrderedDictionary<string,List<Item>>();
             foreach (var iId in SceanrioLoader.ItemStateDict.Keys)
             {
-                HoldingItems.Add(iId,new List<Item>());
+                HoldingItemsDict.Add(iId,new List<Item>());
             }
         }
 
         public AGVStatus GetStatus()
         {
-            return new AGVStatus(_rigidbody, HoldingItems, CurrentTarget);
+            return new AGVStatus(_rigidbody, HoldingItemsDict, CurrentTarget);
         }
 
         #region ItemHolderImplement
         public Item GetItem(string id)
         {
-            if (!HoldingItems.ContainsKey(id) 
-                || HoldingItems[id].Count <= 0)
+            if (!HoldingItemsDict.ContainsKey(id) 
+                || HoldingItemsDict[id].Count <= 0)
             {
                 return null;
             }
-            return HoldingItems[id][0];
+            return HoldingItemsDict[id][0];
         }
 
         public bool Store(Item item)
         {
-            if (!HoldingItems.ContainsKey(item.itemState.id))
+            if (!HoldingItemsDict.ContainsKey(item.itemState.id))
                 return false;
-            HoldingItems[item.itemState.id].Add(item);
+            HoldingItemsDict[item.itemState.id].Add(item);
             PlaceItems();
             return true;
         }
 
         public bool Remove(Item item)
         {
-            if (!HoldingItems.ContainsKey(item.itemState.id))
+            if (!HoldingItemsDict.ContainsKey(item.itemState.id))
                 return false;
             
-            if (!HoldingItems[item.itemState.id].Remove(item))
+            if (!HoldingItemsDict[item.itemState.id].Remove(item))
                 return false;
             
             PlaceItems();
@@ -80,12 +82,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
         {
             if (item==null
-                || !HoldingItems.ContainsKey(item.itemState.id))
+                || !HoldingItemsDict.ContainsKey(item.itemState.id))
             {
                 return ExchangeMessage.WrongType;
             }
             if(agv.capacitySpecified
-               && ItemOdUtils.ListsSumCount(HoldingItems.Values)>=agv.capacity)
+               && ItemOdUtils.ListsSumCount(HoldingItemsDict.Values)>=agv.capacity)
             {
                 return ExchangeMessage.Overload;
             }
@@ -95,8 +97,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public ExchangeMessage CheckGivable(IExchangeable receiver, Item item)
         {
             if (item != null 
-                && HoldingItems.ContainsKey(item.itemState.id)
-                && HoldingItems[item.itemState.id].Contains(item))
+                && HoldingItemsDict.ContainsKey(item.itemState.id)
+                && HoldingItemsDict[item.itemState.id].Contains(item))
             {
                 return ExchangeMessage.Ok;
             }
@@ -111,7 +113,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private void PlaceItems()
         {
             int i = 1;
-            foreach (var list in HoldingItems.Values)
+            foreach (var list in HoldingItemsDict.Values)
             {
                 foreach (var item in list)
                 {
@@ -150,7 +152,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 PolarTargetPos = Utils.NormalizedPolarRelativePosition(
                     transform,
                     CurrentTarget.GameObject.transform,
-                    planeController.normDistanceMaxValue);
+                    NormValues.DistanceMaxValue);
             }
         }
 
@@ -176,7 +178,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         public void ResetHolder()
         {
-            ItemOdUtils.DestroyAndClearLists(HoldingItems.Values,Destroy);
+            ItemOdUtils.DestroyAndClearLists(HoldingItemsDict.Values,Destroy);
         }
         
         private void OnTriggerEnter(Collider other)
@@ -187,7 +189,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 return;
             }
             //到达当前设定的target
-            if (otherGameObject == CurrentTarget.GameObject)
+            if (otherGameObject == CurrentTarget?.GameObject)
             {
                 
                 ArriveTarget();
@@ -235,7 +237,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         private void OnDrawGizmosSelected()
         {
-            if (CurrentTarget.GameObject != null)
+            if (CurrentTarget != null)
             {
                 Gizmos.color = Color.blue;
                 Gizmos.DrawLine(transform.position,CurrentTarget.GameObject.transform.position);

@@ -280,6 +280,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 
         public void Start()
         {
+            planeController = GetComponentInParent<PlaneController>();
             InitInputOutputItems();
             RefreshText();
         }
