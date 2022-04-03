@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Multi;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
