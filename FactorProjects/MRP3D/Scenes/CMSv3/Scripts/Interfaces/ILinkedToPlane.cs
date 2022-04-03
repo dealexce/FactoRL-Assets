@@ -2,6 +2,6 @@
 {
     public interface ILinkedToPlane
     {
-        public PlaneController planeController { get; set; }
+        public PlaneController PlaneController { get; set; }
     }
 }

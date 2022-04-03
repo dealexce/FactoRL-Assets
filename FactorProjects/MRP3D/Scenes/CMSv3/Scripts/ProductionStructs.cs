@@ -30,28 +30,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         Get,Give,Hold
     }
-
-
-    #endregion
-
-    #region Process
-    public record ProcessRecord
-    {
-        public int pid { get; private set; }
-        public string inputType { get; private set; }
-        public string outputType { get; private set; }
-        public float duration { get; private set; }
-
-        public ProcessRecord(){}
-
-        public ProcessRecord(int pid, string inputType, string outputType, float duration)
-        {
-            this.pid = pid;
-            this.inputType = inputType;
-            this.outputType = outputType;
-            this.duration = duration;
-        }
-    }
     #endregion
 
     #region Order
@@ -73,7 +51,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
     #region Status
 
-    public record AGVStatus
+    public record AgvStatus
     {
         /// <summary>
         /// for velocity information
@@ -82,7 +60,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public OrderedDictionary<string,List<Item>> HoldingItems;
         public Target Target;
 
-        public AGVStatus(Rigidbody rigidbody, OrderedDictionary<string,List<Item>> holdingItems, Target target)
+        public AgvStatus(Rigidbody rigidbody, OrderedDictionary<string,List<Item>> holdingItems, Target target)
         {
             Rigidbody = rigidbody;
             HoldingItems = holdingItems;

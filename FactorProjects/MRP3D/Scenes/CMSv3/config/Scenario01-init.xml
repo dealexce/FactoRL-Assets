@@ -104,21 +104,21 @@
     <layout>
         <groundSize x="50" y="50"/>
         <workstationInstances>
-            <workstationInstance x="0" y="0">
-                <workstationRef idref="W1"/>
-            </workstationInstance>
-            <workstationInstance x="0" y="0">
-                <workstationRef idref="W2"/>
-            </workstationInstance>
-            <workstationInstance x="0" y="0">
-                <workstationRef idref="W3"/>
-            </workstationInstance>
-            <workstationInstance x="0" y="0">
-                <workstationRef idref="W4"/>
-            </workstationInstance>
+<!--            <workstationInstance x="0" y="0">-->
+<!--                <workstationRef idref="W1"/>-->
+<!--            </workstationInstance>-->
+<!--            <workstationInstance x="0" y="0">-->
+<!--                <workstationRef idref="W2"/>-->
+<!--            </workstationInstance>-->
+<!--            <workstationInstance x="0" y="0">-->
+<!--                <workstationRef idref="W3"/>-->
+<!--            </workstationInstance>-->
+<!--            <workstationInstance x="0" y="0">-->
+<!--                <workstationRef idref="W4"/>-->
+<!--            </workstationInstance>-->
         </workstationInstances>
         <agvInstances>
-            <agv/>
+<!--            <agv/>-->
         </agvInstances>
         <importStation/>
         <exportStation/>

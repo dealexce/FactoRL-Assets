@@ -366,6 +366,27 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1530490451625291897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5828576488224440954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5721f682edb74960b84648f66c116044, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentParameters:
+    maxStep: 0
+  hasUpgradedFromAgentParameters: 1
+  MaxStep: 0
+  trainingMode: 1
+  showObsDebugInfo: 0
+  activateReward: 1
+  arriveReward: 1
+  collisionReward: -0.01
 --- !u!114 &6414437736524766740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -396,27 +417,6 @@ MonoBehaviour:
   m_UseChildSensors: 1
   m_UseChildActuators: 1
   m_ObservableAttributeHandling: 0
---- !u!114 &1530490451625291897
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5828576488224440954}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5721f682edb74960b84648f66c116044, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
-  trainingMode: 1
-  showObsDebugInfo: 0
-  activateReward: 1
-  arriveReward: 1
-  collisionReward: -0.01
 --- !u!4 &6889539904836143313 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3272909342327498059, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}

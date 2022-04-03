@@ -771,11 +771,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffa1103444dd4dfcbdc301cd9af7a371, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nameTextMesh: {fileID: 114804214382581396}
+  processTextMesh: {fileID: 4952812429195041983}
   inputPlateGameObject: {fileID: 4133336830233152977}
   processPlateGameObject: {fileID: 6596527977463589106}
   outputPlateGameObject: {fileID: 2254671324214478851}
-  nameTextMesh: {fileID: 6501516249766613147}
-  processTextMesh: {fileID: 5324883770312507107}
   holdActionDuration: 1
   itemInterval: 1
 --- !u!1 &8967289009620138078

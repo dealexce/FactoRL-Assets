@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scenario xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <model>
+    <modelName>Scenario01</modelName>
+    <itemStates>
+      <itemState id="AR" name="A-Raw" type="Raw" />
+      <itemState id="A1" name="A-1" />
+      <itemState id="AP" name="A-Product" />
+      <itemState id="BR" name="B-Raw" />
+      <itemState id="B1" name="B-1" />
+      <itemState id="BP" name="B-Product" />
+      <itemState id="CR1" name="C-Raw1" />
+      <itemState id="C1" name="C-1" />
+      <itemState id="CR2" name="C-Raw2" />
+      <itemState id="CP" name="C-Product" type="Product" />
+      <itemState id="S1" name="ScrewT1" />
+      <itemState id="S2" name="ScrewT2" />
+      <itemState id="G" name="Glue" />
+    </itemStates>
+    <processes>
+      <process id="PA1">
+        <inputItemsRef>
+          <inputItemRef idref="AR" />
+          <inputItemRef idref="S1" />
+          <inputItemRef idref="G" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="A1" />
+        </outputItemsRef>
+      </process>
+      <process id="PA2">
+        <inputItemsRef>
+          <inputItemRef idref="A1" />
+          <inputItemRef idref="S2" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="AP" />
+        </outputItemsRef>
+      </process>
+      <process id="PB1">
+        <inputItemsRef>
+          <inputItemRef idref="BR" />
+          <inputItemRef idref="S1" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="B1" />
+        </outputItemsRef>
+      </process>
+      <process id="PB2">
+        <inputItemsRef>
+          <inputItemRef idref="B1" />
+          <inputItemRef idref="S2" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="BP" />
+        </outputItemsRef>
+      </process>
+      <process id="PC1">
+        <inputItemsRef>
+          <inputItemRef idref="CR1" />
+          <inputItemRef idref="S1" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="C1" />
+        </outputItemsRef>
+      </process>
+      <process id="PC2">
+        <inputItemsRef>
+          <inputItemRef idref="C1" />
+          <inputItemRef idref="G" />
+        </inputItemsRef>
+        <outputItemsRef>
+          <outputItemRef idref="CP" />
+        </outputItemsRef>
+      </process>
+    </processes>
+    <workstations>
+      <workstation name="A-1 Assembler" id="W1">
+        <supportProcessesRef>
+          <supportProcessRef idref="PA1" />
+        </supportProcessesRef>
+      </workstation>
+      <workstation name="ScrewT1 Adder" id="W2">
+        <supportProcessesRef>
+          <supportProcessRef idref="PB1" />
+          <supportProcessRef idref="PC1" />
+        </supportProcessesRef>
+      </workstation>
+      <workstation name="ScrewT2 Adder" id="W3">
+        <supportProcessesRef>
+          <supportProcessRef idref="PA2" />
+          <supportProcessRef idref="PB2" />
+        </supportProcessesRef>
+      </workstation>
+      <workstation name="C-Product Assembler" id="W4">
+        <supportProcessesRef>
+          <supportProcessRef idref="PC2" />
+        </supportProcessesRef>
+      </workstation>
+    </workstations>
+    <agv move-speed="5" rotate-speed="5" capacity="1" />
+  </model>
+  <layout>
+    <groundSize x="50" y="40" />
+    <workstationInstances />
+    <agvInstances />
+    <importStation x="5.43207" y="-6.52173662" />
+    <exportStation x="-4.70780039" y="-6.763282" />
+  </layout>
+</scenario>
