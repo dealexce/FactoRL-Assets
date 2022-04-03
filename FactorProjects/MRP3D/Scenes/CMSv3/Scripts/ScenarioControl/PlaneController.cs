@@ -1,16 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using OD;
+using Unity.MLAgents;
+using Unity.MLAgents.Policies;
 using UnityEngine;
+using UnityEngine.Assertions;
+using Object = System.Object;
 using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class PlaneController : ScenarioGenerator
     {
-
+        
         public new void Start()
         {
             base.Start();
+            _instantiatedComplete = true;
+            foreach (var (id,actionSpace) in AgentTypeActionSpaceDict.Values)
+            {
+                MaxActionSpaceSize = Math.Max(actionSpace.Count, MaxActionSpaceSize);
+            }
+            Debug.LogFormat("Max action space size is: {0}",MaxActionSpaceSize);
+            Debug.LogFormat("Goal sensor size should be: {0}",GetAgentTypeCount());
+            // Verify all agent's behaviour parameter settings of action space. Should all be MaxActionSpaceSize
+            foreach (var registeredAgent in AgentGroup.GetRegisteredAgents())
+            {
+                var specSize = registeredAgent.GetComponent<BehaviorParameters>().BrainParameters.ActionSpec.BranchSizes[0];
+                if(specSize!=MaxActionSpaceSize)
+                    Debug.LogErrorFormat(
+                        "{0}: Action space size does not match, should be {1}, but set to {2}",
+                        registeredAgent.GetType().Name,
+                        MaxActionSpaceSize,specSize);
+            }
             // init productStockDict
             foreach (var itemState in _scenario.model.itemStates)
             {
@@ -19,8 +42,94 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     productStockDict.Add(itemState.id,0);
                 }
             }
-            InitRl();
+            InitGameObjectControllerDict();
             InitGameObjectExchangeableDict();
+        }
+
+        public int MaxStep = 30000;
+        [SerializeField]
+        [InspectorUtil.DisplayOnly]
+        private int currentStep = 0;
+
+        private void FixedUpdate()
+        {
+            currentStep++;
+            if (currentStep > MaxStep)
+            {
+                currentStep = 0;
+                ResetPlane();
+            }
+        }
+
+        private void ResetPlane()
+        {
+            AgentGroup.EndGroupEpisode();
+            //TODO: Reset Layout
+            foreach (var c in WorkstationControllerDict.Values)
+            {
+                c.EpisodeReset();
+            }
+            foreach (var c in AgvControllerDict.Values)
+            {
+                c.EpisodeReset();
+            }
+        }
+
+        public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
+        public Dictionary<GameObject, AgvController> AgvControllerDict;
+        public Dictionary<GameObject, ImportController> ImportControllerDict;
+        public Dictionary<GameObject, ExportController> ExportControllerDict;
+        private void InitGameObjectControllerDict()
+        {
+            WorkstationControllerDict = new Dictionary<GameObject, WorkstationController>();
+            AgvControllerDict = new Dictionary<GameObject, AgvController>();
+            ImportControllerDict = new Dictionary<GameObject, ImportController>();
+            ExportControllerDict = new Dictionary<GameObject, ExportController>();
+            foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
+            {
+                WorkstationControllerDict.Add(wsObj,wsObj.GetComponent<WorkstationController>());
+            }
+            foreach (var agvObj in EntityGameObjectsDict[typeof(Agv)])
+            {
+                AgvControllerDict.Add(agvObj,agvObj.GetComponent<AgvController>());
+            }
+            foreach (var o in EntityGameObjectsDict[typeof(ImportStation)])
+            {
+                ImportControllerDict.Add(o,o.GetComponent<ImportController>());
+            }
+            foreach (var o in EntityGameObjectsDict[typeof(ExportStation)])
+            {
+                ExportControllerDict.Add(o,o.GetComponent<ExportController>());
+            }
+        }
+        /// <summary>
+        /// Dictionary from GameObject to IExchangeable instances. This will NOT be updated after Start()!
+        /// </summary>
+        public Dictionary<GameObject, IExchangeable> GameObjectExchangeableDict;
+        public void InitGameObjectExchangeableDict()
+        {
+            GameObjectExchangeableDict = new Dictionary<GameObject, IExchangeable>();
+            foreach (var c in WorkstationControllerDict.Values)
+            {
+                GameObjectExchangeableDict.Add(c.inputPlateGameObject,c);
+                GameObjectExchangeableDict.Add(c.outputPlateGameObject,c);
+            }
+            foreach (var c in ImportControllerDict.Values)
+            {
+                GameObjectExchangeableDict.Add(c.gameObject,c);
+            }
+            foreach (var c in ExportControllerDict.Values)
+            {
+                GameObjectExchangeableDict.Add(c.gameObject,c);
+            }
+            // ItemOdUtils.IterateLists(
+            //     EntityGameObjectsDict.Values,
+            //     itemAction: o =>
+            //     {
+            //         var exchangeable = (IExchangeable) o.GetComponent(typeof(IExchangeable));
+            //         if(exchangeable!=null)
+            //             GameObjectExchangeableDict.Add(o,exchangeable);
+            //     });
         }
 
         /// <summary>
@@ -41,121 +150,49 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 if(c is ILinkedToPlane l)
                     l.PlaneController = this;
             }
+            if (g.GetComponent(typeof(IResettable)) is IResettable resettable)
+                resettable.InitPosition = g.transform.position;
             return g;
         }
 
-        /// <summary>
-        /// Dictionary from GameObject to IExchangeable instances. This will NOT be updated after Start()!
-        /// </summary>
-        public Dictionary<GameObject, IExchangeable> GameObjectExchangeableDict;
-        public void InitGameObjectExchangeableDict()
+        private bool _instantiatedComplete = false;
+        private SimpleMultiAgentGroup AgentGroup = new SimpleMultiAgentGroup();
+        private static Dictionary<string, (int,List<object>)> AgentTypeActionSpaceDict = new Dictionary<string, (int,List<object>)>();
+        public int RegisterAgent<T>(EntityAgent<T> agent, string typeId, Func<List<T>> initFunc)
         {
-            GameObjectExchangeableDict = new Dictionary<GameObject, IExchangeable>();
-            ItemOdUtils.IterateLists(
-                EntityGameObjectsDict.Values,
-                itemAction: o =>
-                {
-                    var exchangeable = (IExchangeable) o.GetComponent(typeof(IExchangeable));
-                    if(exchangeable!=null)
-                        GameObjectExchangeableDict.Add(o,exchangeable);
-                });
+            if (_instantiatedComplete)
+                throw new Exception("Instantiation has been complete. Cannot register agent any more.");
+            int typeNum;
+            if (AgentTypeActionSpaceDict.ContainsKey(typeId))
+            {
+                var a = AgentTypeActionSpaceDict[typeId];
+                typeNum = a.Item1;
+                
+                agent.ActionSpace = a.Item2.Cast<T>().ToList();
+            }
+            else
+            {
+                typeNum = AgentTypeActionSpaceDict.Count;
+                var a = initFunc();
+                agent.ActionSpace = a;
+                AgentTypeActionSpaceDict.Add(typeId,(typeNum,a.Cast<object>().ToList()));
+            }
+            AgentGroup.RegisterAgent(agent);
+            return typeNum;
+        }
+
+        public static int MaxActionSpaceSize { get; private set; } = 0;
+        public static int GetAgentTypeCount()
+        {
+            return AgentTypeActionSpaceDict.Count;
         }
         
 
-        #region RL
 
-
-
-        public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
-        public Dictionary<GameObject, AgvController> AgvControllerDict;
-        private void InitRl()
-        {
-            WorkstationControllerDict = new Dictionary<GameObject, WorkstationController>();
-            AgvControllerDict = new Dictionary<GameObject, AgvController>();
-            foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
-            {
-                WorkstationControllerDict.Add(wsObj,wsObj.GetComponent<WorkstationController>());
-            }
-            foreach (var agvObj in EntityGameObjectsDict[typeof(Agv)])
-            {
-                AgvControllerDict.Add(agvObj,agvObj.GetComponent<AgvController>());
-            }
-            
-            InitActionSpaces();
-        }
-        private void InitActionSpaces()
-        {
-            InitAgvDispatcherActionSpace();
-        }
-
-        // At present, all AGVs have identical action spaces,
-        // therefore initiate it at PlaneController once for all.
-        public List<Target> AgvDispatcherActionSpace { get; private set; }
-        private void InitAgvDispatcherActionSpace()
-        {
-            AgvDispatcherActionSpace = new List<Target>();
-            // Target==null refers to no target
-            AgvDispatcherActionSpace.Add(null);
-            foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
-            {
-                // possible [give x input item state] actions to workstation
-                var controller = wsObj.GetComponent<WorkstationController>();
-                foreach (var itemStateId in controller.InputBufferItemsDict.Keys)
-                {
-                    AgvDispatcherActionSpace.Add(new Target(
-                        controller.inputPlateGameObject,
-                        TargetAction.Give,
-                        itemStateId));
-                }
-                // possible [get x output item state] actions to workstation
-                foreach (var itemStateId in controller.OutputBufferItemsDict.Keys)
-                {
-                    AgvDispatcherActionSpace.Add(new Target(
-                        controller.outputPlateGameObject,
-                        TargetAction.Get,
-                        itemStateId));
-                }
-            }
-            
-            // possible give product actions to export station
-            foreach (var esObj in EntityGameObjectsDict[typeof(ExportStation)])
-            {
-                foreach (var iId in productStockDict.Keys)
-                {
-                    AgvDispatcherActionSpace.Add(new Target(
-                        esObj,
-                        TargetAction.Give,
-                        iId));
-                }
-            }
-            // possible get raw actions to import station
-            foreach (var isObj in EntityGameObjectsDict[typeof(ImportStation)])
-            {
-                var controller = isObj.GetComponent<ImportController>();
-                foreach (var iId in controller.RawItemsDict.Keys)
-                {
-                    AgvDispatcherActionSpace.Add(new Target(
-                        isObj,
-                        TargetAction.Get,
-                        iId));
-                }
-            }
-        }
-        
-        // Different type of workstations have different action spaces,
-        // therefore it is initiated in Start() at each WorkstationAgent.
-        //private void InitWorkstationActionSpace(){}
-        
-
-        #endregion
-
-        
-        
-        
         public GameObject itemPrefab;
         public Item InstantiateItem(string id, GameObject parentObj)
         {
-            ItemState itemState = SceanrioLoader.getItemState(id);
+            ItemState itemState = ScenarioLoader.getItemState(id);
             if (itemState!=null)
             {
                 GameObject obj = Instantiate(itemPrefab, parentObj.transform);
@@ -163,11 +200,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 item.SetItemState(itemState);
                 return item;
             }
-            else
-            {
-                Debug.LogError("Tried to instantiate an item not defined in description model: "+id);
-                return null;
-            }
+            Debug.LogError("Tried to instantiate an item not defined in description model: "+id);
+            return null;
         }
 
         #region Order
@@ -179,7 +213,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private void GenerateOneRandomOrder()
         {
             Order o = new Order(
-                SceanrioLoader.ProductItemStates[Random.Range(0, SceanrioLoader.ProductItemStates.Count)].id, 
+                ScenarioLoader.ProductItemStates[Random.Range(0, ScenarioLoader.ProductItemStates.Count)].id, 
                 GetRandomNonConflictDeadline());
             
             orderList.Add(o.deadLine,o);
@@ -225,9 +259,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void OrderFinished(Order o)
         {
-            // _AGVMultiAgentGroup.AddGroupReward(.1f);
-            // groundController.FlipColor(Ground.GroundSwitchColor.Green);
-            // finishedOrders++;
+            AgentGroup.AddGroupReward(.1f);
+            ground.FlipColor(Ground.GroundSwitchColor.Green);
         }
 
         #endregion

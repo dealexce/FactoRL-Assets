@@ -26,17 +26,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             StringBuilder sb = new StringBuilder();
             foreach (var pref in Workstation.supportProcessesRef)
             {
-                Process p = SceanrioLoader.getProcess(pref.idref);
+                Process p = ScenarioLoader.getProcess(pref.idref);
                 foreach (var iRef in p.inputItemsRef)
                 {
-                    sb.Append(SceanrioLoader.getItemState(iRef.idref).name);
+                    sb.Append(ScenarioLoader.getItemState(iRef.idref).name);
                     sb.Append('+');
                 }
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append("=>");
                 foreach (var iRef in p.outputItemsRef)
                 {
-                    sb.Append(SceanrioLoader.getItemState(iRef.idref).name);
+                    sb.Append(ScenarioLoader.getItemState(iRef.idref).name);
                     sb.Append('+');
                 }
                 sb.Remove(sb.Length - 1, 1);

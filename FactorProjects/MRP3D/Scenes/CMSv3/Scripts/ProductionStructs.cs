@@ -59,26 +59,31 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public Rigidbody Rigidbody;
         public OrderedDictionary<string,List<Item>> HoldingItems;
         public Target Target;
+        public List<Target> ActionSpace;
 
-        public AgvStatus(Rigidbody rigidbody, OrderedDictionary<string,List<Item>> holdingItems, Target target)
+        public AgvStatus(Rigidbody rigidbody, OrderedDictionary<string, List<Item>> holdingItems, Target target, List<Target> actionSpace)
         {
             Rigidbody = rigidbody;
             HoldingItems = holdingItems;
             Target = target;
+            ActionSpace = actionSpace;
         }
     }
 
     public record WorkstationStatus
     {
+        
         public Process CurrentProcess;
         public OrderedDictionary<string,List<Item>> InputBufferItems;
         public OrderedDictionary<string,List<Item>> OutputBufferItems;
-
-        public WorkstationStatus(Process currentProcess, OrderedDictionary<string, List<Item>> inputBufferItems, OrderedDictionary<string, List<Item>> outputBufferItems)
+        public List<Process> ActionSpace;
+        
+        public WorkstationStatus(Process currentProcess, OrderedDictionary<string, List<Item>> inputBufferItems, OrderedDictionary<string, List<Item>> outputBufferItems, List<Process> actionSpace)
         {
             CurrentProcess = currentProcess;
             InputBufferItems = inputBufferItems;
             OutputBufferItems = outputBufferItems;
+            ActionSpace = actionSpace;
         }
     }
     

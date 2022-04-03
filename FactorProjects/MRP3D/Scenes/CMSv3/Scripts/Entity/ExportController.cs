@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class ExportController : MonoBehaviour, IExchangeable, ILinkedToPlane, IResetable, IManualInit<ExportStation>
+    public class ExportController : MonoBehaviour, IExchangeable, ILinkedToPlane, IResettable, IManualInit<ExportStation>
     {
         public PlaneController PlaneController { get; set; }
 
@@ -12,10 +12,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             
         }
-
+        public Vector3 InitPosition { get; set; }
         public void EpisodeReset()
         {
-            
+            transform.position = InitPosition;
         }
 
         private void Awake()
@@ -35,6 +35,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
         {
+            if (item == null)
+                return ExchangeMessage.WrongType;
             if (item.itemState.type==SpecialItemStateType.Product)
             {
                 return ExchangeMessage.Ok;

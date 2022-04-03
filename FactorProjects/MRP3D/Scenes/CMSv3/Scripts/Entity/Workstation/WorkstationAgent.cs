@@ -8,25 +8,22 @@ using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class WorkstationAgent : Agent, ILinkedToPlane
+    public class WorkstationAgent : EntityAgent<Process>, ILinkedToPlane
     {
-        private WorkstationController _workstationController;
-        private List<Process> _actionSpace;
+        [SerializeField]
+        private WorkstationController workstationController;
         public PlaneController PlaneController { get; set; }
 
-        private void Awake()
+        public List<Process> InitActionSpace()
         {
-            _workstationController = GetComponentInParent<WorkstationController>();
-        }
-
-        private void InitActionSpace()
-        {
+            var actionSpace = new List<Process>();
             // Process==null refers to no process
-            _actionSpace.Add(null);
-            foreach (var pRef in _workstationController.Workstation.supportProcessesRef)
+            actionSpace.Add(null);
+            foreach (var pRef in workstationController.Workstation.supportProcessesRef)
             {
-                _actionSpace.Add(SceanrioLoader.getProcess(pRef.idref));
+                actionSpace.Add(ScenarioLoader.getProcess(pRef.idref));
             }
+            return actionSpace;
         }
 
         public bool useMask = false;
@@ -34,11 +31,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// If useMask==true, set action mask to false where the action process that cannot be executed for now
         /// </summary>
         /// <param name="actionMask"></param>
-        public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
+        protected override void WriteDiscreteActionMaskProtected(IDiscreteActionMask actionMask)
         {
-            for (int i = 0; i < _actionSpace.Count; i++)
+            if(!useMask)
+                return;
+            for (int i = 0; i < ActionSpace.Count; i++)
             {
-                if(!_workstationController.CheckProcessIsExecutable(_actionSpace[i]))
+                if(workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
                     actionMask.SetActionEnabled(0,i,false);
             }
         }
@@ -46,20 +45,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void OnActionReceived(ActionBuffers actions)
         {
             var action = actions.DiscreteActions[0];
-            _workstationController.StartProcess(_actionSpace[action]);
+            workstationController.StartProcess(ActionSpace[action]);
         }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="sensor"></param>
-        public override void CollectObservations(VectorSensor sensor)
+        protected override void CollectObservationsProtected(VectorSensor sensor)
         {
             //throw new NotImplementedException();
             //collect relative position and status of all workstations
             foreach (var (wsObj,wsController) in PlaneController.WorkstationControllerDict)
             {
-                if (wsController == _workstationController)
+                if (wsController == workstationController)
                 {
                     continue;
                 }
@@ -84,10 +83,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 }
                 // If current process != null, pOneHot = index of current process in workstation.supportProcessesRef
                 // else, pOneHot = workstation.supportProcessesRef.Count
-                var supportProcessesRef = wsController.Workstation.supportProcessesRef;
-                foreach(var pRef in supportProcessesRef)
+                foreach(var process in s.ActionSpace)
                 {
-                    sensor.AddObservation(s.CurrentProcess.id == pRef.idref ? 1.0f : 0.0f);
+                    sensor.AddObservation(s.CurrentProcess == process ? 1.0f : 0.0f);
                 }
             }
             
@@ -106,7 +104,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 
                 var s = agvController.GetStatus();
                 // Collect current currentTarget information
-                foreach (var target in PlaneController.AgvDispatcherActionSpace)
+                foreach (var target in s.ActionSpace)
                 {
                     sensor.AddObservation(s.Target == target ? 1.0f : 0.0f);
                 }
@@ -128,7 +126,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             foreach (var (ddl,order) in PlaneController.orderList)
             {
                 sensor.AddObservation((ddl-Time.fixedTime)/NormValues.TimeLeftMaxValue);
-                foreach (var itemState in SceanrioLoader.ProductItemStates)
+                foreach (var itemState in ScenarioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
                 }
@@ -141,7 +139,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                               (NormValues.OrderObservationLength - orderCount), 
                               0, 
                               NormValues.OrderObservationLength)
-                          * (1 + SceanrioLoader.ProductItemStates.Count);
+                          * (1 + ScenarioLoader.ProductItemStates.Count);
             sensor.AddObservation(new float[padSize]);
         }
 
@@ -164,11 +162,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <returns></returns>
         private int GetFirstExecutableProcessIndex()
         {
-            for (int i = 0; i < _actionSpace.Count; i++)
+            for (int i = 0; i < ActionSpace.Count; i++)
             {
-                if(_actionSpace[i]==null)
+                if(ActionSpace[i]==null)
                     continue;
-                if (!_workstationController.CheckProcessIsExecutable(_actionSpace[i]))
+                if (workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
                 {
                     continue;
                 }
@@ -180,11 +178,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private int GetRandomExecutableProcessIndex()
         {
             List<int> executables = new List<int>();
-            for (int i = 0; i < _actionSpace.Count; i++)
+            for (int i = 0; i < ActionSpace.Count; i++)
             {
-                if(_actionSpace[i]==null)
+                if(ActionSpace[i]==null)
                     continue;
-                if (!_workstationController.CheckProcessIsExecutable(_actionSpace[i]))
+                if (workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
                 {
                     continue;
                 }

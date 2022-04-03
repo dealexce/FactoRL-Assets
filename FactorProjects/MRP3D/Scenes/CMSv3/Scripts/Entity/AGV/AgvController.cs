@@ -2,28 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using OD;
+using Unity.MLAgents;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
 
-    public class AgvController : AgvControllerBase, IExchangeable, IResetable, ILinkedToPlane, IHasStatus<AgvStatus>, IManualInit<Agv>
+    public class AgvController : AgvControllerBase, IExchangeable, IResettable, ILinkedToPlane, IHaveStatus<AgvStatus>, IHaveAgent
     {
         public PlaneController PlaneController { get; set; }
         public OrderedDictionary<string,List<Item>> HoldingItemsDict;
 
-        [HideInInspector]
-        public AgvDispatcherAgent agvDispatcherAgent;
-        [HideInInspector]
-        public AGVMoveAgent agvMoveAgent;
-        
+        [SerializeField]
+        private AgvDispatcherAgent agvDispatcherAgent;
+        [SerializeField]
+        private AGVMoveAgent agvMoveAgent;
         private Rigidbody _rigidbody;
         private void Awake()
         {
             _rigidbody = GetComponentInParent<Rigidbody>();
-            agvDispatcherAgent = GetComponentInChildren<AgvDispatcherAgent>();
-            agvMoveAgent = GetComponentInChildren<AGVMoveAgent>();
         }
 
         public override void Init(Agv model)
@@ -32,12 +30,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             InitHoldingItems();
             moveSpeed = model.movespeed;
             rotateSpeed = model.rotatespeed;
+            agvDispatcherAgent.typeNum = PlaneController.RegisterAgent(agvDispatcherAgent, "AD",agvDispatcherAgent.InitActionSpace);
         }
 
         private void InitHoldingItems()
         {
             HoldingItemsDict = new OrderedDictionary<string,List<Item>>();
-            foreach (var iId in SceanrioLoader.ItemStateDict.Keys)
+            foreach (var iId in ScenarioLoader.ItemStateDict.Keys)
             {
                 HoldingItemsDict.Add(iId,new List<Item>());
             }
@@ -45,7 +44,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public AgvStatus GetStatus()
         {
-            return new AgvStatus(_rigidbody, HoldingItemsDict, CurrentTarget);
+            return new AgvStatus(_rigidbody, HoldingItemsDict, CurrentTarget,agvDispatcherAgent.ActionSpace);
+        }
+
+        public Agent GetAgent()
+        {
+            return agvDispatcherAgent;
         }
 
         #region ItemHolderImplement
@@ -166,21 +170,27 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
         }
 
+        public Vector3 InitPosition { get; set; }
 
         public void EpisodeReset()
         {
+            transform.position = InitPosition;
             transform.rotation = Quaternion.identity;
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
             ResetHolder();
             agvMoveAgent.EpisodeInterrupted();
-            //agvDispatcherAgent.RequestTargetDecision();
         }
         public void ResetHolder()
         {
             ItemOdUtils.DestroyAndClearLists(HoldingItemsDict.Values,Destroy);
         }
-        
+
+        private void Start()
+        {
+            agvDispatcherAgent.RequestTargetDecision();
+        }
+
         private void OnTriggerEnter(Collider other)
         {
             GameObject otherGameObject = other.gameObject;
@@ -191,19 +201,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             //到达当前设定的target
             if (otherGameObject == CurrentTarget?.GameObject)
             {
-                
                 ArriveTarget();
                 agvDispatcherAgent.RequestTargetDecision();
             }
         }
         private void OnCollisionEnter(Collision other)
         {
-            agvMoveAgent.collideTrain();
+            agvMoveAgent.CollideTrain();
         }
 
         private void OnCollisionStay(Collision other)
         {
-            agvMoveAgent.collideTrain();
+            agvMoveAgent.CollideTrain();
         }
         
         public void AssignNewTarget(Target newTarget)

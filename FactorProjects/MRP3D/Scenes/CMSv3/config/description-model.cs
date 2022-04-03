@@ -506,7 +506,7 @@ public partial class Workstation {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-public partial class Process {
+public partial class Process{
     
     private ItemState[] inputItemsRefField;
     

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6385131209887719093}
   - component: {fileID: 4722643332102197537}
   - component: {fileID: 2183408822918589266}
+  - component: {fileID: 6089161772610002721}
   m_Layer: 0
   m_Name: Dispatcher
   m_TagString: Untagged
@@ -46,12 +47,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 1
+    VectorObservationSize: 520
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
-      BranchSizes: 01000000
-    VectorActionSize: 01000000
+      BranchSizes: 41000000
+    VectorActionSize: 41000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
@@ -79,7 +80,27 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
-  useMask: 0
+  typeNum: -1
+  goalSensor: {fileID: 6089161772610002721}
+  behaviorParameters: {fileID: 4722643332102197537}
+  agvController: {fileID: 4633030942523245412}
+  useMask: 1
+--- !u!114 &6089161772610002721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 361546378755540507}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b7cc1f5819445aa85e9a9b054552dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SensorName: VectorSensor
+  m_ObservationSize: 5
+  m_ObservationType: 1
+  m_ObservationStacks: 1
 --- !u!1 &3138914704657889545
 GameObject:
   m_ObjectHideFlags: 0
@@ -143,8 +164,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc37becf027d46908a99b76becc7e4c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  agvDispatcherAgent: {fileID: 0}
-  agvMoveAgent: {fileID: 0}
+  agvDispatcherAgent: {fileID: 2183408822918589266}
+  agvMoveAgent: {fileID: 1530490451625291897}
   itemInterval: 1
   fixDecision: 1
   moveSpeed: 5
@@ -345,8 +366,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 2193018656325368372, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}
 --- !u!1 &5828576488224440954 stripped
 GameObject:
@@ -382,6 +402,7 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
+  agvController: {fileID: 4633030942523245412}
   trainingMode: 1
   showObsDebugInfo: 0
   activateReward: 1
@@ -400,23 +421,37 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 1
+    VectorObservationSize: 4
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
-      BranchSizes: 01000000
-    VectorActionSize: 01000000
+      BranchSizes: 0300000003000000
+    VectorActionSize: 0300000003000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: 6f448659a62a3a84295a5855144c32ff, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 0
-  m_BehaviorName: CMSv3Move
+  m_BehaviorType: 2
+  m_BehaviorName: CMSv2AGVMove
   TeamId: 0
   m_UseChildSensors: 1
   m_UseChildActuators: 1
   m_ObservableAttributeHandling: 0
+--- !u!114 &6966216042367011678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5828576488224440954}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DecisionPeriod: 5
+  TakeActionsBetweenDecisions: 1
 --- !u!4 &6889539904836143313 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3272909342327498059, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}

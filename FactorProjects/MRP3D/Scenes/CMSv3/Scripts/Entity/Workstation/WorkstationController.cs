@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using OD;
 using TMPro;
 using UnityEngine;
@@ -12,9 +13,10 @@ using UnityEngine.Assertions;
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class WorkstationController : WorkstationControllerBase,
-        IExchangeable, IResetable, ILinkedToPlane, IHasStatus<WorkstationStatus>
+        IExchangeable, IResettable, ILinkedToPlane, IHaveStatus<WorkstationStatus>
     {
         public PlaneController PlaneController { get; set; }
+        public WorkstationAgent workstationAgent;
         public GameObject inputPlateGameObject;
         public GameObject processPlateGameObject;
         public GameObject outputPlateGameObject;
@@ -24,12 +26,26 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public OrderedDictionary<string,List<Item>> ProcessingInputItemsDict;
         public OrderedDictionary<string,List<Item>> OutputBufferItemsDict;
 
+        public override void Init(Workstation model)
+        {
+            base.Init(model);
+            ProcessingInputItemsDict = new OrderedDictionary<string, List<Item>>();
+            InitInputOutputItems();
+            workstationAgent.InitActionSpace();
+            workstationAgent.typeNum = PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id,workstationAgent.InitActionSpace);
+        }
+        private void Start()
+        {
+            workstationAgent.DecideProcess();
+        }
+
         public WorkstationStatus GetStatus()
         {
             return new WorkstationStatus(
                 CurrentProcess,
                 InputBufferItemsDict,
-                OutputBufferItemsDict);
+                OutputBufferItemsDict,
+                workstationAgent.ActionSpace);
         }
 
         #region IExchangeable Implement
@@ -89,8 +105,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         #endregion
 
-        #region IResetable Implement
-
+        #region IResettable Implement
+        public Vector3 InitPosition { get; set; }
         public void EpisodeReset()
         {
             StopCoroutine(nameof(ProcessItemToOutput));
@@ -98,6 +114,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             ItemOdUtils.DestroyAndClearLists(InputBufferItemsDict.Values,Destroy);
             ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
             ItemOdUtils.DestroyAndClearLists(OutputBufferItemsDict.Values,Destroy);
+            transform.position = InitPosition;
         }
 
         #endregion
@@ -105,42 +122,64 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         #region Workstation Process Implement
         
         public Process CurrentProcess { get; private set; } = null;
+        [InspectorUtil.DisplayOnly]
+        public string currentProcessName;
         public void StartProcess(Process process)
         {
             ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
             CurrentProcess = process;
             if (process==null)
             {
+                currentProcessName = "Hold";
                 StartCoroutine(nameof(Hold));
                 return;
             }
-            if (CheckProcessIsExecutable(process))
-                StartCoroutine(nameof(ProcessItemToOutput),(ProcessingInputItemsDict,process));
+            currentProcessName = process.id;
+            var status = CheckProcessIsExecutable(process);
+            switch (status)
+            {
+                case ProcessExecutableStatus.Ok:
+                    StartCoroutine(nameof(ProcessItemToOutput),(ProcessingInputItemsDict,process));
+                    break;
+                case ProcessExecutableStatus.Unsupported:
+                    Debug.LogWarning(Workstation.name + ": Cannot start chosen process: " +
+                                     "chosen process is not supported");
+                    break;
+                case ProcessExecutableStatus.LackOfInput:
+                    Debug.LogWarning(Workstation.name + ": Cannot start chosen process: " +
+                                     "some required input items are not found in input buffer");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
+        public enum ProcessExecutableStatus
+        {
+            Ok,Unsupported,LackOfInput
+        }
         /// <summary>
         /// Check whether a process can be executed at present.
-        /// If yes, load required input items into ProcessingInputItemsDict.
+        /// If true, load required input items into ProcessingInputItemsDict.
         /// Else, clear the ProcessingInputItemsDict
         /// </summary>
         /// <param name="process"></param>
         /// <returns></returns>
-        public bool CheckProcessIsExecutable(Process process)
+        public ProcessExecutableStatus CheckProcessIsExecutable(Process process)
         {
-            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
             if (process == null)
-                return true;
+                return ProcessExecutableStatus.Ok;
+            // Check whether the process is in support process list
+            if (!Workstation.supportProcessesRef.Select(p => p.idref).Contains(process.id))
+                return ProcessExecutableStatus.Unsupported;
+            
+            var status = ProcessExecutableStatus.Ok;
+            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+
             // Find required input items in input buffer
             foreach (var iRef in process.inputItemsRef)
             {
-                if (!InputBufferItemsDict.ContainsKey(iRef.idref))
-                {
-                    ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
-                    // Debug.LogWarning(workstation.name + ": Cannot start chosen process: " +
-                    //                  "contains unsupported input(s)");
-                    
-                    return false;
-                }
+                Assert.IsTrue(InputBufferItemsDict.ContainsKey(iRef.idref));
                 var itemList = InputBufferItemsDict[iRef.idref];
                 if (itemList.Count > 0)
                 {
@@ -152,23 +191,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 else
                 {
                     // Input buffer does not have required input item
-                    // ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
-                    // Debug.LogWarning(workstation.name + ": Cannot start chosen process: " +
-                    //                  "some required input items are not found in input buffer");
-                    return false;
+                    status = ProcessExecutableStatus.LackOfInput;
+                    break;
                 }
             }
-            return true;
+            
+            if(status!=ProcessExecutableStatus.Ok)
+                ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+            return status;
         }
 
         public float holdActionDuration = 1f;
-        IEnumerator Hold()
+
+        private IEnumerator Hold()
         {
             yield return new WaitForSeconds(holdActionDuration);
             Done();
         }
 
-        IEnumerator ProcessItemToOutput(Process p)
+        private IEnumerator ProcessItemToOutput([NotNull] Process p)
         {
             // Simulate process time
             yield return new WaitForSeconds(p.duration);
@@ -194,12 +235,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private void Done()
         {
             CurrentProcess = null;
+            currentProcessName = "null";
+            workstationAgent.DecideProcess();
         }
 
         #endregion
-
-        
-        
         
         #region Visualization
 
@@ -234,7 +274,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             OutputBufferItemsDict = new OrderedDictionary<string,List<Item>>();
             foreach (var pRef in Workstation.supportProcessesRef)
             {
-                var p = SceanrioLoader.getProcess(pRef.idref);
+                var p = ScenarioLoader.getProcess(pRef.idref);
                 foreach (var iRef in p.inputItemsRef)
                 {
                     if(!InputBufferItemsDict.ContainsKey(iRef.idref))
@@ -246,13 +286,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         OutputBufferItemsDict.Add(iRef.idref,new List<Item>());
                 }
             }
-        }
-
-                
-        public override void Init(Workstation model)
-        {
-            base.Init(model);
-            InitInputOutputItems();
         }
 
     }

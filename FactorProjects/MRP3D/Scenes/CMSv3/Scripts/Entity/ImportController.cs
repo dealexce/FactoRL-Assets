@@ -14,9 +14,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void Init(ImportStation importStation=null)
         {
             RawItemsDict = new Dictionary<string, Item>();
-            foreach (var (id,itemState) in SceanrioLoader.ItemStateDict)
+            foreach (var itemState in ScenarioLoader.RawItemStates)
             {
-                RawItemsDict.Add(id,PlaneController.InstantiateItem(id, gameObject));
+                RawItemsDict.Add(itemState.id,PlaneController.InstantiateItem(itemState.id, gameObject));
             }
         }
 
@@ -49,6 +49,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public ExchangeMessage CheckGivable(IExchangeable receiver, Item item)
         {
+            if (item == null)
+                return ExchangeMessage.WrongType;
             if (RawItemsDict.ContainsKey(item.itemState.id))
             {
                 return ExchangeMessage.Ok;

@@ -1,7 +1,7 @@
 ﻿namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public interface IResetable
+    public interface IHaveStatus<out T>
     {
-        public void EpisodeReset();
+        public T GetStatus();
     }
 }

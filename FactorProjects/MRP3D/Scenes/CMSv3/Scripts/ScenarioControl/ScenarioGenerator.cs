@@ -44,8 +44,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void Start()
         {
-            SceanrioLoader.Load(scenarioXmlPath);
-            _scenario = SceanrioLoader.getScenario();
+            ScenarioLoader.Load(scenarioXmlPath);
+            _scenario = ScenarioLoader.getScenario();
             Assert.IsNotNull(_scenario);
             InitLayout();
             if (randomizeLayout)
@@ -65,6 +65,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 InstantiateWorkstation(wsi);
             }
+            //instantiate import station and export station according to layout
+            InstantiateImportStation();
+            InstantiateExportStation();
 
             //instantiate agv instances according to layout
             foreach (var agv in _scenario.layout.agvInstances)
@@ -72,9 +75,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 InstantiateAgvInstance(agv);
             }
 
-            //instantiate import station and export station according to layout
-            InstantiateImportStation();
-            InstantiateExportStation();
         }
 
 
@@ -165,7 +165,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 Instantiate(WorkstationUtil.GetMachinePrefab(id), g.transform);
             }
             var controller = g.GetComponent<WorkstationControllerBase>();
-            controller.Init(SceanrioLoader.getWorkstation(id));
+            controller.Init(ScenarioLoader.getWorkstation(id));
         }
         
         private void InstantiateImportStation()
@@ -185,7 +185,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             GameObject entityGameObject = Instantiate(
                 prefab, 
-                ground.transform.position+new Vector3(x, Utils.GetEncapsulateBoxColliderBounds(prefab).extents.y, z),
+                ground.transform.position+new Vector3(x, Utils.GetEncapsulateBoxColliderBounds(prefab).extents.y+0.3f, z),
                 new Quaternion(),
                 transform);
             EntityGameObjectsDict[type].Add(entityGameObject);

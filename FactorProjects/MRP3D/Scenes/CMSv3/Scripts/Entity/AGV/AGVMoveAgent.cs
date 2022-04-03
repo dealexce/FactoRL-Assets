@@ -10,7 +10,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class AGVMoveAgent : Agent
     {
-        private AgvController _agvController;
+        [SerializeField]
+        private AgvController agvController;
 
         public bool trainingMode = true;
         public bool showObsDebugInfo = false;
@@ -25,7 +26,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             RewardIfActivated(arriveReward);
         }
 
-        public void collideTrain()
+        public void CollideTrain()
         {
             RewardIfActivated(collisionReward);
         }
@@ -37,15 +38,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 AddReward(r);
             }
         }
-
-
-
-        void Awake()
-        {
-            _agvController = GetComponentInParent<AgvController>();
-        }
-
-
+        
 
         /// <summary>
         /// This override method handles the action decisions made by neural network
@@ -59,27 +52,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void OnActionReceived(ActionBuffers actions)
         {
             ActionSegment<int> act = actions.DiscreteActions;
-            float move = 0f;
-            switch (act[0])
+            float move = act[0] switch
             {
-                case 1:
-                    move = 1f;
-                    break;
-                case 2:
-                    move = -1f;
-                    break;
-            }
-            float rot = 0f;
-            switch (act[1])
+                1 => 1f,
+                2 => -1f,
+                _ => 0f
+            };
+            float rot = act[1] switch
             {
-                case 1:
-                    rot = 1f;
-                    break;
-                case 2:
-                    rot = -1f;
-                    break;
-            }
-            _agvController.Move(move, rot);
+                1 => 1f,
+                2 => -1f,
+                _ => 0f
+            };
+            agvController.Move(move, rot);
         }
 
         /// <summary>
@@ -91,14 +76,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <param name="sensor"></param>
         public override void CollectObservations(VectorSensor sensor)
         {
-            sensor.AddObservation(_agvController.PolarVelocity);
-            sensor.AddObservation(_agvController.PolarTargetPos);
+            sensor.AddObservation(agvController.PolarVelocity);
+            sensor.AddObservation(agvController.PolarTargetPos);
             if (showObsDebugInfo)
             {
                 Debug.Log(
                     "R:" + GetCumulativeReward()+ 
-                    "|polarV:"+_agvController.PolarVelocity+
-                    "|polarP:"+_agvController.PolarTargetPos.ToString("f6"));
+                    "|polarV:"+agvController.PolarVelocity+
+                    "|polarP:"+agvController.PolarTargetPos.ToString("f6"));
             }
         }
 
@@ -108,22 +93,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (trainingMode)
                 return;
             var discreteActions = actionsOut.DiscreteActions;
-            float vert = Input.GetAxis("Vertical");
-            if (vert > 0)
+            discreteActions[0] = Input.GetAxis("Vertical") switch
             {
-                discreteActions[0] = 1;
-            }else if (vert < 0)
+                > 0 => 1,
+                < 0 => 2,
+                _ => discreteActions[0]
+            };
+            discreteActions[1] = Input.GetAxis("Horizontal") switch
             {
-                discreteActions[0] = 2;
-            }
-            float hori = Input.GetAxis("Horizontal");
-            if (hori > 0)
-            {
-                discreteActions[1] = 1;
-            }else if (hori < 0)
-            {
-                discreteActions[1] = 2;
-            }
+                > 0 => 1,
+                < 0 => 2,
+                _ => discreteActions[1]
+            };
         }
         
 

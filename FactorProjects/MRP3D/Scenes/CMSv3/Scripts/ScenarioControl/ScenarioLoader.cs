@@ -6,15 +6,14 @@ using UnityEngine;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class SceanrioLoader
+    public class ScenarioLoader
     {
         private static Scenario _scenario=null;
-
         public static List<ItemState> RawItemStates { get; } = new List<ItemState>();
         public static List<ItemState> ProductItemStates { get; } = new List<ItemState>();
         public static Dictionary<string, ItemState> ItemStateDict { get; } = new Dictionary<string, ItemState>();
         private static Dictionary<string, Process> ProcessDict = new Dictionary<string, Process>();
-        private static Dictionary<string, Workstation> WorkstationDict = new Dictionary<string, Workstation>();
+        public static Dictionary<string, Workstation> WorkstationDict { get; } = new Dictionary<string, Workstation>();
         public static void Load(string path)
         {
             if (_scenario != null)
@@ -29,7 +28,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (_scenario == null)
             {
                 throw new Exception("Failed to load scenario XML");
-                return;
             }
             foreach (var i in _scenario.model.itemStates)
             {

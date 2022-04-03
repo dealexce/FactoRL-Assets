@@ -84,32 +84,31 @@ public class GridAgent : Agent
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
         // Mask the necessary actions if selected by the user.
-        if (maskActions)
+        if (!maskActions)
+            return;
+        // Prevents the agent from picking an action that would make it collide with a wall
+        var positionX = (int)transform.localPosition.x;
+        var positionZ = (int)transform.localPosition.z;
+        var maxPosition = (int)m_ResetParams.GetWithDefault("gridSize", 5f) - 1;
+
+        if (positionX == 0)
         {
-            // Prevents the agent from picking an action that would make it collide with a wall
-            var positionX = (int)transform.localPosition.x;
-            var positionZ = (int)transform.localPosition.z;
-            var maxPosition = (int)m_ResetParams.GetWithDefault("gridSize", 5f) - 1;
+            actionMask.SetActionEnabled(0, k_Left, false);
+        }
 
-            if (positionX == 0)
-            {
-                actionMask.SetActionEnabled(0, k_Left, false);
-            }
+        if (positionX == maxPosition)
+        {
+            actionMask.SetActionEnabled(0, k_Right, false);
+        }
 
-            if (positionX == maxPosition)
-            {
-                actionMask.SetActionEnabled(0, k_Right, false);
-            }
+        if (positionZ == 0)
+        {
+            actionMask.SetActionEnabled(0, k_Down, false);
+        }
 
-            if (positionZ == 0)
-            {
-                actionMask.SetActionEnabled(0, k_Down, false);
-            }
-
-            if (positionZ == maxPosition)
-            {
-                actionMask.SetActionEnabled(0, k_Up, false);
-            }
+        if (positionZ == maxPosition)
+        {
+            actionMask.SetActionEnabled(0, k_Up, false);
         }
     }
 
