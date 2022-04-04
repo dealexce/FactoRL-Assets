@@ -29,8 +29,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void Init(Workstation model)
         {
             base.Init(model);
-            ProcessingInputItemsDict = new OrderedDictionary<string, List<Item>>();
             InitInputOutputItems();
+            ProcessingInputItemsDict = new OrderedDictionary<string, List<Item>>();
+            foreach (var k in InputBufferItemsDict.Keys)
+            {
+                ProcessingInputItemsDict.Add(k,new List<Item>());
+            }
             workstationAgent.InitActionSpace();
             workstationAgent.typeNum = PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id,workstationAgent.InitActionSpace);
         }
@@ -110,6 +114,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void EpisodeReset()
         {
             StopCoroutine(nameof(ProcessItemToOutput));
+            StopCoroutine(nameof(Hold));
             Done();
             ItemOdUtils.DestroyAndClearLists(InputBufferItemsDict.Values,Destroy);
             ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
@@ -139,7 +144,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             switch (status)
             {
                 case ProcessExecutableStatus.Ok:
-                    StartCoroutine(nameof(ProcessItemToOutput),(ProcessingInputItemsDict,process));
+                    StartCoroutine(nameof(ProcessItemToOutput),process);
                     break;
                 case ProcessExecutableStatus.Unsupported:
                     Debug.LogWarning(Workstation.name + ": Cannot start chosen process: " +
@@ -167,11 +172,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <returns></returns>
         public ProcessExecutableStatus CheckProcessIsExecutable(Process process)
         {
+            // Check whether the process is in support process list
+            // if (!Workstation.supportProcessesRef.Select(p => p.idref).Contains(process.id))
+            //     return ProcessExecutableStatus.Unsupported;
+            if(!workstationAgent.ActionSpace.Contains(process))
+                return ProcessExecutableStatus.Unsupported;
             if (process == null)
                 return ProcessExecutableStatus.Ok;
-            // Check whether the process is in support process list
-            if (!Workstation.supportProcessesRef.Select(p => p.idref).Contains(process.id))
-                return ProcessExecutableStatus.Unsupported;
             
             var status = ProcessExecutableStatus.Ok;
             ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
@@ -251,7 +258,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 foreach (var item in list)
                 {
-                    item.gameObject.transform.localPosition = Vector3.up * itemInterval * i;
+                    item.gameObject.transform.position = item.gameObject.transform.parent.position+Vector3.up * itemInterval * i;
                     i++;
                 }
             }

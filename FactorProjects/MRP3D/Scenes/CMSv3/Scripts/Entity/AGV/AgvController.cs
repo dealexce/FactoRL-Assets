@@ -122,7 +122,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 foreach (var item in list)
                 {
-                    item.gameObject.transform.localPosition = Vector3.up * itemInterval * i;
+                    item.transform.localPosition = Vector3.up * itemInterval * i;
                     i++;
                 }
             }
@@ -180,6 +180,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             _rigidbody.angularVelocity = Vector3.zero;
             ResetHolder();
             agvMoveAgent.EpisodeInterrupted();
+            Done();
         }
         public void ResetHolder()
         {
@@ -202,7 +203,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (otherGameObject == CurrentTarget?.GameObject)
             {
                 ArriveTarget();
-                agvDispatcherAgent.RequestTargetDecision();
             }
         }
         private void OnCollisionEnter(Collision other)
@@ -259,24 +259,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     ItemControlHost.PassItem(
                         this, 
                         PlaneController.GameObjectExchangeableDict[CurrentTarget.GameObject], 
-                        CurrentTarget.ItemStateId),
+                        CurrentTarget.ItemStateId,
+                        CurrentTarget.GameObject.transform),
                 TargetAction.Get =>
                     //从targetItemHolder拿一个targetItemType类型的Item
                     ItemControlHost.PassItem(
                         PlaneController.GameObjectExchangeableDict[CurrentTarget.GameObject], 
                         this,
-                        CurrentTarget.ItemStateId),
+                        CurrentTarget.ItemStateId,
+                        transform),
                 _ => ExchangeMessage.Fail
             };
             //交换成功，重置target
-            if (exchangeMessage == ExchangeMessage.Ok)
-            {
-                Done();
-            }
-            else
+            if (exchangeMessage != ExchangeMessage.Ok)
             {
                 Debug.LogWarning("Arrived at target but failed to exchange");
             }
+            Done();
         }
 
         private void Done()

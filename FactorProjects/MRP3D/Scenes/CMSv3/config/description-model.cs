@@ -141,7 +141,9 @@ public partial class ItemState {
     
     private SpecialItemStateType typeField;
     
-    private bool typeFieldSpecified;
+    public ItemState() {
+        this.typeField = SpecialItemStateType.Mid;
+    }
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute(DataType="ID")]
@@ -178,23 +180,13 @@ public partial class ItemState {
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
+    [System.ComponentModel.DefaultValueAttribute(SpecialItemStateType.Mid)]
     public SpecialItemStateType type {
         get {
             return this.typeField;
         }
         set {
             this.typeField = value;
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
-    public bool typeSpecified {
-        get {
-            return this.typeFieldSpecified;
-        }
-        set {
-            this.typeFieldSpecified = value;
         }
     }
 }
@@ -209,6 +201,9 @@ public enum SpecialItemStateType {
     
     /// <remarks/>
     Product,
+    
+    /// <remarks/>
+    Mid,
 }
 
 /// <remarks/>
@@ -506,7 +501,7 @@ public partial class Workstation {
 [System.SerializableAttribute()]
 [System.Diagnostics.DebuggerStepThroughAttribute()]
 [System.ComponentModel.DesignerCategoryAttribute("code")]
-public partial class Process{
+public partial class Process {
     
     private ItemState[] inputItemsRefField;
     
@@ -514,11 +509,13 @@ public partial class Process{
     
     private float durationField;
     
-    private bool durationFieldSpecified;
-    
     private string idField;
     
     private string idrefField;
+    
+    public Process() {
+        this.durationField = ((float)(3F));
+    }
     
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayAttribute(Form=System.Xml.Schema.XmlSchemaForm.Unqualified)]
@@ -546,23 +543,13 @@ public partial class Process{
     
     /// <remarks/>
     [System.Xml.Serialization.XmlAttributeAttribute()]
+    [System.ComponentModel.DefaultValueAttribute(typeof(float), "3")]
     public float duration {
         get {
             return this.durationField;
         }
         set {
             this.durationField = value;
-        }
-    }
-    
-    /// <remarks/>
-    [System.Xml.Serialization.XmlIgnoreAttribute()]
-    public bool durationSpecified {
-        get {
-            return this.durationFieldSpecified;
-        }
-        set {
-            this.durationFieldSpecified = value;
         }
     }
     

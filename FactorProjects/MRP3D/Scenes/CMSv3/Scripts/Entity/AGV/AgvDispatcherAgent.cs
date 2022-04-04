@@ -204,14 +204,47 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public override void Heuristic(in ActionBuffers actionsOut)
         {
             var act = actionsOut.DiscreteActions;
-            act[0] = GetFirstValidTarget();
+            act[0] = GetRandomValidTargetIndex();
         }
         //give a random valid currentTarget
-        public int GenerateRandomActionIndex()
+        public int GetRandomValidTargetIndex()
         {
-            return Random.Range(0, ActionSpace.Count);
+            var validTargets = new List<int>();
+            for (int i = 0; i < ActionSpace.Count; i++)
+            {
+                var target = ActionSpace[i];
+                if(target==null)
+                    continue;
+                var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
+                switch (target.TargetAction)
+                {
+                    case TargetAction.Get:
+                    {
+                        var item = other.GetItem(target.ItemStateId);
+                        // Disable action if other is not givable or this is not receivable
+                        if (other.CheckGivable(agvController, item) == ExchangeMessage.Ok
+                            && agvController.CheckReceivable(other, item) == ExchangeMessage.Ok)
+                        {
+                            validTargets.Add(i);
+                        }
+                        break;
+                    }
+                    case TargetAction.Give:
+                    {
+                        var item = agvController.GetItem(target.ItemStateId);
+                        // Disable action if other is not receivable or this is not givable
+                        if (other.CheckReceivable(agvController, item) == ExchangeMessage.Ok
+                            && agvController.CheckGivable(other, item) == ExchangeMessage.Ok)
+                        {
+                            validTargets.Add(i);
+                        }
+                        break;
+                    }
+                }
+            }
+            return validTargets.Count > 0 ? validTargets[Random.Range(0, validTargets.Count)] : 0;
         }
-        private int GetFirstValidTarget()
+        private int GetFirstValidTargetIndex()
         {
             for (int i = 0; i < ActionSpace.Count; i++)
             {

@@ -353,6 +353,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: MaxStep
+      value: 20000
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
       value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
       objectReference: {fileID: 0}

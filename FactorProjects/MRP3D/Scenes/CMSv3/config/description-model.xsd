@@ -27,7 +27,7 @@
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
         <xs:attribute name="name" type="xs:string"/>
-        <xs:attribute name="type" type="SpecialItemStateType">
+        <xs:attribute name="type" type="SpecialItemStateType" default="Mid">
             
         </xs:attribute>
     </xs:complexType>
@@ -35,6 +35,7 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="Raw"/>
             <xs:enumeration value="Product"/>
+            <xs:enumeration value="Mid"/>
         </xs:restriction>
     </xs:simpleType>
     
@@ -49,7 +50,7 @@
             <xs:element name="inputItemsRef" type="InputItemsRef" minOccurs="1"/>
             <xs:element name="outputItemsRef" type="OutputItemsRef" minOccurs="1"/>
         </xs:sequence>
-        <xs:attribute name="duration" type="xs:float"/>
+        <xs:attribute name="duration" type="xs:float" default="3"/>
         <xs:attribute name="id" type="xs:ID"/>
         <xs:attribute name="idref" type="xs:IDREF"/>
     </xs:complexType>

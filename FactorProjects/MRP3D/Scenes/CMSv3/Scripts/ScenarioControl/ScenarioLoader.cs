@@ -32,13 +32,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             foreach (var i in _scenario.model.itemStates)
             {
                 ItemStateDict.Add(i.id,i);
-                if (i.type == SpecialItemStateType.Raw)
+                switch (i.type)
                 {
-                    RawItemStates.Add(i);
-                }
-                if (i.type == SpecialItemStateType.Product)
-                {
-                    ProductItemStates.Add(i);
+                    case SpecialItemStateType.Raw:
+                        RawItemStates.Add(i);
+                        break;
+                    case SpecialItemStateType.Product:
+                        ProductItemStates.Add(i);
+                        break;
+                    case SpecialItemStateType.Mid:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
             foreach (var p in _scenario.model.processes)

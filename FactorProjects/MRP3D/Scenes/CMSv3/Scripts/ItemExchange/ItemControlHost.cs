@@ -13,11 +13,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <param name="receiver"></param>
         /// <param name="id"></param>
         /// <returns></returns>
-        public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id)
+        private static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id)
         {
             return PassItem(giver, receiver, giver.GetItem(id));
         }
-        public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, Item item)
+        private static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, Item item)
         {
             ExchangeMessage exchangeMessage = giver.CheckGivable(receiver,item);
             giver.OnRequest(exchangeMessage);
@@ -53,8 +53,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             ExchangeMessage exchangeMessage = PassItem(giver, receiver, item);
             if (exchangeMessage == ExchangeMessage.Ok)
             {
-                item.transform.parent = newParent;
-                item.transform.localPosition = localPosition;
+                var originScale = item.transform.localScale;
+                Transform transform;
+                (transform = item.transform).SetParent(newParent);
+                transform.localPosition = localPosition;
+                transform.localScale = originScale;
             }
             return exchangeMessage;
         }
