@@ -68,7 +68,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (!HoldingItemsDict.ContainsKey(item.itemState.id))
                 return false;
             HoldingItemsDict[item.itemState.id].Add(item);
-            PlaceItems();
             return true;
         }
 
@@ -82,6 +81,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             
             PlaceItems();
             return true;
+        }
+
+        public void OnReceived(ExchangeMessage exchangeMessage)
+        {
+            PlaceItems();
         }
 
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
@@ -111,10 +115,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         #endregion
         
-        public float itemInterval = 1f;
-        /// <summary>
-        /// TODO: Check whether should use local position
-        /// </summary>
+        public float itemInterval = .2f;
         private void PlaceItems()
         {
             int i = 1;
@@ -122,7 +123,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 foreach (var item in list)
                 {
-                    item.transform.localPosition = Vector3.up * itemInterval * i;
+                    var transform1 = item.transform;
+                    transform1.rotation=Quaternion.identity;
+                    transform1.position = transform.position+Vector3.up * itemInterval * i;
                     i++;
                 }
             }
@@ -131,6 +134,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public Target CurrentTarget = null;
         
         public bool fixDecision = true;
+        public int autoDecisionInterval = 100;
 
         //Move settings
         public float moveSpeed = 5;
@@ -140,9 +144,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public Vector2 PolarTargetPos { get; private set; }
 
 
+        private int lastDecisionStep = 0;
         private void FixedUpdate()
         {
             UpdatePolarPosAndPolarVelocity();
+            lastDecisionStep++;
+            if (lastDecisionStep > autoDecisionInterval)
+            {
+                RequestDispatchDecision();
+            }
+        }
+
+        private void RequestDispatchDecision()
+        {
+            agvDispatcherAgent.RequestTargetDecision();
+            lastDecisionStep = 0;
         }
 
         private void UpdatePolarPosAndPolarVelocity()
@@ -163,11 +179,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void Update()
         {
-            //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                agvDispatcherAgent.RequestTargetDecision();
-            }
+            // //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
+            // if (Input.GetKeyDown(KeyCode.R))
+            // {
+            //     RequestDispatchDecision();
+            // }
         }
 
         public Vector3 InitPosition { get; set; }
@@ -189,7 +205,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void Start()
         {
-            agvDispatcherAgent.RequestTargetDecision();
+            RequestDispatchDecision();
         }
 
         private void OnTriggerEnter(Collider other)
@@ -281,7 +297,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private void Done()
         {
             CurrentTarget = null;
-            agvDispatcherAgent.RequestTargetDecision();
+            RequestDispatchDecision();
         }
 
     }

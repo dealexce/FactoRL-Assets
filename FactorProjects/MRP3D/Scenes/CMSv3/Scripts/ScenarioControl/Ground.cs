@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 
@@ -9,7 +11,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public enum GroundSwitchColor
         {
-            Green,Red
+            Green,Red,Yellow
         }
 
         public GroundSize GroundSize;
@@ -26,17 +28,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         //for visualization
         public Material _successMaterial;
         public Material _failedMaterial;
+        public Material _stockSuccessMaterial;
         private Material _originMaterial;
         private MeshRenderer _meshRenderer;
 
-        public GameObject FloatingTextObject;
-        private TextMeshPro _textMeshPro;
 
         private void Awake()
         {
             _meshRenderer = ground.GetComponent<MeshRenderer>();
             _originMaterial = _meshRenderer.material;
-            _textMeshPro = FloatingTextObject.GetComponent<TextMeshPro>();
             groundMF = ground.GetComponent<MeshFilter>();
             groundMFx = groundMF.mesh.bounds.size.x;
             groundMFz = groundMF.mesh.bounds.size.z;
@@ -65,10 +65,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             GroundSize = new GroundSize {x = x, y = z};
         }
 
-        public void changeText(string text)
-        {
-            _textMeshPro.text = text;
-        }
+
 
         //visualization indicate product finished
         public void FlipColor(GroundSwitchColor color)
@@ -80,6 +77,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     break;
                 case GroundSwitchColor.Red:
                     StartCoroutine(ProductReceivedSwapMaterial(1f, _failedMaterial));
+                    break;
+                case GroundSwitchColor.Yellow:
+                    StartCoroutine(ProductReceivedSwapMaterial(1f, _stockSuccessMaterial));
                     break;
             }
         }

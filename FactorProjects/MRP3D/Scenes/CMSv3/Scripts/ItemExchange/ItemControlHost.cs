@@ -30,7 +30,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             
             if(giver.Remove(item)&&receiver.Store(item))
             {
-                receiver.OnReceived(exchangeMessage);
                 return ExchangeMessage.Ok;
             }
             Debug.LogError("Error occured when exchanging item");
@@ -38,28 +37,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, Item item, Transform newParent)
         {
-            return PassItem(giver,receiver,item,newParent,Vector3.zero);
+            ExchangeMessage exchangeMessage = PassItem(giver, receiver, item);
+            if (exchangeMessage == ExchangeMessage.Ok)
+            {
+                item.transform.SetParent(newParent);
+            }
+            receiver.OnReceived(exchangeMessage);
+            return exchangeMessage;
         }
         public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id, Transform newParent)
         {
             return PassItem(giver,receiver,giver.GetItem(id),newParent);
-        }
-        public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id, Transform newParent, Vector3 localPosition)
-        {
-            return PassItem(giver,receiver,giver.GetItem(id),newParent,localPosition);
-        }
-        public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, Item item, Transform newParent, Vector3 localPosition)
-        {
-            ExchangeMessage exchangeMessage = PassItem(giver, receiver, item);
-            if (exchangeMessage == ExchangeMessage.Ok)
-            {
-                var originScale = item.transform.localScale;
-                Transform transform;
-                (transform = item.transform).SetParent(newParent);
-                transform.localPosition = localPosition;
-                transform.localScale = originScale;
-            }
-            return exchangeMessage;
         }
     }
 }

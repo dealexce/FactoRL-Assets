@@ -23,7 +23,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public override void CollectObservations(VectorSensor sensor)
         {
-            goalSensor.GetSensor().AddOneHotObservation(typeNum,PlaneController.GetAgentTypeCount());
+            goalSensor.GetSensor().AddOneHotObservation(typeNum,PlaneController.AgentTypeCount);
             CollectObservationsProtected(sensor);
         }
 

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using OD;
+using TMPro;
+using Unity.Mathematics;
 using Unity.MLAgents;
 using Unity.MLAgents.Policies;
 using UnityEngine;
@@ -13,17 +16,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class PlaneController : ScenarioGenerator
     {
-        
         public new void Start()
         {
             base.Start();
             _instantiatedComplete = true;
+            AgentTypeCount = Math.Max(AgentTypeCount, AgentTypeActionSpaceDict.Count);
             foreach (var (id,actionSpace) in AgentTypeActionSpaceDict.Values)
             {
                 MaxActionSpaceSize = Math.Max(actionSpace.Count, MaxActionSpaceSize);
             }
             Debug.LogFormat("Max action space size is: {0}",MaxActionSpaceSize);
-            Debug.LogFormat("Goal sensor size should be: {0}",GetAgentTypeCount());
+            Debug.LogFormat("Goal sensor size should be: {0}",AgentTypeCount);
             // Verify all agent's behaviour parameter settings of action space. Should all be MaxActionSpaceSize
             foreach (var registeredAgent in AgentGroup.GetRegisteredAgents())
             {
@@ -44,27 +47,82 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             InitGameObjectControllerDict();
             InitGameObjectExchangeableDict();
+            GenerateRandomOrders(initialOrderNum);
         }
 
-        public int MaxStep = 30000;
+        public float EpisodeDuration = 300f;
         [SerializeField]
         [InspectorUtil.DisplayOnly]
-        private int currentStep = 0;
-
+        private float currentEpisodeStart = 0;
+        [SerializeField]
+        [InspectorUtil.DisplayOnly]
+        private float lastOrderGenerateTime = 0f;
         private void FixedUpdate()
         {
-            currentStep++;
-            if (currentStep > MaxStep)
+            // Check Whether episode is end and should reset plane
+            var now = Time.fixedTime;
+            if (now-currentEpisodeStart > EpisodeDuration)
             {
-                currentStep = 0;
                 ResetPlane();
+                currentEpisodeStart = now;
             }
+            // Check whether should generate an order
+            if (now-lastOrderGenerateTime > orderGenerateInterval)
+            {
+                GenerateOneRandomOrder();
+                lastOrderGenerateTime = now;
+            }
+            // Check in orders whether timeout. If so, call OrderFailed() and remove it from orderList
+            var toRemove = new List<float>();
+            foreach (var (ddl,order) in orderList)
+            {
+                if (now > ddl)
+                {
+                    toRemove.Add(ddl);
+                    OrderFailed(order);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            foreach (var ddl in toRemove)
+            {
+                orderList.Remove(ddl);
+            }
+            RefreshOrderText(now);
+        }
+        
+        public TextMeshPro textMeshPro;
+        public void ChangeText(string text)
+        {
+            textMeshPro.text = text;
+        }
+
+        public void RefreshOrderText(float now)
+        {
+            if(textMeshPro==null)
+                return;
+            StringBuilder sb = new StringBuilder();
+            sb.Append($"<color=blue>Episode time: {now - currentEpisodeStart:0.0}/{EpisodeDuration:0.0}(s)</color>\n");
+            sb.Append("\nStock----------\n");
+            foreach (var (id,num) in productStockDict)
+            {
+                
+                sb.Append($"{ScenarioLoader.getItemState(id).name}*{num}\n");
+            }
+            sb.Append("\nOrder----------\n");
+            foreach (var (ddl,order) in orderList)
+            {
+                sb.Append(
+                    $"[{ScenarioLoader.getItemState(order.ProductId).name}] <color={((now + 10f) > ddl ? "red" : "green")}>{ddl - now:0.00} sec left</color>\n");
+            }
+            ChangeText(sb.ToString());
         }
 
         private void ResetPlane()
         {
             AgentGroup.EndGroupEpisode();
-            //TODO: Reset Layout
             foreach (var c in WorkstationControllerDict.Values)
             {
                 c.EpisodeReset();
@@ -73,6 +131,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 c.EpisodeReset();
             }
+            foreach (var k in productStockDict.Keys.ToList())
+            {
+                productStockDict[k] = 0;
+            }
+            orderList.Clear();
         }
 
         public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
@@ -157,7 +220,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private bool _instantiatedComplete = false;
         private SimpleMultiAgentGroup AgentGroup = new SimpleMultiAgentGroup();
-        private static Dictionary<string, (int,List<object>)> AgentTypeActionSpaceDict = new Dictionary<string, (int,List<object>)>();
+        private Dictionary<string, (int,List<object>)> AgentTypeActionSpaceDict = new Dictionary<string, (int,List<object>)>();
         public int RegisterAgent<T>(EntityAgent<T> agent, string typeId, Func<List<T>> initFunc)
         {
             if (_instantiatedComplete)
@@ -182,11 +245,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
 
         public static int MaxActionSpaceSize { get; private set; } = 0;
-        public static int GetAgentTypeCount()
-        {
-            return AgentTypeActionSpaceDict.Count;
-        }
-        
+        public static int AgentTypeCount { get; private set; } = 0;
+
 
 
         public GameObject itemPrefab;
@@ -207,17 +267,33 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         #region Order
 
         public SortedList<float,Order> orderList = new SortedList<float,Order>();
-        public float minDeadline { get; } = 60f;
-        public float maxDeadline { get; } = 120f;
+        public float minDeadline = 60f;
+        public float maxDeadline = 120f;
+        public int initialOrderNum = 0;
+        public float orderGenerateInterval = 60f;
 
         private void GenerateOneRandomOrder()
         {
             Order o = new Order(
                 ScenarioLoader.ProductItemStates[Random.Range(0, ScenarioLoader.ProductItemStates.Count)].id, 
                 GetRandomNonConflictDeadline());
-            
-            orderList.Add(o.deadLine,o);
-            CheckStockFinishOrder();
+            if (productStockDict[o.ProductId] > 0)
+            {
+                productStockDict[o.ProductId]--;
+                OrderFinished(o,true);
+            }
+            else
+            {
+                orderList.Add(o.deadLine,o);
+            }
+        }
+
+        private void GenerateRandomOrders(int num)
+        {
+            for (int i = 0; i < num; i++)
+            {
+                GenerateOneRandomOrder();
+            }
         }
         private float GetRandomNonConflictDeadline()
         {
@@ -233,6 +309,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             productStockDict[item.itemState.id]++;
             Destroy(item.gameObject);
+            CheckStockFinishOrder();
         }
 
         /// <summary>
@@ -246,21 +323,44 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 if (productStockDict[o.ProductId] > 0)
                 {
+                    productStockDict[o.ProductId]--;
                     toRemove.Add(o);
                 }
             }
             foreach (var o in toRemove)
             {
-                productStockDict[o.ProductId]--;
                 orderList.Remove(o.deadLine);
                 OrderFinished(o);
             }
         }
 
-        private void OrderFinished(Order o)
+        public float OrderFailReward = -.1f;
+        public float StockFinishNewOrderReward = .02f;
+        public float OrderFinishReward = .1f;
+        public float FinishAheadRewardFactor = .01f;
+        private void OrderFinished(Order o,bool isNewOrder=false)
         {
-            AgentGroup.AddGroupReward(.1f);
+            if (isNewOrder)
+            {
+                AgentGroup.AddGroupReward(StockFinishNewOrderReward);
+                Debug.LogFormat("Finished {0} order by stock. Reward: {1:0.00}",
+                    ScenarioLoader.getItemState(o.ProductId).name, StockFinishNewOrderReward);
+                ground.FlipColor(Ground.GroundSwitchColor.Yellow);
+                return;
+            }
+            var timeLeft = o.deadLine - Time.fixedTime;
+            var r = OrderFinishReward + FinishAheadRewardFactor * timeLeft;
+            AgentGroup.AddGroupReward(r);
+            Debug.LogFormat("Finished {0} order {1:0.00} seconds before deadline. Reward: {2:0.00}",
+                ScenarioLoader.getItemState(o.ProductId).name, timeLeft, r);
             ground.FlipColor(Ground.GroundSwitchColor.Green);
+        }
+
+        private void OrderFailed(Order o)
+        {
+            AgentGroup.AddGroupReward(OrderFailReward);
+            Debug.LogFormat("Failed {0} order. Reward: {1:0.00}",ScenarioLoader.getItemState(o.ProductId).name,OrderFailReward);
+            ground.FlipColor(Ground.GroundSwitchColor.Red);
         }
 
         #endregion

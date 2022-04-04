@@ -18,7 +18,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if (_scenario != null)
             {
-                Debug.LogWarning("Already loaded a scenario, overwriting current scenario");
+                //Debug.Log("Already loaded a scenario, using existing scenario");
+                return;
             }
             XmlSerializer serializer = new XmlSerializer(typeof(Scenario));
             using (StreamReader reader = new StreamReader(path))

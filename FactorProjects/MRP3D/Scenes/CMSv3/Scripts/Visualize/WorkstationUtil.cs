@@ -5,10 +5,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts.Visualize
 {
     public class WorkstationUtil
     {
-        private static Dictionary<string, GameObject> _workstationMachinePrefabDict = new Dictionary<string, GameObject>();
+        private static Dictionary<string, GameObject> _workstationMachinePrefabDict;
 
         public static void Init(Workstation[] workstations, string prefabPath)
         {
+            if(_workstationMachinePrefabDict!=null)
+                return;
+            _workstationMachinePrefabDict = new Dictionary<string, GameObject>();
             GameObject[] prefabs = Resources.LoadAll<GameObject>(prefabPath);
             if (prefabs.Length < workstations.Length)
             {

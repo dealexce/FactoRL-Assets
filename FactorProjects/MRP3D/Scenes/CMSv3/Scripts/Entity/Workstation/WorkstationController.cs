@@ -92,7 +92,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (!InputBufferItemsDict.ContainsKey(item.itemState.id))
                 return false;
             InputBufferItemsDict[item.itemState.id].Add(item);
-            PlaceItemList(InputBufferItemsDict.Values);
             return true;
         }
 
@@ -105,6 +104,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 return false;
             PlaceItemList(OutputBufferItemsDict.Values);
             return true;
+        }
+
+        public void OnReceived(ExchangeMessage exchangeMessage)
+        {
+            PlaceItemList(InputBufferItemsDict.Values);
         }
 
         #endregion
@@ -250,7 +254,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         
         #region Visualization
 
-        public float itemInterval = 1f;
+        public float itemInterval = .2f;
         private void PlaceItemList(IEnumerable<List<Item>> lists)
         {
             int i = 1;
@@ -258,7 +262,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 foreach (var item in list)
                 {
-                    item.gameObject.transform.position = item.gameObject.transform.parent.position+Vector3.up * itemInterval * i;
+                    var transform1 = item.transform;
+                    transform1.rotation = Quaternion.identity;
+                    transform1.position = transform1.parent.position+Vector3.up * itemInterval * i;
                     i++;
                 }
             }

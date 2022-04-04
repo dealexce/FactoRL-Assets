@@ -7,12 +7,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public Item GetItem(string id);
 
-        internal void OnReceived(ExchangeMessage exchangeMessage)
+        public void OnReceived(ExchangeMessage exchangeMessage)
         {
             
         }
         
-        internal void OnRequest(ExchangeMessage exchangeMessage)
+        public void OnRequest(ExchangeMessage exchangeMessage)
         {
             
         }
