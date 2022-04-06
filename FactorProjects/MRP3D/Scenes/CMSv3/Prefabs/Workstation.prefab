@@ -356,7 +356,7 @@ MonoBehaviour:
   goalSensor: {fileID: 6790087876707487383}
   behaviorParameters: {fileID: 8156606643044452946}
   workstationController: {fileID: 2131449222914743247}
-  useMask: 0
+  useMask: 1
 --- !u!114 &6790087876707487383
 MonoBehaviour:
   m_ObjectHideFlags: 0

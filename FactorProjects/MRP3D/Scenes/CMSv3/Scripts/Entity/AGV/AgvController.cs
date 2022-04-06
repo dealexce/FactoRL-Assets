@@ -149,7 +149,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             UpdatePolarPosAndPolarVelocity();
             lastDecisionStep++;
-            if (lastDecisionStep > autoDecisionInterval)
+            if (!fixDecision&&lastDecisionStep > autoDecisionInterval)
             {
                 RequestDispatchDecision();
             }

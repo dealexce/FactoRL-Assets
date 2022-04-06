@@ -125,7 +125,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             int orderCount = 0;
             foreach (var (ddl,order) in PlaneController.orderList)
             {
-                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.TimeLeftMaxValue);
+                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.OrderTimeMaxValue);
                 foreach (var itemState in ScenarioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);

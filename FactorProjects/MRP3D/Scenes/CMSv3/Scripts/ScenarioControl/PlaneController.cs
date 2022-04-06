@@ -43,14 +43,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 if (itemState.type == SpecialItemStateType.Product)
                 {
                     productStockDict.Add(itemState.id,0);
+                    deliveredProductCount.Add(itemState.id,0);
                 }
             }
             InitGameObjectControllerDict();
             InitGameObjectExchangeableDict();
-            GenerateRandomOrders(initialOrderNum);
+            lastOrderGenerateTime = Time.fixedTime+startGenerateOrderTime;
+            //GenerateRandomOrders(initialOrderNum);
         }
-
-        public float EpisodeDuration = 300f;
+        
+        public float EpisodeDuration = 1000f;
         [SerializeField]
         [InspectorUtil.DisplayOnly]
         private float currentEpisodeStart = 0;
@@ -74,21 +76,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             // Check in orders whether timeout. If so, call OrderFailed() and remove it from orderList
             var toRemove = new List<float>();
-            foreach (var (ddl,order) in orderList)
+            foreach (var (generateTime,order) in orderList)
             {
-                if (now > ddl)
+                if (now > order.deadLine)
                 {
-                    toRemove.Add(ddl);
+                    toRemove.Add(generateTime);
                     OrderFailed(order);
                 }
-                else
-                {
-                    break;
-                }
             }
-            foreach (var ddl in toRemove)
+            foreach (var generateTime in toRemove)
             {
-                orderList.Remove(ddl);
+                orderList.Remove(generateTime);
             }
             RefreshOrderText(now);
         }
@@ -104,18 +102,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if(textMeshPro==null)
                 return;
             StringBuilder sb = new StringBuilder();
-            sb.Append($"<color=blue>Episode time: {now - currentEpisodeStart:0.0}/{EpisodeDuration:0.0}(s)</color>\n");
-            sb.Append("\nStock----------\n");
-            foreach (var (id,num) in productStockDict)
+            sb.Append($"<color=#00ffffff>Episode time: {now - currentEpisodeStart:0.0}/{EpisodeDuration:0.0}(s)</color>\n");
+            sb.Append($"<color=green>Total finished: {finishedOrder}</color>\n<color=red>Total Failed: {failedOrder}</color>\n");
+            sb.Append("\n<b>Delivered</b>------\n");
+            foreach (var (id,num) in deliveredProductCount)
             {
-                
                 sb.Append($"{ScenarioLoader.getItemState(id).name}*{num}\n");
             }
-            sb.Append("\nOrder----------\n");
-            foreach (var (ddl,order) in orderList)
+            sb.Append("\n<b>Stock</b>----------\n");
+            foreach (var (id,num) in productStockDict)
+            {
+                sb.Append($"{ScenarioLoader.getItemState(id).name}*{num}\n");
+            }
+            sb.Append("\n<b>Order</b>----------\n");
+            foreach (var order in orderList.Values)
             {
                 sb.Append(
-                    $"[{ScenarioLoader.getItemState(order.ProductId).name}] <color={((now + 10f) > ddl ? "red" : "green")}>{ddl - now:0.00} sec left</color>\n");
+                    $"[{ScenarioLoader.getItemState(order.ProductId).name}] <color={((now + 10f) > order.deadLine ? "red" : "green")}>{order.deadLine - now:0.00} sec left</color>\n");
             }
             ChangeText(sb.ToString());
         }
@@ -134,8 +137,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             foreach (var k in productStockDict.Keys.ToList())
             {
                 productStockDict[k] = 0;
+                deliveredProductCount[k] = 0;
             }
             orderList.Clear();
+            finishedOrder = 0;
+            failedOrder = 0;
+            lastOrderGenerateTime = Time.fixedTime+startGenerateOrderTime;
         }
 
         public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
@@ -270,21 +277,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public float minDeadline = 60f;
         public float maxDeadline = 120f;
         public int initialOrderNum = 0;
+        public float startGenerateOrderTime = 40f;
         public float orderGenerateInterval = 60f;
 
         private void GenerateOneRandomOrder()
         {
+            var now = Time.fixedTime;
             Order o = new Order(
                 ScenarioLoader.ProductItemStates[Random.Range(0, ScenarioLoader.ProductItemStates.Count)].id, 
-                GetRandomNonConflictDeadline());
+                GetRandomDeadline());
             if (productStockDict[o.ProductId] > 0)
             {
                 productStockDict[o.ProductId]--;
-                OrderFinished(o,true);
+                OrderFinished(now,o,true);
             }
             else
             {
-                orderList.Add(o.deadLine,o);
+                orderList.Add(now,o);
             }
         }
 
@@ -295,19 +304,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 GenerateOneRandomOrder();
             }
         }
-        private float GetRandomNonConflictDeadline()
+        private float GetRandomDeadline()
         {
-            float ddl = Time.fixedTime + Random.Range(minDeadline, maxDeadline);
-            while (orderList.ContainsKey(ddl))
-            {
-                ddl = Time.fixedTime + Random.Range(minDeadline, maxDeadline);
-            }
-            return ddl;
+            return Time.fixedTime + Random.Range(minDeadline, maxDeadline);
         }
         public Dictionary<string, int> productStockDict = new Dictionary<string, int>();
         public void DeliverProduct(Item item)
         {
             productStockDict[item.itemState.id]++;
+            deliveredProductCount[item.itemState.id]++;
             Destroy(item.gameObject);
             CheckStockFinishOrder();
         }
@@ -318,48 +323,67 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// </summary>
         public void CheckStockFinishOrder()
         {
-            List<Order> toRemove = new List<Order>();
-            foreach (var o in orderList.Values)
+            List<float> toRemove = new List<float>();
+            foreach (var (gt,o) in orderList)
             {
                 if (productStockDict[o.ProductId] > 0)
                 {
                     productStockDict[o.ProductId]--;
-                    toRemove.Add(o);
+                    toRemove.Add(gt);
                 }
             }
-            foreach (var o in toRemove)
+            foreach (var gt in toRemove)
             {
-                orderList.Remove(o.deadLine);
-                OrderFinished(o);
+                OrderFinished(gt,orderList[gt]);
+                orderList.Remove(gt);
             }
+        }
+
+        public TextMeshPro PromptText;
+
+        private void RefreshPromptText(string text, string color)
+        {
+            if(PromptText==null)
+                return;
+            PromptText.text = $"<color={color}>"+text+"</color>";
         }
 
         public float OrderFailReward = -.1f;
         public float StockFinishNewOrderReward = .02f;
         public float OrderFinishReward = .1f;
-        public float FinishAheadRewardFactor = .01f;
-        private void OrderFinished(Order o,bool isNewOrder=false)
+        public float FinishOrderTimeCostRewardFactor = -.1f;
+        private Dictionary<string, int> deliveredProductCount = new Dictionary<string, int>();
+        private int finishedOrder = 0;
+        private int failedOrder = 0;
+        private void OrderFinished(float generateTime, Order o,bool isNewOrder=false)
         {
-            if (isNewOrder)
-            {
-                AgentGroup.AddGroupReward(StockFinishNewOrderReward);
-                Debug.LogFormat("Finished {0} order by stock. Reward: {1:0.00}",
-                    ScenarioLoader.getItemState(o.ProductId).name, StockFinishNewOrderReward);
-                ground.FlipColor(Ground.GroundSwitchColor.Yellow);
-                return;
-            }
+            finishedOrder++;
+            // if (isNewOrder)
+            // {
+            //     AgentGroup.AddGroupReward(StockFinishNewOrderReward);
+            //     Debug.LogFormat("Finished {0} order by stock. Reward: {1:0.00}",
+            //         ScenarioLoader.getItemState(o.ProductId).name, StockFinishNewOrderReward);
+            //     ground.FlipColor(Ground.GroundSwitchColor.Yellow);
+            //     return;
+            // }
             var timeLeft = o.deadLine - Time.fixedTime;
-            var r = OrderFinishReward + FinishAheadRewardFactor * timeLeft;
+            var timeCost = Time.fixedTime - generateTime;
+            var r = OrderFinishReward*(1-timeCost/NormValues.OrderTimeMaxValue);
             AgentGroup.AddGroupReward(r);
-            Debug.LogFormat("Finished {0} order {1:0.00} seconds before deadline. Reward: {2:0.00}",
-                ScenarioLoader.getItemState(o.ProductId).name, timeLeft, r);
+            RefreshPromptText(
+                $"Finished {ScenarioLoader.getItemState(o.ProductId).name} order " +
+                              $"use {timeCost:0.00} seconds, {timeLeft:0.00} seconds before deadline. Reward: {r:0.00}",
+                "green");
             ground.FlipColor(Ground.GroundSwitchColor.Green);
         }
 
         private void OrderFailed(Order o)
         {
+            failedOrder++;
             AgentGroup.AddGroupReward(OrderFailReward);
-            Debug.LogFormat("Failed {0} order. Reward: {1:0.00}",ScenarioLoader.getItemState(o.ProductId).name,OrderFailReward);
+            RefreshPromptText(
+                $"Failed {ScenarioLoader.getItemState(o.ProductId).name} order. Reward: {OrderFailReward:0.00}",
+                "red");
             ground.FlipColor(Ground.GroundSwitchColor.Red);
         }
 
