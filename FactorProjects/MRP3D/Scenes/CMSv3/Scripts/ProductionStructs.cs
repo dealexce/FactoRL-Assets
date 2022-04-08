@@ -36,14 +36,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
     public record Order
     {
-        public string ProductId { get; }
-        public float deadLine { get; }
-
-        public Order(string productId, float deadLine)
+        public Order(string productId, float generateTime, float deadLine)
         {
-            this.ProductId = productId;
-            this.deadLine = deadLine;
+            ProductId = productId;
+            GenerateTime = generateTime;
+            this.DeadLine = deadLine;
         }
+
+        public string ProductId { get; }
+        public float GenerateTime { get; }
+        public float DeadLine { get; }
     }
 
     #endregion

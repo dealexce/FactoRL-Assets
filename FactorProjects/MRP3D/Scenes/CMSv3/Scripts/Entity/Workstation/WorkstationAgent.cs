@@ -18,7 +18,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             var actionSpace = new List<Process>();
             // Process==null refers to no process
-            actionSpace.Add(null);
+            // actionSpace.Add(null);
             foreach (var pRef in workstationController.Workstation.supportProcessesRef)
             {
                 actionSpace.Add(ScenarioLoader.getProcess(pRef.idref));
@@ -35,10 +35,21 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if(!useMask)
                 return;
+            if (GetNotNullExecutableProcessIndexes().Count == 0)
+            {
+                PlaneController._workstationStrangeMask++;
+                return;
+            }
             for (int i = 0; i < ActionSpace.Count; i++)
             {
-                if(workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
+                if (ActionSpace[i] == null)
+                {
                     actionMask.SetActionEnabled(0,i,false);
+                }
+                else if(workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
+                {
+                    actionMask.SetActionEnabled(0, i, false);
+                }
             }
         }
         
@@ -56,7 +67,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             //throw new NotImplementedException();
             //collect relative position and status of all workstations
-            foreach (var (wsObj,wsController) in PlaneController.WorkstationControllerDict)
+            foreach (var (wsObj,wsController) in PlaneController.WorkstationControllerOd)
             {
                 if (wsController == workstationController)
                 {
@@ -90,7 +101,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             
             // collect relative position and status of other AGVs
-            foreach (var (agvObj,agvController) in PlaneController.AgvControllerDict)
+            foreach (var (agvObj,agvController) in PlaneController.AgvControllerOd)
             {
                 Vector2 polarTargetPos = new Vector2();
                 if (agvObj != null)
@@ -116,16 +127,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
 
             // Collect product stock info
-            foreach (var stock in PlaneController.productStockDict.Values)
+            foreach (var stock in PlaneController.productStockOd.Values)
             {
                 sensor.AddObservation(Utils.NormalizeValue(stock,0,NormValues.StockCountMaxValue));
             }
             
             // Collect order info
             int orderCount = 0;
-            foreach (var (ddl,order) in PlaneController.orderList)
+            foreach (var (_,order) in PlaneController.orderSortedList)
             {
-                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.OrderTimeMaxValue);
+                sensor.AddObservation(1.0f-(order.DeadLine-Time.fixedTime)/NormValues.OrderTimeMaxValue);
                 foreach (var itemState in ScenarioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
@@ -145,7 +156,22 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void DecideProcess()
         {
-            RequestDecision();
+            // If workstation only supports one process (null, p1),
+            // start the process as long as it can, no need for RL decision
+            var executables = GetNotNullExecutableProcessIndexes();
+            if (executables.Count == 0)
+            {
+                workstationController.StartProcess(null);
+            }else if (executables.Count == 1)
+            {
+                workstationController.StartProcess(ActionSpace[executables[0]]);
+            }
+            else
+            {
+                RequestDecision();
+                PlaneController.workstationDecisionCount++;
+            }
+            
         }
 
         public override void Heuristic(in ActionBuffers actionsOut)
@@ -175,7 +201,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return 0;
         }
 
-        private int GetRandomExecutableProcessIndex()
+        private List<int> GetNotNullExecutableProcessIndexes()
         {
             List<int> executables = new List<int>();
             for (int i = 0; i < ActionSpace.Count; i++)
@@ -188,6 +214,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 }
                 executables.Add(i);
             }
+            return executables;
+        }
+        private int GetRandomExecutableProcessIndex()
+        {
+            var executables = GetNotNullExecutableProcessIndexes();
             return executables.Count > 0 ? executables[Random.Range(0, executables.Count)] : 0;
         }
     }

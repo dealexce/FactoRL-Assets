@@ -75,6 +75,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void RequestTargetDecision()
         {
+            PlaneController.agvDispatcherDecisionCount++;
             RequestDecision();
         }
 
@@ -86,8 +87,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             for (int i = 0; i < ActionSpace.Count; i++)
             {
                 var target = ActionSpace[i];
-                if(target==null)
+                if (target == null)
+                {
+                    // Mask null target action
+                    actionMask.SetActionEnabled(0,i,false);
                     continue;
+                }
                 var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
                 switch (target.TargetAction)
                 {
@@ -116,7 +121,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         protected override void CollectObservationsProtected(VectorSensor sensor)
         {
             //collect relative position and status of all workstations
-            foreach (var (wsObj,wsController) in PlaneController.WorkstationControllerDict)
+            foreach (var (wsObj,wsController) in PlaneController.WorkstationControllerOd)
             {
                 Vector2 polarTargetPos = new Vector2();
                 if (wsObj != null)
@@ -146,7 +151,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             
             // collect relative position and status of other AGVs
-            foreach (var (agvObj,agvCtrl) in PlaneController.AgvControllerDict)
+            foreach (var (agvObj,agvCtrl) in PlaneController.AgvControllerOd)
             {
                 if (agvCtrl == this.agvController)
                 {
@@ -176,16 +181,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
 
             // Collect product stock info
-            foreach (var stock in PlaneController.productStockDict.Values)
+            foreach (var stock in PlaneController.productStockOd.Values)
             {
                 sensor.AddObservation(Utils.NormalizeValue(stock,0,NormValues.StockCountMaxValue));
             }
             
             // Collect order info
             int orderCount = 0;
-            foreach (var (ddl,order) in PlaneController.orderList)
+            foreach (var (_,order) in PlaneController.orderSortedList)
             {
-                sensor.AddObservation((ddl-Time.fixedTime)/NormValues.OrderTimeMaxValue);
+                sensor.AddObservation(1.0f-(order.DeadLine-Time.fixedTime)/NormValues.OrderTimeMaxValue);
                 foreach (var itemState in ScenarioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);

@@ -2190,7 +2190,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0.403821, g: 0.542207, b: 0.7830189, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -3323,7 +3323,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc850f6484c54684a45f1089e55847e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scenarioXmlPath: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403164624.xml
+  scenarioXmlPath: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
   randomizeLayout: 0
   minGroundX: 40
   maxGroundX: 60

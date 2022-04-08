@@ -51,6 +51,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <param name="actions"></param>
         public override void OnActionReceived(ActionBuffers actions)
         {
+            // Don't do anything if target is null
+            if(agvController.CurrentTarget==null)
+                return;
             ActionSegment<int> act = actions.DiscreteActions;
             float move = act[0] switch
             {

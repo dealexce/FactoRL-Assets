@@ -30,7 +30,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             InitHoldingItems();
             moveSpeed = model.movespeed;
             rotateSpeed = model.rotatespeed;
-            agvDispatcherAgent.typeNum = PlaneController.RegisterAgent(agvDispatcherAgent, "AD",agvDispatcherAgent.InitActionSpace);
+            PlaneController.RegisterAgent(agvDispatcherAgent, "AD",agvDispatcherAgent.InitActionSpace);
         }
 
         private void InitHoldingItems()
@@ -251,6 +251,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         IEnumerator Hold()
         {
             CurrentTarget = null;
+            _rigidbody.velocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
             yield return new WaitForSeconds(holdActionDuration);
             Done();
         }

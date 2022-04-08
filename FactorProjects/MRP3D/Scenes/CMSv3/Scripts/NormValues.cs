@@ -7,7 +7,7 @@
         /// <summary>
         /// How many orders can be observed
         /// </summary>
-        public const int OrderObservationLength = 5;
+        public const int OrderObservationLength = 10;
         public const int ItemCountMaxValue = 5;
         public const float OrderTimeMaxValue = 120f;
 

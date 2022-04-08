@@ -20,8 +20,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             base.Start();
             _instantiatedComplete = true;
-            AgentTypeCount = Math.Max(AgentTypeCount, AgentTypeActionSpaceDict.Count);
-            foreach (var (id,actionSpace) in AgentTypeActionSpaceDict.Values)
+            AgentTypeCount = Math.Max(AgentTypeCount, AgentTypeActionSpaceOd.Count);
+            foreach (var (id,actionSpace) in AgentTypeActionSpaceOd.Values)
             {
                 MaxActionSpaceSize = Math.Max(actionSpace.Count, MaxActionSpaceSize);
             }
@@ -42,7 +42,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 if (itemState.type == SpecialItemStateType.Product)
                 {
-                    productStockDict.Add(itemState.id,0);
+                    productStockOd.Add(itemState.id,0);
                     deliveredProductCount.Add(itemState.id,0);
                 }
             }
@@ -50,6 +50,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             InitGameObjectExchangeableDict();
             lastOrderGenerateTime = Time.fixedTime+startGenerateOrderTime;
             //GenerateRandomOrders(initialOrderNum);
+            RefreshTrainInfoText();
+            RefreshEpisodeInfoText(Time.fixedTime);
         }
         
         public float EpisodeDuration = 1000f;
@@ -76,92 +78,129 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             // Check in orders whether timeout. If so, call OrderFailed() and remove it from orderList
             var toRemove = new List<float>();
-            foreach (var (generateTime,order) in orderList)
+            foreach (var (ddl,order) in orderSortedList)
             {
-                if (now > order.deadLine)
+                if (now > ddl)
                 {
-                    toRemove.Add(generateTime);
+                    toRemove.Add(ddl);
                     OrderFailed(order);
                 }
             }
-            foreach (var generateTime in toRemove)
+            foreach (var ddl in toRemove)
             {
-                orderList.Remove(generateTime);
+                orderSortedList.Remove(ddl);
             }
-            RefreshOrderText(now);
+            RefreshEpisodeInfoText(now);
+            RefreshTrainInfoText();
         }
         
-        public TextMeshPro textMeshPro;
+        public TextMeshPro EpisodeInfoText;
+        public TextMeshPro TrainInfoText;
+
+        private void RefreshTrainInfoText()
+        {
+            if(TrainInfoText==null)
+                return;
+            TrainInfoText.text = $"Episode: {episodeCount}\n" +
+                                 $"{agvDispatcherDecisionCount} Total AGV decision\n" +
+                                 // $"AGV mask: {_agvMaskCount}\n" +
+                                 // $"AGV act: {_agvActionCount}\n" +
+                                 $"{workstationDecisionCount} Total WS decision\n" +
+                                 $"{_workstationStrangeMask} Strange WS Mask\n";
+            // + $"WS mask: {_workstationMaskCount}\n" +
+            // $"WS act: {_workstationActionCount}\n";
+        }
         public void ChangeText(string text)
         {
-            textMeshPro.text = text;
+            EpisodeInfoText.text = text;
         }
-
-        public void RefreshOrderText(float now)
+        
+        private static int episodeCount = 0;
+        private int finishedOrder = 0;
+        private int failedOrder = 0;
+        private float episodeCumulativeReward = 0f;
+        [NonSerialized]
+        public static int agvDispatcherDecisionCount = 0;
+        //[NonSerialized]
+        //public static int _agvActionCount=0,_agvMaskCount=0;
+        [NonSerialized]
+        public static int workstationDecisionCount = 0;
+        //[NonSerialized]
+        //public static int _workstationMaskCount = 0, _workstationActionCount = 0;
+        [NonSerialized]
+        public static int _workstationStrangeMask = 0;
+        public void RefreshEpisodeInfoText(float now)
         {
-            if(textMeshPro==null)
+            if(EpisodeInfoText==null)
                 return;
             StringBuilder sb = new StringBuilder();
             sb.Append($"<color=#00ffffff>Episode time: {now - currentEpisodeStart:0.0}/{EpisodeDuration:0.0}(s)</color>\n");
-            sb.Append($"<color=green>Total finished: {finishedOrder}</color>\n<color=red>Total Failed: {failedOrder}</color>\n");
+            sb.Append($"<color=green>Episode finished: {finishedOrder}</color>\n<color=red>Episode Failed: {failedOrder}</color>\n");
+            sb.Append($"Cumulative reward: {episodeCumulativeReward:0.00}\n");
             sb.Append("\n<b>Delivered</b>------\n");
             foreach (var (id,num) in deliveredProductCount)
             {
                 sb.Append($"{ScenarioLoader.getItemState(id).name}*{num}\n");
             }
             sb.Append("\n<b>Stock</b>----------\n");
-            foreach (var (id,num) in productStockDict)
+            foreach (var (id,num) in productStockOd)
             {
                 sb.Append($"{ScenarioLoader.getItemState(id).name}*{num}\n");
             }
             sb.Append("\n<b>Order</b>----------\n");
-            foreach (var order in orderList.Values)
+            foreach (var order in orderSortedList.Values)
             {
                 sb.Append(
-                    $"[{ScenarioLoader.getItemState(order.ProductId).name}] <color={((now + 10f) > order.deadLine ? "red" : "green")}>{order.deadLine - now:0.00} sec left</color>\n");
+                    $"[{ScenarioLoader.getItemState(order.ProductId).name}] " +
+                    $"<color={((now + 10f) > order.DeadLine ? "red" : "green")}>" +
+                    $"{order.DeadLine - now:0.00} sec left" +
+                    $"</color>\n");
             }
             ChangeText(sb.ToString());
         }
 
-        private void ResetPlane()
+
+        protected virtual void ResetPlane()
         {
+            episodeCount++;
             AgentGroup.EndGroupEpisode();
-            foreach (var c in WorkstationControllerDict.Values)
+            foreach (var c in WorkstationControllerOd.Values)
             {
                 c.EpisodeReset();
             }
-            foreach (var c in AgvControllerDict.Values)
+            foreach (var c in AgvControllerOd.Values)
             {
                 c.EpisodeReset();
             }
-            foreach (var k in productStockDict.Keys.ToList())
+            foreach (var k in productStockOd.Keys.ToList())
             {
-                productStockDict[k] = 0;
+                productStockOd[k] = 0;
                 deliveredProductCount[k] = 0;
             }
-            orderList.Clear();
+            orderSortedList.Clear();
             finishedOrder = 0;
             failedOrder = 0;
-            lastOrderGenerateTime = Time.fixedTime+startGenerateOrderTime;
+            episodeCumulativeReward = 0f;
+            lastOrderGenerateTime = Time.fixedTime + startGenerateOrderTime;
         }
 
-        public Dictionary<GameObject, WorkstationController> WorkstationControllerDict;
-        public Dictionary<GameObject, AgvController> AgvControllerDict;
-        public Dictionary<GameObject, ImportController> ImportControllerDict;
-        public Dictionary<GameObject, ExportController> ExportControllerDict;
+        public OrderedDictionary<GameObject, WorkstationController> WorkstationControllerOd;
+        public OrderedDictionary<GameObject, AgvController> AgvControllerOd;
+        public OrderedDictionary<GameObject, ImportController> ImportControllerDict;
+        public OrderedDictionary<GameObject, ExportController> ExportControllerDict;
         private void InitGameObjectControllerDict()
         {
-            WorkstationControllerDict = new Dictionary<GameObject, WorkstationController>();
-            AgvControllerDict = new Dictionary<GameObject, AgvController>();
-            ImportControllerDict = new Dictionary<GameObject, ImportController>();
-            ExportControllerDict = new Dictionary<GameObject, ExportController>();
+            WorkstationControllerOd = new OrderedDictionary<GameObject, WorkstationController>();
+            AgvControllerOd = new OrderedDictionary<GameObject, AgvController>();
+            ImportControllerDict = new OrderedDictionary<GameObject, ImportController>();
+            ExportControllerDict = new OrderedDictionary<GameObject, ExportController>();
             foreach (var wsObj in EntityGameObjectsDict[typeof(Workstation)])
             {
-                WorkstationControllerDict.Add(wsObj,wsObj.GetComponent<WorkstationController>());
+                WorkstationControllerOd.Add(wsObj,wsObj.GetComponent<WorkstationController>());
             }
             foreach (var agvObj in EntityGameObjectsDict[typeof(Agv)])
             {
-                AgvControllerDict.Add(agvObj,agvObj.GetComponent<AgvController>());
+                AgvControllerOd.Add(agvObj,agvObj.GetComponent<AgvController>());
             }
             foreach (var o in EntityGameObjectsDict[typeof(ImportStation)])
             {
@@ -175,11 +214,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <summary>
         /// Dictionary from GameObject to IExchangeable instances. This will NOT be updated after Start()!
         /// </summary>
-        public Dictionary<GameObject, IExchangeable> GameObjectExchangeableDict;
+        public OrderedDictionary<GameObject, IExchangeable> GameObjectExchangeableDict;
         public void InitGameObjectExchangeableDict()
         {
-            GameObjectExchangeableDict = new Dictionary<GameObject, IExchangeable>();
-            foreach (var c in WorkstationControllerDict.Values)
+            GameObjectExchangeableDict = new OrderedDictionary<GameObject, IExchangeable>();
+            foreach (var c in WorkstationControllerOd.Values)
             {
                 GameObjectExchangeableDict.Add(c.inputPlateGameObject,c);
                 GameObjectExchangeableDict.Add(c.outputPlateGameObject,c);
@@ -227,28 +266,29 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private bool _instantiatedComplete = false;
         private SimpleMultiAgentGroup AgentGroup = new SimpleMultiAgentGroup();
-        private Dictionary<string, (int,List<object>)> AgentTypeActionSpaceDict = new Dictionary<string, (int,List<object>)>();
-        public int RegisterAgent<T>(EntityAgent<T> agent, string typeId, Func<List<T>> initFunc)
+        private OrderedDictionary<string, (int,List<object>)> AgentTypeActionSpaceOd = new OrderedDictionary<string, (int,List<object>)>();
+        public void RegisterAgent<T>(EntityAgent<T> agent, string typeName, Func<List<T>> initFunc)
         {
             if (_instantiatedComplete)
                 throw new Exception("Instantiation has been complete. Cannot register agent any more.");
             int typeNum;
-            if (AgentTypeActionSpaceDict.ContainsKey(typeId))
+            if (AgentTypeActionSpaceOd.ContainsKey(typeName))
             {
-                var a = AgentTypeActionSpaceDict[typeId];
-                typeNum = a.Item1;
-                
-                agent.ActionSpace = a.Item2.Cast<T>().ToList();
+                // Load stored action space
+                var (num,objActs) = AgentTypeActionSpaceOd[typeName];
+                typeNum = num;
+                agent.ActionSpace = objActs.Cast<T>().ToList();
             }
             else
             {
-                typeNum = AgentTypeActionSpaceDict.Count;
+                // Init and add new action space
+                typeNum = AgentTypeActionSpaceOd.Count;
                 var a = initFunc();
                 agent.ActionSpace = a;
-                AgentTypeActionSpaceDict.Add(typeId,(typeNum,a.Cast<object>().ToList()));
+                AgentTypeActionSpaceOd.Add(typeName,(typeNum,a.Cast<object>().ToList()));
             }
             AgentGroup.RegisterAgent(agent);
-            return typeNum;
+            agent.typeNum = typeNum;
         }
 
         public static int MaxActionSpaceSize { get; private set; } = 0;
@@ -273,7 +313,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         #region Order
 
-        public SortedList<float,Order> orderList = new SortedList<float,Order>();
+        public SortedList<float,Order> orderSortedList = new SortedList<float,Order>();
         public float minDeadline = 60f;
         public float maxDeadline = 120f;
         public int initialOrderNum = 0;
@@ -285,15 +325,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             var now = Time.fixedTime;
             Order o = new Order(
                 ScenarioLoader.ProductItemStates[Random.Range(0, ScenarioLoader.ProductItemStates.Count)].id, 
-                GetRandomDeadline());
-            if (productStockDict[o.ProductId] > 0)
+                now,
+                GetNonConflictRandomDeadline());
+            if (productStockOd[o.ProductId] > 0)
             {
-                productStockDict[o.ProductId]--;
-                OrderFinished(now,o,true);
+                productStockOd[o.ProductId]--;
+                OrderFinished(o,true);
             }
             else
             {
-                orderList.Add(now,o);
+                orderSortedList.Add(o.DeadLine,o);
             }
         }
 
@@ -304,14 +345,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 GenerateOneRandomOrder();
             }
         }
+
+        private float GetNonConflictRandomDeadline()
+        {
+            var ddl = GetRandomDeadline();
+            while (orderSortedList.ContainsKey(ddl))
+            {
+                ddl = GetRandomDeadline();
+            }
+
+            return ddl;
+        }
         private float GetRandomDeadline()
         {
             return Time.fixedTime + Random.Range(minDeadline, maxDeadline);
         }
-        public Dictionary<string, int> productStockDict = new Dictionary<string, int>();
+        public OrderedDictionary<string, int> productStockOd = new OrderedDictionary<string, int>();
         public void DeliverProduct(Item item)
         {
-            productStockDict[item.itemState.id]++;
+            productStockOd[item.itemState.id]++;
             deliveredProductCount[item.itemState.id]++;
             Destroy(item.gameObject);
             CheckStockFinishOrder();
@@ -324,18 +376,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void CheckStockFinishOrder()
         {
             List<float> toRemove = new List<float>();
-            foreach (var (gt,o) in orderList)
+            foreach (var (ddl,o) in orderSortedList)
             {
-                if (productStockDict[o.ProductId] > 0)
+                if (productStockOd[o.ProductId] > 0)
                 {
-                    productStockDict[o.ProductId]--;
-                    toRemove.Add(gt);
+                    productStockOd[o.ProductId]--;
+                    toRemove.Add(ddl);
                 }
             }
-            foreach (var gt in toRemove)
+            foreach (var ddl in toRemove)
             {
-                OrderFinished(gt,orderList[gt]);
-                orderList.Remove(gt);
+                OrderFinished(orderSortedList[ddl]);
+                orderSortedList.Remove(ddl);
             }
         }
 
@@ -352,10 +404,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public float StockFinishNewOrderReward = .02f;
         public float OrderFinishReward = .1f;
         public float FinishOrderTimeCostRewardFactor = -.1f;
-        private Dictionary<string, int> deliveredProductCount = new Dictionary<string, int>();
-        private int finishedOrder = 0;
-        private int failedOrder = 0;
-        private void OrderFinished(float generateTime, Order o,bool isNewOrder=false)
+        private OrderedDictionary<string, int> deliveredProductCount = new OrderedDictionary<string, int>();
+        protected virtual void OrderFinished(Order o,bool isNewOrder=false)
         {
             finishedOrder++;
             // if (isNewOrder)
@@ -366,10 +416,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             //     ground.FlipColor(Ground.GroundSwitchColor.Yellow);
             //     return;
             // }
-            var timeLeft = o.deadLine - Time.fixedTime;
-            var timeCost = Time.fixedTime - generateTime;
+            var timeLeft = o.DeadLine - Time.fixedTime;
+            var timeCost = Time.fixedTime - o.GenerateTime;
             var r = OrderFinishReward*(1-timeCost/NormValues.OrderTimeMaxValue);
             AgentGroup.AddGroupReward(r);
+            episodeCumulativeReward += r;
             RefreshPromptText(
                 $"Finished {ScenarioLoader.getItemState(o.ProductId).name} order " +
                               $"use {timeCost:0.00} seconds, {timeLeft:0.00} seconds before deadline. Reward: {r:0.00}",
@@ -377,10 +428,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             ground.FlipColor(Ground.GroundSwitchColor.Green);
         }
 
-        private void OrderFailed(Order o)
+        protected virtual void OrderFailed(Order o)
         {
             failedOrder++;
-            AgentGroup.AddGroupReward(OrderFailReward);
+            var r = OrderFailReward;
+            AgentGroup.AddGroupReward(r);
+            episodeCumulativeReward += r;
             RefreshPromptText(
                 $"Failed {ScenarioLoader.getItemState(o.ProductId).name} order. Reward: {OrderFailReward:0.00}",
                 "red");

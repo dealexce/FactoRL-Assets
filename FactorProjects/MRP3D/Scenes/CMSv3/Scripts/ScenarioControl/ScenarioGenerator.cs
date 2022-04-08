@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using FactorProjects.MRP3D.Scenes.CMSv3.Scripts.Visualize;
+using OD;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -33,7 +34,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject importStationPrefab;
         public GameObject exportStationPrefab;
 
-        public Dictionary<Type, List<GameObject>> EntityGameObjectsDict = new Dictionary<Type, List<GameObject>>()
+        public OrderedDictionary<Type, List<GameObject>> EntityGameObjectsDict = new OrderedDictionary<Type, List<GameObject>>()
         {
             {typeof(Agv), new List<GameObject>()},
             {typeof(Workstation), new List<GameObject>()},
@@ -172,13 +173,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             ImportStation importStation = _scenario.layout.importStation;
             var g = InstantiateEntityOnGround(typeof(ImportStation), importStationPrefab, importStation.x, importStation.y);
-            g.GetComponent<ImportController>().Init(_scenario.layout.importStation);
+            g.GetComponent<ImportController>()?.Init(_scenario.layout.importStation);
         }
         private void InstantiateExportStation()
         {
             ExportStation exportStation = _scenario.layout.exportStation;
             var g = InstantiateEntityOnGround(typeof(ExportStation), exportStationPrefab, exportStation.x, exportStation.y);
-            g.GetComponent<ExportController>().Init(exportStation);
+            g.GetComponent<ExportController>()?.Init(exportStation);
         }
 
         protected virtual GameObject InstantiateEntityOnGround(Type type, GameObject prefab, float x, float z)
