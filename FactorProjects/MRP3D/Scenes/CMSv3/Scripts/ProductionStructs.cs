@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using OD;
 using UnityEngine;
 
@@ -123,5 +125,44 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     // }
 
     #endregion
+    public class LinkedOperation
+    {
+        public Process Process;
+        public LinkedOperation Next;
 
+        public LinkedOperation(Process process, LinkedOperation next=null)
+        {
+            this.Process = process;
+            this.Next = next;
+        }
+    }
+
+    public class LinkedTransport
+    {
+        public GameObject Pick;
+        public GameObject Put;
+        public string ItemId;
+        public LinkedTransport Next;
+
+        public LinkedTransport(GameObject pick, GameObject put, string itemId)
+        {
+            this.Pick = pick;
+            this.Put = put;
+            this.ItemId = itemId;
+        }
+    }
+
+    public class Transport
+    {
+        public GameObject Pick;
+        public GameObject Put;
+        public string ItemId;
+
+        public Transport(GameObject pick, GameObject put, string itemId)
+        {
+            this.Pick = pick;
+            this.Put = put;
+            this.ItemId = itemId;
+        }
+    }
 }

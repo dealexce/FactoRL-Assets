@@ -8,13 +8,13 @@ using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class WorkstationAgent : EntityAgent<Process>, ILinkedToPlane
+    public class WorkstationAgent : EntityAgent<Process>
     {
         [SerializeField]
         private WorkstationController workstationController;
-        public PlaneController PlaneController { get; set; }
 
-        public List<Process> InitActionSpace()
+
+        public override List<Process> InitActionSpace()
         {
             var actionSpace = new List<Process>();
             // Process==null refers to no process
@@ -30,33 +30,38 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <summary>
         /// If useMask==true, set action mask to false where the action process that cannot be executed for now
         /// </summary>
-        /// <param name="actionMask"></param>
-        protected override void WriteDiscreteActionMaskProtected(IDiscreteActionMask actionMask)
+        protected override List<int> WriteDiscreteActionMaskProtected()
         {
             if(!useMask)
-                return;
+                return null;
             if (GetNotNullExecutableProcessIndexes().Count == 0)
             {
                 PlaneController._workstationStrangeMask++;
-                return;
             }
+            var mask = new List<int>();
             for (int i = 0; i < ActionSpace.Count; i++)
             {
                 if (ActionSpace[i] == null)
                 {
-                    actionMask.SetActionEnabled(0,i,false);
+                    // mask.Add(i);
                 }
                 else if(workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
                 {
-                    actionMask.SetActionEnabled(0, i, false);
+                    mask.Add(i);
                 }
             }
+
+            return mask;
         }
         
-        public override void OnActionReceived(ActionBuffers actions)
+        // public override void OnActionReceived(ActionBuffers actions)
+        // {
+        //     var action = actions.DiscreteActions[0];
+        //     workstationController.StartProcess(ActionSpace[action]);
+        // }
+        protected override void OnActionReceivedProtected(Process process)
         {
-            var action = actions.DiscreteActions[0];
-            workstationController.StartProcess(ActionSpace[action]);
+            workstationController.StartProcess(process);
         }
 
         /// <summary>
@@ -174,11 +179,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             
         }
 
-        public override void Heuristic(in ActionBuffers actionsOut)
+        protected override int HeuristicProtected()
         {
-            var act = actionsOut.DiscreteActions;
-            act[0] = GetRandomExecutableProcessIndex();
-
+            return GetRandomExecutableProcessIndex();
         }
 
         /// <summary>

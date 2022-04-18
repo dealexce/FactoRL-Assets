@@ -123,107 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1001 &142070711
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 15
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -110
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (11)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
 --- !u!1001 &172793403
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -292,12 +191,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -393,12 +300,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -598,107 +513,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!1001 &368803596
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -120
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (12)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
 --- !u!1 &440254853
 GameObject:
   m_ObjectHideFlags: 0
@@ -1012,12 +826,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1113,12 +935,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1214,12 +1044,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1323,6 +1161,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1783165112}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
       value: 1000
       objectReference: {fileID: 0}
@@ -1333,6 +1175,10 @@ PrefabInstance:
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1433,12 +1279,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1463,208 +1317,6 @@ PrefabInstance:
     - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: m_Name
       value: Plane (8)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
---- !u!1001 &1320289970
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 17
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -130
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (13)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
---- !u!1001 &1410696605
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 14
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -100
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (10)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
@@ -1736,12 +1388,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -1971,6 +1631,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   OnlyLogError: 1
+  UseUnionActionSpace: 1
 --- !u!4 &1876127178
 Transform:
   m_ObjectHideFlags: 0
@@ -2232,12 +1893,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -2333,12 +2002,20 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: globalSetting
+      value: 
+      objectReference: {fileID: 1876127177}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: EpisodeDuration
-      value: 200
+      value: 1000
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: OrderFailReward
       value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
+      propertyPath: randomizeLayout
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: scenarioXmlPath
@@ -2363,208 +2040,6 @@ PrefabInstance:
     - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
       propertyPath: m_Name
       value: Plane (3)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
---- !u!1001 &2058155947
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 19
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -150
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (15)
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
---- !u!1001 &2083782989
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1735098837987403857, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2140032, guid: dc36b3fdc14f47ebb36fd484a67e268a, type: 2}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_RootOrder
-      value: 18
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -140
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5398576832236666973, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: MaxStep
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: DisableLog
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: textMeshPro
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: EpisodeDuration
-      value: 200
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFailReward
-      value: -0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: scenarioXmlPath
-      value: Assets/FactorProjects/MRP3D/Scenes/CMSv3/config/scenarios/Scenario220403170821.xml
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: OrderFinishReward
-      value: 0.15
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: orderGenerateInterval
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: FinishAheadRewardFactor
-      value: 0.01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7863427869732445907, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: StockFinishNewOrderReward
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8935774370970545097, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}
-      propertyPath: m_Name
-      value: Plane (14)
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5971d8d6d39eefb4193c5a50b699c0aa, type: 3}

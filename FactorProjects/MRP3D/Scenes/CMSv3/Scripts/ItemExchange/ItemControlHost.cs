@@ -43,6 +43,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 item.transform.SetParent(newParent);
             }
             receiver.OnReceived(exchangeMessage);
+            giver.OnGiven(exchangeMessage);
             return exchangeMessage;
         }
         public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id, Transform newParent)

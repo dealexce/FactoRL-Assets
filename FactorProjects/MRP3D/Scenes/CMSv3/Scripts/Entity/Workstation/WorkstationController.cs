@@ -21,6 +21,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject processPlateGameObject;
         public GameObject outputPlateGameObject;
         
+        public MeshRenderer processPlateMeshRenderer;
+        public Material originalMaterial;
+        public Material processingMaterial;
 
         public OrderedDictionary<string,List<Item>> InputBufferItemsDict;
         public OrderedDictionary<string,List<Item>> ProcessingInputItemsDict;
@@ -36,7 +39,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 ProcessingInputItemsDict.Add(k,new List<Item>());
             }
             workstationAgent.InitActionSpace();
-            workstationAgent.typeNum = PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id,workstationAgent.InitActionSpace);
+            PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id);
         }
         private void Start()
         {
@@ -109,6 +112,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void OnReceived(ExchangeMessage exchangeMessage)
         {
             PlaceItemList(InputBufferItemsDict.Values);
+            if(PlaneController.centralHeuristic) TryBootOperations();
         }
 
         #endregion
@@ -119,10 +123,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             StopCoroutine(nameof(ProcessItemToOutput));
             StopCoroutine(nameof(Hold));
-            Done();
             ItemOdUtils.DestroyAndClearLists(InputBufferItemsDict.Values,Destroy);
             ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
             ItemOdUtils.DestroyAndClearLists(OutputBufferItemsDict.Values,Destroy);
+            Done();
             transform.position = InitPosition;
         }
 
@@ -133,9 +137,19 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public Process CurrentProcess { get; private set; } = null;
         [InspectorUtil.DisplayOnly]
         public string currentProcessName;
+
+        public bool ableToSwitchProcess = true;
         public void StartProcess(Process process)
         {
-            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
+            if (ableToSwitchProcess)
+            {
+                StopCoroutine(nameof(ProcessItemToOutput));
+                ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
+            }
+            else if (ItemOdUtils.ListsSumCount(ProcessingInputItemsDict.Values) > 0)
+            {
+                throw new Exception("This workstation cannot switch an executing process, but asked to start process when ProcessingInputItemsDict is not empty yet");
+            }
             CurrentProcess = process;
             if (process==null)
             {
@@ -148,6 +162,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             switch (status)
             {
                 case ProcessExecutableStatus.Ok:
+                    foreach (var iRef in process.inputItemsRef)
+                    {
+                        var item = InputBufferItemsDict[iRef.idref][0];
+                        item.transform.parent = processPlateGameObject.transform;
+                        ProcessingInputItemsDict[iRef.idref].Add(item);
+                    }
                     StartCoroutine(nameof(ProcessItemToOutput),process);
                     break;
                 case ProcessExecutableStatus.Unsupported:
@@ -183,33 +203,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 return ProcessExecutableStatus.Unsupported;
             if (process == null)
                 return ProcessExecutableStatus.Ok;
-            
-            var status = ProcessExecutableStatus.Ok;
-            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
 
             // Find required input items in input buffer
             foreach (var iRef in process.inputItemsRef)
             {
                 Assert.IsTrue(InputBufferItemsDict.ContainsKey(iRef.idref));
                 var itemList = InputBufferItemsDict[iRef.idref];
-                if (itemList.Count > 0)
-                {
-                    // Copy input item reference from input buffer to processing item list
-                    var item = itemList[0];
-                    item.transform.parent = processPlateGameObject.transform;
-                    ProcessingInputItemsDict[iRef.idref].Add(item);
-                }
-                else
+                if (itemList.Count <=0)
                 {
                     // Input buffer does not have required input item
-                    status = ProcessExecutableStatus.LackOfInput;
-                    break;
+                    return ProcessExecutableStatus.LackOfInput;
                 }
             }
-            
-            if(status!=ProcessExecutableStatus.Ok)
-                ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
-            return status;
+
+            return ProcessExecutableStatus.Ok;
         }
 
         public float holdActionDuration = 1f;
@@ -222,8 +229,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private IEnumerator ProcessItemToOutput([NotNull] Process p)
         {
+            processPlateMeshRenderer.material = processingMaterial;
             // Simulate process time
             yield return new WaitForSeconds(p.duration);
+            processPlateMeshRenderer.material = originalMaterial;
             // Remove and destroy items in ProcessingInputItemsDict
             foreach (var list in ProcessingInputItemsDict.Values)
             {
@@ -242,12 +251,48 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             PlaceAllItems();
             Done();
         }
+
+        private LinkedOperation _currentLinkedOperation;
+        public SortedList<float,LinkedOperation> TodoOperations = new ();
+
+        public void AddOperation(LinkedOperation op)
+        {
+            TodoOperations.Add(op.priority, op);
+            TryBootOperations();
+        }
         
+        // If there currentOperation==null, start process of operation with maximum priority.
+        // Should be called when 1.OnReceived; 2.AddOperation 3.Done
+        private bool TryBootOperations()
+        {
+            if (_currentLinkedOperation != null)
+            {
+                return false;
+            }
+            foreach (var (k,operation) in TodoOperations)
+            {
+                if (CheckProcessIsExecutable(operation.Process) != ProcessExecutableStatus.Ok) continue;
+                _currentLinkedOperation = operation;
+                TodoOperations.Remove(k);
+                StartProcess(operation.Process);
+                return true;
+            }
+
+            return false;
+        }
         private void Done()
         {
             CurrentProcess = null;
             currentProcessName = "null";
-            workstationAgent.DecideProcess();
+            if (PlaneController.centralHeuristic)
+            {
+                PlaneController.OperationFinished(_currentLinkedOperation);
+                TryBootOperations();
+            }
+            else
+            {
+                workstationAgent.DecideProcess();
+            }
         }
 
         #endregion

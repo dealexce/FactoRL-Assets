@@ -9,13 +9,12 @@ using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class AgvDispatcherAgent : EntityAgent<Target>, ILinkedToPlane
+    public class AgvDispatcherAgent : EntityAgent<Target>
     {
-        public PlaneController PlaneController { get; set; }
         [SerializeField]
         private AgvController agvController;
 
-        public List<Target> InitActionSpace()
+        public override List<Target> InitActionSpace()
         {
             var agvDispatcherActionSpace = new List<Target>();
             var entityGameObjectsDict = PlaneController.EntityGameObjectsDict;
@@ -67,11 +66,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             }
             return agvDispatcherActionSpace;
         }
-        public override void OnActionReceived(ActionBuffers actions)
+        // public override void OnActionReceived(ActionBuffers actions)
+        // {
+        //     var action = actions.DiscreteActions[0];
+        //     agvController.AssignNewTarget(ActionSpace[action]);
+        // }
+        protected override void OnActionReceivedProtected(Target target)
         {
-            var action = actions.DiscreteActions[0];
-            agvController.AssignNewTarget(ActionSpace[action]);
+            agvController.AssignNewTarget(target);
         }
+
 
         public void RequestTargetDecision()
         {
@@ -80,17 +84,18 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
 
         public bool useMask = false;
-        protected override void WriteDiscreteActionMaskProtected(IDiscreteActionMask actionMask)
+        protected override List<int> WriteDiscreteActionMaskProtected()
         {
-            if(!useMask)
-                return;
+            var mask = new List<int>();
+            if (!useMask)
+                return mask;
             for (int i = 0; i < ActionSpace.Count; i++)
             {
                 var target = ActionSpace[i];
                 if (target == null)
                 {
-                    // Mask null target action
-                    actionMask.SetActionEnabled(0,i,false);
+                    // // Mask null target action
+                    // mask.Add(i);
                     continue;
                 }
                 var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
@@ -102,7 +107,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         // Disable action if other is not givable or this is not receivable
                         if(other.CheckGivable(agvController,item)!=ExchangeMessage.Ok
                            ||agvController.CheckReceivable(other,item)!=ExchangeMessage.Ok)
-                            actionMask.SetActionEnabled(0,i,false);
+                            mask.Add(i);
                         break;
                     }
                     case TargetAction.Give:
@@ -111,11 +116,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         // Disable action if other is not receivable or this is not givable
                         if(other.CheckReceivable(agvController,item)!=ExchangeMessage.Ok
                            ||agvController.CheckGivable(other,item)!=ExchangeMessage.Ok)
-                            actionMask.SetActionEnabled(0,i,false);
+                            mask.Add(i);
                         break;
                     }
                 }
             }
+
+            return mask;
         }
         
         protected override void CollectObservationsProtected(VectorSensor sensor)
@@ -206,10 +213,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         
 
-        public override void Heuristic(in ActionBuffers actionsOut)
+        protected override int HeuristicProtected()
         {
-            var act = actionsOut.DiscreteActions;
-            act[0] = GetRandomValidTargetIndex();
+            return GetRandomValidTargetIndex();
         }
         //give a random valid currentTarget
         public int GetRandomValidTargetIndex()

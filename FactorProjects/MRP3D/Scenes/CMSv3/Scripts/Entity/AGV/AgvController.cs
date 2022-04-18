@@ -30,7 +30,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             InitHoldingItems();
             moveSpeed = model.movespeed;
             rotateSpeed = model.rotatespeed;
-            PlaneController.RegisterAgent(agvDispatcherAgent, "AD",agvDispatcherAgent.InitActionSpace);
+            PlaneController.RegisterAgent(agvDispatcherAgent, "AD");
+            //PlaneController.RegisterAgent(agvMoveAgent,"AM");
         }
 
         private void InitHoldingItems()
@@ -86,6 +87,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void OnReceived(ExchangeMessage exchangeMessage)
         {
             PlaceItems();
+            StartPut();
+        }
+
+        public void OnGiven(ExchangeMessage exchangeMessage)
+        {
+            throw new NotImplementedException();
         }
 
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
@@ -132,6 +139,41 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
 
         public Target CurrentTarget = null;
+
+        private LinkedTransport _currentLinkedTransport = null;
+
+        public void AllocateTransport(LinkedTransport linkedTransport)
+        {
+            if (_currentLinkedTransport != null)
+                throw new Exception("Already have an ongoing transport");
+            _currentLinkedTransport = linkedTransport;
+            StartPick();
+        }
+
+        private void StartPick()
+        {
+            Assert.IsNotNull(_currentLinkedTransport);
+            Assert.IsNull(CurrentTarget);
+            CurrentTarget = new Target(_currentLinkedTransport.Pick,TargetAction.Get,_currentLinkedTransport.ItemId);
+        }
+
+        private void StartPut()
+        {
+            Assert.IsNotNull(_currentLinkedTransport);
+            Assert.IsNull(CurrentTarget);
+            CurrentTarget = new Target(_currentLinkedTransport.Put,TargetAction.Give,_currentLinkedTransport.ItemId);
+        }
+
+        private void TransportComplete()
+        {
+            _currentLinkedTransport = null;
+            PlaneController.TransporterComplete();
+        }
+
+        public bool IsIdle()
+        {
+            return _currentLinkedTransport == null;
+        }
         
         public bool fixDecision = true;
         public int autoDecisionInterval = 100;
@@ -157,6 +199,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private void RequestDispatchDecision()
         {
+            if(PlaneController.centralHeuristic)
+                return;
             agvDispatcherAgent.RequestTargetDecision();
             lastDecisionStep = 0;
         }
@@ -195,7 +239,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             _rigidbody.velocity = Vector3.zero;
             _rigidbody.angularVelocity = Vector3.zero;
             ResetHolder();
-            agvMoveAgent.EpisodeInterrupted();
+            //agvMoveAgent.EpisodeInterrupted();
             Done();
         }
         public void ResetHolder()

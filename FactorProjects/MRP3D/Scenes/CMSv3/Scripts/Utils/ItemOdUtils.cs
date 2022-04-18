@@ -14,7 +14,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 list.Clear();
             }
         }
-        
+
         public static void DestroyAndClearLists(IEnumerable<List<Item>> lists, Action<GameObject> destroyAction)
         {
             IterateLists(lists,

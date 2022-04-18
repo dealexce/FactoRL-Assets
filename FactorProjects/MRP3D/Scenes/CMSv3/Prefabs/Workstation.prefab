@@ -60,7 +60,7 @@ GameObject:
   - component: {fileID: 2067089877517639390}
   m_Layer: 0
   m_Name: Cube
-  m_TagString: Untagged
+  m_TagString: wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -319,19 +319,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 577
+    VectorObservationSize: 580
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
-      BranchSizes: 3d000000
-    VectorActionSize: 3d000000
+      BranchSizes: 43000000
+    VectorActionSize: 43000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: 0cec7f83925ea8441a9e664c70e7f9e2, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 1
-  m_BehaviorName: CMSv3AD_WS_heuristic
+  m_BehaviorType: 0
+  m_BehaviorName: CMSv3AD_WS
   TeamId: 0
   m_UseChildSensors: 1
   m_UseChildActuators: 1
@@ -353,6 +353,7 @@ MonoBehaviour:
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
   typeNum: -1
+  offset: -1
   goalSensor: {fileID: 6790087876707487383}
   behaviorParameters: {fileID: 8156606643044452946}
   workstationController: {fileID: 2131449222914743247}
@@ -813,6 +814,8 @@ MonoBehaviour:
   inputPlateGameObject: {fileID: 4133336830233152977}
   processPlateGameObject: {fileID: 6596527977463589106}
   outputPlateGameObject: {fileID: 2254671324214478851}
+  processPlateMeshRenderer: {fileID: 4377235499150254917}
+  processingMaterial: {fileID: 2100000, guid: db79f8ac52572404f971f0cf7d5ecf7c, type: 2}
   currentProcessName: 
   holdActionDuration: 1
   itemInterval: 0.2

@@ -17,6 +17,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             
         }
 
+        public void OnGiven(ExchangeMessage exchangeMessage)
+        {
+            
+        }
+
         public  ExchangeMessage CheckReceivable(IExchangeable giver, Item item);
         public  ExchangeMessage CheckGivable(IExchangeable receiver, Item item);
         

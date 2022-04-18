@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Policies;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Serialization;
 using Object = System.Object;
 using Random = UnityEngine.Random;
 
@@ -16,26 +18,46 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class PlaneController : ScenarioGenerator
     {
+        public GlobalSetting globalSetting;
         public new void Start()
         {
             base.Start();
             _instantiatedComplete = true;
-            AgentTypeCount = Math.Max(AgentTypeCount, AgentTypeActionSpaceOd.Count);
-            foreach (var (id,actionSpace) in AgentTypeActionSpaceOd.Values)
+            AgentTypeCount = AgentTypeActionSpaceOd.Count;
+
+            var actionSpaceSize = 0;
+            string actionSpaceMethod;
+            if (globalSetting.UseUnionActionSpace)
             {
-                MaxActionSpaceSize = Math.Max(actionSpace.Count, MaxActionSpaceSize);
+                var unionActionSpaceSize = 0;
+                foreach (var (_,actions) in AgentTypeActionSpaceOd.Values)
+                {
+                    actionSpaceSize += actions.Count;
+                }
+
+                actionSpaceMethod = "UNION";
             }
-            Debug.LogFormat("Max action space size is: {0}",MaxActionSpaceSize);
-            Debug.LogFormat("Goal sensor size should be: {0}",AgentTypeCount);
+            else
+            {
+                foreach (var (_,actionSpace) in AgentTypeActionSpaceOd.Values)
+                {
+                    actionSpaceSize = Math.Max(actionSpace.Count, actionSpaceSize);
+                }
+
+                actionSpaceMethod = "MAX";
+            }
+            
+            Debug.Log($"Using {actionSpaceMethod} action space, action space size should be: {actionSpaceSize}");
+            Debug.Log($"Goal sensor size should be: {AgentTypeCount}");
             // Verify all agent's behaviour parameter settings of action space. Should all be MaxActionSpaceSize
             foreach (var registeredAgent in AgentGroup.GetRegisteredAgents())
             {
-                var specSize = registeredAgent.GetComponent<BehaviorParameters>().BrainParameters.ActionSpec.BranchSizes[0];
-                if(specSize!=MaxActionSpaceSize)
-                    Debug.LogErrorFormat(
-                        "{0}: Action space size does not match, should be {1}, but set to {2}",
-                        registeredAgent.GetType().Name,
-                        MaxActionSpaceSize,specSize);
+                var brainParas = registeredAgent.GetComponent<BehaviorParameters>().BrainParameters;
+                var specSize = brainParas.ActionSpec.BranchSizes[0];
+                if(specSize!=actionSpaceSize)
+                    Debug.LogError(
+                        $"{registeredAgent.GetType().Name}: Action space size does not match, " +
+                        $"should be {actionSpaceSize}, but set to {specSize}");
             }
             // init productStockDict
             foreach (var itemState in _scenario.model.itemStates)
@@ -61,6 +83,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         [SerializeField]
         [InspectorUtil.DisplayOnly]
         private float lastOrderGenerateTime = 0f;
+
+        private int refreshTextCounter = 0;
+        public int textRefreshRate = 30;
         private void FixedUpdate()
         {
             // Check Whether episode is end and should reset plane
@@ -90,8 +115,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 orderSortedList.Remove(ddl);
             }
-            RefreshEpisodeInfoText(now);
-            RefreshTrainInfoText();
+
+            refreshTextCounter++;
+            if (refreshTextCounter > textRefreshRate)
+            {
+                RefreshEpisodeInfoText(now);
+                RefreshTrainInfoText();
+                refreshTextCounter = 0;
+            }
         }
         
         public TextMeshPro EpisodeInfoText;
@@ -115,20 +146,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             EpisodeInfoText.text = text;
         }
         
-        private static int episodeCount = 0;
+        private int episodeCount = 0;
         private int finishedOrder = 0;
         private int failedOrder = 0;
         private float episodeCumulativeReward = 0f;
         [NonSerialized]
-        public static int agvDispatcherDecisionCount = 0;
+        public int agvDispatcherDecisionCount = 0;
         //[NonSerialized]
-        //public static int _agvActionCount=0,_agvMaskCount=0;
+        //public int _agvActionCount=0,_agvMaskCount=0;
         [NonSerialized]
-        public static int workstationDecisionCount = 0;
+        public int workstationDecisionCount = 0;
         //[NonSerialized]
-        //public static int _workstationMaskCount = 0, _workstationActionCount = 0;
+        //public int _workstationMaskCount = 0, _workstationActionCount = 0;
         [NonSerialized]
-        public static int _workstationStrangeMask = 0;
+        public int _workstationStrangeMask = 0;
         public void RefreshEpisodeInfoText(float now)
         {
             if(EpisodeInfoText==null)
@@ -163,7 +194,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         protected virtual void ResetPlane()
         {
             episodeCount++;
-            AgentGroup.EndGroupEpisode();
+            AgentGroup.GroupEpisodeInterrupted();
             foreach (var c in WorkstationControllerOd.Values)
             {
                 c.EpisodeReset();
@@ -182,6 +213,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             failedOrder = 0;
             episodeCumulativeReward = 0f;
             lastOrderGenerateTime = Time.fixedTime + startGenerateOrderTime;
+            RefreshPromptText("Plane has been reset","white");
         }
 
         public OrderedDictionary<GameObject, WorkstationController> WorkstationControllerOd;
@@ -267,7 +299,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private bool _instantiatedComplete = false;
         private SimpleMultiAgentGroup AgentGroup = new SimpleMultiAgentGroup();
         private OrderedDictionary<string, (int,List<object>)> AgentTypeActionSpaceOd = new OrderedDictionary<string, (int,List<object>)>();
-        public void RegisterAgent<T>(EntityAgent<T> agent, string typeName, Func<List<T>> initFunc)
+        public void RegisterAgent<T>(EntityAgent<T> agent, string typeName)
         {
             if (_instantiatedComplete)
                 throw new Exception("Instantiation has been complete. Cannot register agent any more.");
@@ -283,15 +315,27 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 // Init and add new action space
                 typeNum = AgentTypeActionSpaceOd.Count;
-                var a = initFunc();
+                var a = agent.InitActionSpace();
                 agent.ActionSpace = a;
                 AgentTypeActionSpaceOd.Add(typeName,(typeNum,a.Cast<object>().ToList()));
             }
-            AgentGroup.RegisterAgent(agent);
-            agent.typeNum = typeNum;
-        }
 
-        public static int MaxActionSpaceSize { get; private set; } = 0;
+            int offset = 0;
+            foreach (var (tName, (tNum,actions)) in AgentTypeActionSpaceOd)
+            {
+                if (tName != typeName)
+                {
+                    offset += actions.Count;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            agent.typeNum = typeNum;
+            agent.offset = offset;
+            AgentGroup.RegisterAgent(agent);
+        }
         public static int AgentTypeCount { get; private set; } = 0;
 
 
@@ -313,6 +357,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         #region Order
 
+        /// <summary>
+        /// All orders at present, sorted by deadline
+        /// </summary>
         public SortedList<float,Order> orderSortedList = new SortedList<float,Order>();
         public float minDeadline = 60f;
         public float maxDeadline = 120f;
@@ -441,7 +488,91 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
 
         #endregion
+
+
+        public bool centralHeuristic = false;
         
-        
+        private void ScheduleNewOrder(Order order)
+        {
+            // Get a copy of operation link. The priority of operations for this order/job is the order generate time.
+            var op = ScenarioLoader.GetPrioritizedOperationCopy(order.ProductId,order.GenerateTime);
+            AllocateOperation(op);
+        }
+
+        private Dictionary<string, List<WorkstationController>> processWorkstationsDict = new ();
+
+        private List<WorkstationController> GetProcessCandidateWorkstations(string pId)
+        {
+            if (!processWorkstationsDict.ContainsKey(pId))
+            {
+                var candidateWorkstations = WorkstationControllerOd.Values.Where(controller => controller.Workstation.supportProcessesRef.Any(pRef => pRef.idref == pId)).ToList();
+                // Find all workstations support this operation
+                if (candidateWorkstations.Count == 0)
+                {
+                    throw new Exception(
+                        "Find an operation with process that is not supported by any workstation");
+                }
+                processWorkstationsDict.Add(pId,candidateWorkstations);
+            }
+
+            return processWorkstationsDict[pId];
+        }
+        private void AllocateOperationWithTransport(GameObject pick, LinkedOperation op)
+        {
+            var pId = op.Process.id;
+            // Allocate operation to a random support workstation.
+            var candidates = GetProcessCandidateWorkstations(pId);
+            var candidate = candidates[Random.Range(0,candidates.Count)];
+            candidate.AddOperation(op);
+            AddTransport(op.priority,new LinkedTransport(pick,candidate.inputPlateGameObject,op.Process.));
+        }
+
+        private SortedList<float, LinkedTransport> todoTransports = new();
+        public void AddTransport(float priority, LinkedTransport tp)
+        {
+            todoTransports.Add(priority,tp);
+            TryBootTransportSchedule();
+        }
+
+        public void TransporterComplete()
+        {
+            TryBootTransportSchedule();
+        }
+
+        /// <summary>
+        /// Allocate transport tasks to idle and nearest transporter in order of priority
+        /// Should be invoked when 1.AddTransport 2.TransporterComplete
+        /// </summary>
+        /// <returns></returns>
+        private void TryBootTransportSchedule()
+        {
+            foreach (var tp in todoTransports.Values)
+            {
+                var freeTransporters = AgvControllerOd.Values.Where(c => c.IsIdle()).ToList();
+                if (freeTransporters.Count==0)
+                {
+                    return;
+                }
+                var startPos = tp.Pick.transform.position;
+                var t = freeTransporters.Aggregate
+                ((a, b) =>
+                    (startPos - a.transform.position).magnitude < (startPos - b.transform.position).magnitude
+                        ? a
+                        : b);
+                t.AllocateTransport(tp);
+            }
+        }
+
+        public void OperationFinished(WorkstationController controller, LinkedOperation linkedOperation)
+        {
+            if(linkedOperation.Next==null)
+            {
+                foreach (var iRef in linkedOperation.Process.outputItemsRef)
+                {
+                    AddTransport(linkedOperation.priority,new LinkedTransport(controller.outputPlateGameObject,ExportControllerDict.Keys.Single(),iRef.idref));
+                }
+            }
+        }
+
     }
 }

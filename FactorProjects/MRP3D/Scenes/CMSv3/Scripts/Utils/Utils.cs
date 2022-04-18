@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -90,5 +91,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             return (Math.Clamp(value, minValue, maxValue) - minValue) / (maxValue - minValue);
         }
+
     }
 }
