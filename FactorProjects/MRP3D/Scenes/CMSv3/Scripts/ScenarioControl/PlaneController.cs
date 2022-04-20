@@ -383,6 +383,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 orderSortedList.Add(o.DeadLine,o);
             }
+
+            if (centralHeuristic) ScheduleOrder(o);
         }
 
         private void GenerateRandomOrders(int num)
@@ -455,14 +457,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         protected virtual void OrderFinished(Order o,bool isNewOrder=false)
         {
             finishedOrder++;
-            // if (isNewOrder)
-            // {
-            //     AgentGroup.AddGroupReward(StockFinishNewOrderReward);
-            //     Debug.LogFormat("Finished {0} order by stock. Reward: {1:0.00}",
-            //         ScenarioLoader.getItemState(o.ProductId).name, StockFinishNewOrderReward);
-            //     ground.FlipColor(Ground.GroundSwitchColor.Yellow);
-            //     return;
-            // }
+            if (isNewOrder)
+            {
+                AgentGroup.AddGroupReward(StockFinishNewOrderReward);
+                Debug.LogFormat("Finished {0} order by stock. Reward: {1:0.00}",
+                    ScenarioLoader.getItemState(o.ProductId).name, StockFinishNewOrderReward);
+                ground.FlipColor(Ground.GroundSwitchColor.Yellow);
+                return;
+            }
             var timeLeft = o.DeadLine - Time.fixedTime;
             var timeCost = Time.fixedTime - o.GenerateTime;
             var r = OrderFinishReward*(1-timeCost/NormValues.OrderTimeMaxValue);
@@ -492,11 +494,29 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public bool centralHeuristic = false;
         
-        private void ScheduleNewOrder(Order order)
+        private void ScheduleOrder(Order order)
         {
-            // Get a copy of operation link. The priority of operations for this order/job is the order generate time.
-            var op = ScenarioLoader.GetPrioritizedOperationCopy(order.ProductId,order.GenerateTime);
-            AllocateOperation(op);
+            // Record the selection of workstation instance for middle items in the stack
+            var wStack = new Stack<(WorkstationController,string)>();
+            // This should and should only work when using DFS to process tree
+            var pList = ScenarioLoader.GetDfsOperation(order.ProductId);
+            foreach (var pCurrent in pList)
+            {
+                // allocate a workstation for this process
+                var m = AllocateProcessLl(pCurrent);
+                // allocate an AGV for each input item
+                foreach (var item in pCurrent.inputItemsRef.Select(iRef=>ScenarioLoader.getItemState(iRef.idref)))
+                {
+                    // If the input is raw, get from import station, otherwise get from stack
+                    AllocateTransportLl(item.type == SpecialItemStateType.Raw
+                        ? new Transport(SelectImportStation(), m.inputPlateGameObject, item.id)
+                        : new Transport(wStack.Pop().Item1.outputPlateGameObject, m.inputPlateGameObject, item.id));
+                }
+                wStack.Push((m,pCurrent.outputItemsRef.Single().idref));
+            }
+            // The only element remain in the stack is the product item, allocate an AGV to transport it to export station
+            var (ws, productId) = wStack.Pop();
+            AllocateTransportLl(new Transport(ws.outputPlateGameObject, SelectExportStation(), productId));
         }
 
         private Dictionary<string, List<WorkstationController>> processWorkstationsDict = new ();
@@ -517,61 +537,78 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
             return processWorkstationsDict[pId];
         }
-        private void AllocateOperationWithTransport(GameObject pick, LinkedOperation op)
+
+        private GameObject SelectImportStation()
         {
-            var pId = op.Process.id;
-            // Allocate operation to a random support workstation.
-            var candidates = GetProcessCandidateWorkstations(pId);
-            var candidate = candidates[Random.Range(0,candidates.Count)];
-            candidate.AddOperation(op);
-            AddTransport(op.priority,new LinkedTransport(pick,candidate.inputPlateGameObject,op.Process.));
+            return ImportControllerDict.Keys.First();
         }
 
-        private SortedList<float, LinkedTransport> todoTransports = new();
-        public void AddTransport(float priority, LinkedTransport tp)
+        private GameObject SelectExportStation()
         {
-            todoTransports.Add(priority,tp);
-            TryBootTransportSchedule();
+            return ExportControllerDict.Keys.First();
         }
-
-        public void TransporterComplete()
-        {
-            TryBootTransportSchedule();
-        }
-
+        
         /// <summary>
-        /// Allocate transport tasks to idle and nearest transporter in order of priority
-        /// Should be invoked when 1.AddTransport 2.TransporterComplete
+        /// Allocate process to workstation with minimum process load
         /// </summary>
+        /// <param name="process"></param>
         /// <returns></returns>
-        private void TryBootTransportSchedule()
+        private WorkstationController AllocateProcessLl(Process process)
         {
-            foreach (var tp in todoTransports.Values)
-            {
-                var freeTransporters = AgvControllerOd.Values.Where(c => c.IsIdle()).ToList();
-                if (freeTransporters.Count==0)
-                {
-                    return;
-                }
-                var startPos = tp.Pick.transform.position;
-                var t = freeTransporters.Aggregate
-                ((a, b) =>
-                    (startPos - a.transform.position).magnitude < (startPos - b.transform.position).magnitude
-                        ? a
-                        : b);
-                t.AllocateTransport(tp);
-            }
+            var pId = process.id;
+            // Allocate operation to the support workstation with minimum schedule
+            var candidates = GetProcessCandidateWorkstations(pId);
+            var selected = candidates.Aggregate((c1, c2) => c1.Schedule.Count < c2.Schedule.Count ? c1 : c2);
+            selected.Schedule.Enqueue(process);
+            selected.TryPushSchedule();
+            return selected;
         }
-
-        public void OperationFinished(WorkstationController controller, LinkedOperation linkedOperation)
+        
+        /// <summary>
+        /// Allocate transport to AGV with minimum transport load
+        /// </summary>
+        /// <param name="transport"></param>
+        /// <returns></returns>
+        private AgvController AllocateTransportLl(Transport transport)
         {
-            if(linkedOperation.Next==null)
-            {
-                foreach (var iRef in linkedOperation.Process.outputItemsRef)
-                {
-                    AddTransport(linkedOperation.priority,new LinkedTransport(controller.outputPlateGameObject,ExportControllerDict.Keys.Single(),iRef.idref));
-                }
-            }
+            // Select the agv with minimum schedule load
+            var selected =
+                AgvControllerOd.Values.Aggregate((a1, a2) => a1.Schedule.Count < a2.Schedule.Count ? a1 : a2);
+            selected.Schedule.Add(transport);
+            selected.TryPushSchedule();
+            return selected;
+        }
+        /// <summary>
+        /// Select the AGV that the distance from its last transport put position to this new transport's pick position
+        /// is minimum, and allocate the transport to selected AGV
+        /// </summary>
+        /// <param name="transport"></param>
+        /// <returns></returns>
+        // private AgvController AllocateTransportLtt(Transport transport)
+        // {
+        //     // Select the agv with minimum schedule load
+        //     var selected =
+        //         AgvControllerOd.Values.Aggregate((a1, a2) =>
+        //             EstimatePickDistance(a1, transport) < EstimatePickDistance(a2, transport) ? a1 : a2);
+        //     selected.Schedule.AddLast(transport);
+        //     selected.TryPushSchedule();
+        //     return selected;
+        // }
+        //
+        // private static float EstimatePickDistance(AgvController agvController, Transport newTransport)
+        // {
+        //     // Calculate the direct distance from AGV's last transport put position to new transport's pick position
+        //     return (agvController.Schedule.Last.Value.Put.transform.position - newTransport.Pick.transform.position)
+        //         .magnitude;
+        // }
+
+        public bool CheckTransportAvailable(IExchangeable transporter, Transport transport)
+        {
+            var pickE = GameObjectExchangeableDict[transport.Pick];
+            var putE = GameObjectExchangeableDict[transport.Put];
+            var item = pickE.GetItem(transport.ItemId);
+            return pickE.CheckGivable(transporter, item)==ExchangeMessage.Ok &&
+                   putE.CheckReceivable(transporter, item)==ExchangeMessage.Ok;
         }
 
     }

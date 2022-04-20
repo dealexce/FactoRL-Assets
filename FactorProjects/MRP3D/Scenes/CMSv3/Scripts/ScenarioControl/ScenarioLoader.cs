@@ -86,12 +86,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return WorkstationDict[id];
         }
 
-        public static (List<Process>, List<Transport>) GetOperationTransport(string id)
+        public static List<Process> GetDfsOperation(string id)
         {
-            return productOperationTransportDict[id];
+            return productDfsOperationDict[id];
         }
 
-        private static Dictionary<string, (List<Process>, List<Transport>)> productOperationTransportDict;
+        private static Dictionary<string, List<Process>> productDfsOperationDict;
 
         private static void InitProductOperationDict()
         {
@@ -103,10 +103,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     outputProcessDict.Add(iRef.idref, p);
                 }
             }
-            productOperationTransportDict = new Dictionary<string, (List<Process>, List<Transport>)>();
+
+            productDfsOperationDict = new Dictionary<string, List<Process>>();
             foreach (var pi in ProductItemStates)
             {
-                productOperationTransportDict.Add(pi.id, GenerateLinkedOperation(pi.id));
+                productDfsOperationDict.Add(pi.id, GenerateDfsOperations(pi.id));
             }
         }
 
@@ -117,16 +118,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// <param name="id">product item id</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static (List<Process>,List<Transport>) GenerateLinkedOperation(string id)
+        private static List<Process> GenerateDfsOperations(string id)
         {
             var operationList = new List<Process>();
-            var transportList = new List<Transport>();
-            GenerateLinkedOperationTransportRecursive(id, operationList, transportList);
-            return (operationList, transportList);
+            GenerateDfsOperationTransportRecursive(id, operationList);
+            return operationList;
         }
 
-        private static void GenerateLinkedOperationTransportRecursive(string outputId, in List<Process> operationList,
-            in List<Transport> transportList)
+        private static void GenerateDfsOperationTransportRecursive(string outputId, in List<Process> operationList)
         {
             // Find the process whose output contains outputId
             var p = outputProcessDict[outputId];
@@ -135,10 +134,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 // If this input is raw, there is no pre operation for this input, so add a transport from raw to undetermined
                 if (item.type == SpecialItemStateType.Raw)
                 {
-                    transportList.Add(new Transport(null, null, item.id));
+                    continue;
                 }
                 // Else go recursively to this input
-                GenerateLinkedOperationTransportRecursive(item.id, operationList, transportList);   
+                GenerateDfsOperationTransportRecursive(item.id, operationList);   
             }
             operationList.Add(p);
 

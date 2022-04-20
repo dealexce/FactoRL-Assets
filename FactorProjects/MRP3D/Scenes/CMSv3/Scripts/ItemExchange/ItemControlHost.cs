@@ -20,7 +20,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         private static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, Item item)
         {
             ExchangeMessage exchangeMessage = giver.CheckGivable(receiver,item);
-            giver.OnRequest(exchangeMessage);
+            giver.OnRequest(exchangeMessage, item);
             if (exchangeMessage != ExchangeMessage.Ok)
                 return exchangeMessage;
             
@@ -41,9 +41,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if (exchangeMessage == ExchangeMessage.Ok)
             {
                 item.transform.SetParent(newParent);
+                receiver.OnReceived(exchangeMessage, item);
+                giver.OnGiven(exchangeMessage, item);
             }
-            receiver.OnReceived(exchangeMessage);
-            giver.OnGiven(exchangeMessage);
             return exchangeMessage;
         }
         public static ExchangeMessage PassItem(IExchangeable giver, IExchangeable receiver, string id, Transform newParent)

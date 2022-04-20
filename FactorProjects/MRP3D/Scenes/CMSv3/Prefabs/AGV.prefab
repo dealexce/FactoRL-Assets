@@ -58,7 +58,7 @@ MonoBehaviour:
     hasUpgradedBrainParametersWithActionSpec: 1
   m_Model: {fileID: 5022602860645237092, guid: 0cec7f83925ea8441a9e664c70e7f9e2, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 0
+  m_BehaviorType: 2
   m_BehaviorName: CMSv3AD_WS
   TeamId: 0
   m_UseChildSensors: 1
@@ -415,7 +415,7 @@ PrefabInstance:
     - target: {fileID: 9060745912894294053, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 5a26de236ce89e94b963be8fa2b7ade6, type: 2}
+      objectReference: {fileID: 2100000, guid: 652107f36a28e44479c0b827dee5852a, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0332af39ab981f1459ca81280e1d720b, type: 3}
 --- !u!1 &5828576488224440954 stripped
@@ -434,8 +434,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1.5, z: 1.5}
-  m_Center: {x: 0, y: 0.25, z: 0}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &60780507833991542
 MonoBehaviour:
   m_ObjectHideFlags: 0

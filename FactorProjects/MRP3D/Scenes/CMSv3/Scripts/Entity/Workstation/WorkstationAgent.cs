@@ -61,7 +61,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         // }
         protected override void OnActionReceivedProtected(Process process)
         {
-            workstationController.StartProcess(process);
+            workstationController.Schedule.Enqueue(process);
         }
 
         /// <summary>

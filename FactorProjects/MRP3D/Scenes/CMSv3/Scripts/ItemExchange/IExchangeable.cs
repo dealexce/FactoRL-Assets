@@ -7,17 +7,17 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
     {
         public Item GetItem(string id);
 
-        public void OnReceived(ExchangeMessage exchangeMessage)
+        public void OnReceived(ExchangeMessage exchangeMessage, Item item)
         {
             
         }
         
-        public void OnRequest(ExchangeMessage exchangeMessage)
+        public void OnRequest(ExchangeMessage exchangeMessage, Item item)
         {
             
         }
 
-        public void OnGiven(ExchangeMessage exchangeMessage)
+        public void OnGiven(ExchangeMessage exchangeMessage, Item item)
         {
             
         }

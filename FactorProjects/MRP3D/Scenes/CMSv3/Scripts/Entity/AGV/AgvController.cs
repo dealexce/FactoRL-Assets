@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using OD;
 using Unity.MLAgents;
 using UnityEngine;
@@ -84,15 +85,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return true;
         }
 
-        public void OnReceived(ExchangeMessage exchangeMessage)
+        public void OnReceived(ExchangeMessage exchangeMessage, Item item)
         {
             PlaceItems();
-            StartPut();
+            if(PlaneController.centralHeuristic) StartPut();
         }
 
-        public void OnGiven(ExchangeMessage exchangeMessage)
+        public void OnGiven(ExchangeMessage exchangeMessage, Item item)
         {
-            throw new NotImplementedException();
+            if(PlaneController.centralHeuristic) TransportDone();
         }
 
         public ExchangeMessage CheckReceivable(IExchangeable giver, Item item)
@@ -140,41 +141,59 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public Target CurrentTarget = null;
 
-        private LinkedTransport _currentLinkedTransport = null;
-
-        public void AllocateTransport(LinkedTransport linkedTransport)
+        public Transport CurrentTransport = null;
+        private enum TransportPhase
         {
-            if (_currentLinkedTransport != null)
-                throw new Exception("Already have an ongoing transport");
-            _currentLinkedTransport = linkedTransport;
+            Pick,Put,Idle
+        }
+
+        private TransportPhase _transportPhase = TransportPhase.Idle;
+        public List<Transport> Schedule = new();
+        private void TransportDone()
+        {
+            Schedule.Remove(CurrentTransport);
+            CurrentTransport = null;
+            _transportPhase = TransportPhase.Idle;
+            TryPushSchedule();
+        }
+
+        /// <summary>
+        /// Todo: 允许插队，首先对能运输的任务(给的能给且收的能收）按FIFO排序，再对尚不能运输的排序
+        /// </summary>
+        /// <returns></returns>
+        public bool TryPushSchedule()
+        {
+            if (!PlaneController.centralHeuristic)
+                return false;
+            if (Schedule.Count==0) 
+                return false;
+            if (_transportPhase != TransportPhase.Put)
+            {
+                var available = Schedule.FindAll(t => PlaneController.CheckTransportAvailable(this, t));
+                CurrentTransport = available.Count > 0 ? available[0] : Schedule[0];
+            }
+            else
+            {
+                return false;
+            }
             StartPick();
+            return true;
         }
 
         private void StartPick()
         {
-            Assert.IsNotNull(_currentLinkedTransport);
-            Assert.IsNull(CurrentTarget);
-            CurrentTarget = new Target(_currentLinkedTransport.Pick,TargetAction.Get,_currentLinkedTransport.ItemId);
+            Assert.IsNotNull(CurrentTransport);
+            _transportPhase = TransportPhase.Pick;
+            CurrentTarget = new Target(CurrentTransport.Pick,TargetAction.Get,CurrentTransport.ItemId);
         }
 
         private void StartPut()
         {
-            Assert.IsNotNull(_currentLinkedTransport);
-            Assert.IsNull(CurrentTarget);
-            CurrentTarget = new Target(_currentLinkedTransport.Put,TargetAction.Give,_currentLinkedTransport.ItemId);
+            Assert.IsNotNull(CurrentTransport);
+            _transportPhase = TransportPhase.Put;
+            CurrentTarget = new Target(CurrentTransport.Put,TargetAction.Give,CurrentTransport.ItemId);
         }
 
-        private void TransportComplete()
-        {
-            _currentLinkedTransport = null;
-            PlaneController.TransporterComplete();
-        }
-
-        public bool IsIdle()
-        {
-            return _currentLinkedTransport == null;
-        }
-        
         public bool fixDecision = true;
         public int autoDecisionInterval = 100;
 
@@ -201,6 +220,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if(PlaneController.centralHeuristic)
                 return;
+            CurrentTarget = null;
             agvDispatcherAgent.RequestTargetDecision();
             lastDecisionStep = 0;
         }
@@ -219,15 +239,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     CurrentTarget.GameObject.transform,
                     NormValues.DistanceMaxValue);
             }
-        }
-
-        private void Update()
-        {
-            // //FOR TEST: 每次按R会将目标切换至下一个，顺序一定
-            // if (Input.GetKeyDown(KeyCode.R))
-            // {
-            //     RequestDispatchDecision();
-            // }
         }
 
         public Vector3 InitPosition { get; set; }
@@ -332,17 +343,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         transform),
                 _ => ExchangeMessage.Fail
             };
-            //交换成功，重置target
-            if (exchangeMessage != ExchangeMessage.Ok)
-            {
-                Debug.LogWarning("Arrived at target but failed to exchange");
-            }
+            // if (exchangeMessage != ExchangeMessage.Ok)
+            // {
+            //     Debug.LogWarning("Arrived at target but failed to exchange");
+            // }
             Done();
         }
 
         private void Done()
         {
-            CurrentTarget = null;
             RequestDispatchDecision();
         }
 

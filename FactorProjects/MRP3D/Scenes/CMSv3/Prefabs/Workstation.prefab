@@ -108,7 +108,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: dedc9ad20ccbd6d4bab03a1fd34f3d64, type: 2}
+  - {fileID: 2100000, guid: c181c23a6120fbe4aadd5bb53a58dd78, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -250,7 +250,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b32af8e0f645f2b4bb8563018db5dcd9, type: 2}
+  - {fileID: 2100000, guid: 5e148de6cdf2d164aa3e3f90ce8c852c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -330,7 +330,7 @@ MonoBehaviour:
     hasUpgradedBrainParametersWithActionSpec: 1
   m_Model: {fileID: 5022602860645237092, guid: 0cec7f83925ea8441a9e664c70e7f9e2, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 0
+  m_BehaviorType: 2
   m_BehaviorName: CMSv3AD_WS
   TeamId: 0
   m_UseChildSensors: 1
@@ -815,8 +815,10 @@ MonoBehaviour:
   processPlateGameObject: {fileID: 6596527977463589106}
   outputPlateGameObject: {fileID: 2254671324214478851}
   processPlateMeshRenderer: {fileID: 4377235499150254917}
+  originalMaterial: {fileID: 2100000, guid: c181c23a6120fbe4aadd5bb53a58dd78, type: 2}
   processingMaterial: {fileID: 2100000, guid: db79f8ac52572404f971f0cf7d5ecf7c, type: 2}
   currentProcessName: 
+  ableToSwitchProcess: 1
   holdActionDuration: 1
   itemInterval: 0.2
 --- !u!65 &8641153617628974447
@@ -893,7 +895,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f666b03bd01d4784b920cf07c4978b73, type: 2}
+  - {fileID: 2100000, guid: c852af001dae0064e9acaa832f1dadb7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

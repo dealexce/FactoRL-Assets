@@ -94,8 +94,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 var target = ActionSpace[i];
                 if (target == null)
                 {
-                    // // Mask null target action
-                    // mask.Add(i);
+                    // Mask null target action
+                    mask.Add(i);
                     continue;
                 }
                 var other = PlaneController.GameObjectExchangeableDict[target.GameObject];

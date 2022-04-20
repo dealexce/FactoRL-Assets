@@ -43,7 +43,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         private void Start()
         {
-            workstationAgent.DecideProcess();
+            if(!PlaneController.centralHeuristic) workstationAgent.DecideProcess();
         }
 
         public WorkstationStatus GetStatus()
@@ -109,10 +109,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return true;
         }
 
-        public void OnReceived(ExchangeMessage exchangeMessage)
+        public void OnReceived(ExchangeMessage exchangeMessage, Item item)
         {
             PlaceItemList(InputBufferItemsDict.Values);
-            if(PlaneController.centralHeuristic) TryBootOperations();
+            if(PlaneController.centralHeuristic) TryPushSchedule();
         }
 
         #endregion
@@ -143,14 +143,15 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         {
             if (ableToSwitchProcess)
             {
+                StopCoroutine(nameof(Hold));
                 StopCoroutine(nameof(ProcessItemToOutput));
                 ItemOdUtils.DestroyAndClearLists(ProcessingInputItemsDict.Values,Destroy);
             }
-            else if (ItemOdUtils.ListsSumCount(ProcessingInputItemsDict.Values) > 0)
+            else if (CurrentProcess!=null||ItemOdUtils.ListsSumCount(ProcessingInputItemsDict.Values) > 0)
             {
-                throw new Exception("This workstation cannot switch an executing process, but asked to start process when ProcessingInputItemsDict is not empty yet");
+                throw new Exception("This workstation cannot hot switch a process, " +
+                                    "but asked to start process when executing process or ProcessingInputItemsDict is not empty yet");
             }
-            CurrentProcess = process;
             if (process==null)
             {
                 currentProcessName = "Hold";
@@ -189,8 +190,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         /// <summary>
         /// Check whether a process can be executed at present.
-        /// If true, load required input items into ProcessingInputItemsDict.
-        /// Else, clear the ProcessingInputItemsDict
         /// </summary>
         /// <param name="process"></param>
         /// <returns></returns>
@@ -229,6 +228,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private IEnumerator ProcessItemToOutput([NotNull] Process p)
         {
+            CurrentProcess = p;
             processPlateMeshRenderer.material = processingMaterial;
             // Simulate process time
             yield return new WaitForSeconds(p.duration);
@@ -252,47 +252,27 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             Done();
         }
 
-        private LinkedOperation _currentLinkedOperation;
-        public SortedList<float,LinkedOperation> TodoOperations = new ();
-
-        public void AddOperation(LinkedOperation op)
+        public Queue<Process> Schedule = new();
+        // Try to start the first process of current schedule
+        // Should be called when 1.OnReceived; 2.Schedule 3.Done
+        public bool TryPushSchedule()
         {
-            TodoOperations.Add(op.priority, op);
-            TryBootOperations();
-        }
-        
-        // If there currentOperation==null, start process of operation with maximum priority.
-        // Should be called when 1.OnReceived; 2.AddOperation 3.Done
-        private bool TryBootOperations()
-        {
-            if (_currentLinkedOperation != null)
-            {
+            if (!PlaneController.centralHeuristic)
                 return false;
-            }
-            foreach (var (k,operation) in TodoOperations)
-            {
-                if (CheckProcessIsExecutable(operation.Process) != ProcessExecutableStatus.Ok) continue;
-                _currentLinkedOperation = operation;
-                TodoOperations.Remove(k);
-                StartProcess(operation.Process);
-                return true;
-            }
-
-            return false;
+            if (CurrentProcess != null) return false;
+            if (Schedule.Count==0) return false;
+            var p = Schedule.Peek();
+            if (CheckProcessIsExecutable(p) != ProcessExecutableStatus.Ok) return false;
+            StartProcess(p);
+            Schedule.Dequeue();
+            return true;
         }
         private void Done()
         {
             CurrentProcess = null;
             currentProcessName = "null";
-            if (PlaneController.centralHeuristic)
-            {
-                PlaneController.OperationFinished(_currentLinkedOperation);
-                TryBootOperations();
-            }
-            else
-            {
-                workstationAgent.DecideProcess();
-            }
+            if(!PlaneController.centralHeuristic) workstationAgent.DecideProcess();
+            TryPushSchedule();
         }
 
         #endregion
