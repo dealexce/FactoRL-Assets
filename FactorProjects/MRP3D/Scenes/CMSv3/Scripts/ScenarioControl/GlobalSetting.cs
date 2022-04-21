@@ -11,5 +11,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             if(OnlyLogError)
                 Debug.unityLogger.filterLogType = LogType.Error;
         }
+
+        public bool UseUnionActionSpace = false;
     }
 }

@@ -36,7 +36,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 ProcessingInputItemsDict.Add(k,new List<Item>());
             }
             workstationAgent.InitActionSpace();
-            workstationAgent.typeNum = PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id,workstationAgent.InitActionSpace);
+            PlaneController.RegisterAgent(workstationAgent, "WS"+Workstation.id,workstationAgent.InitActionSpace);
         }
         private void Start()
         {
@@ -148,6 +148,12 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             switch (status)
             {
                 case ProcessExecutableStatus.Ok:
+                    foreach (var iRef in process.inputItemsRef)
+                    {
+                        var item = InputBufferItemsDict[iRef.idref][0];
+                        item.transform.parent = processPlateGameObject.transform;
+                        ProcessingInputItemsDict[iRef.idref].Add(item);
+                    }
                     StartCoroutine(nameof(ProcessItemToOutput),process);
                     break;
                 case ProcessExecutableStatus.Unsupported:
@@ -183,33 +189,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 return ProcessExecutableStatus.Unsupported;
             if (process == null)
                 return ProcessExecutableStatus.Ok;
-            
-            var status = ProcessExecutableStatus.Ok;
-            ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
 
             // Find required input items in input buffer
             foreach (var iRef in process.inputItemsRef)
             {
                 Assert.IsTrue(InputBufferItemsDict.ContainsKey(iRef.idref));
                 var itemList = InputBufferItemsDict[iRef.idref];
-                if (itemList.Count > 0)
-                {
-                    // Copy input item reference from input buffer to processing item list
-                    var item = itemList[0];
-                    item.transform.parent = processPlateGameObject.transform;
-                    ProcessingInputItemsDict[iRef.idref].Add(item);
-                }
-                else
+                if (itemList.Count <=0)
                 {
                     // Input buffer does not have required input item
-                    status = ProcessExecutableStatus.LackOfInput;
-                    break;
+                    return ProcessExecutableStatus.LackOfInput;
                 }
             }
-            
-            if(status!=ProcessExecutableStatus.Ok)
-                ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
-            return status;
+
+            return ProcessExecutableStatus.Ok;
         }
 
         public float holdActionDuration = 1f;

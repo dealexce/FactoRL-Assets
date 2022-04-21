@@ -319,19 +319,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 577
+    VectorObservationSize: 580
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
-      BranchSizes: 3d000000
-    VectorActionSize: 3d000000
+      BranchSizes: 43000000
+    VectorActionSize: 43000000
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: 0cec7f83925ea8441a9e664c70e7f9e2, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 1
-  m_BehaviorName: CMSv3AD_WS_heuristic
+  m_BehaviorType: 0
+  m_BehaviorName: CMSv3AD_WS
   TeamId: 0
   m_UseChildSensors: 1
   m_UseChildActuators: 1
@@ -353,6 +353,7 @@ MonoBehaviour:
   hasUpgradedFromAgentParameters: 1
   MaxStep: 0
   typeNum: -1
+  offset: -1
   goalSensor: {fileID: 6790087876707487383}
   behaviorParameters: {fileID: 8156606643044452946}
   workstationController: {fileID: 2131449222914743247}

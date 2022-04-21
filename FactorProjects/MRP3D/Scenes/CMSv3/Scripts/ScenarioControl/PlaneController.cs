@@ -16,26 +16,46 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class PlaneController : ScenarioGenerator
     {
+        public GlobalSetting globalSetting;
         public new void Start()
         {
             base.Start();
             _instantiatedComplete = true;
-            AgentTypeCount = Math.Max(AgentTypeCount, AgentTypeActionSpaceOd.Count);
-            foreach (var (id,actionSpace) in AgentTypeActionSpaceOd.Values)
+            AgentTypeCount = AgentTypeActionSpaceOd.Count;
+
+            var actionSpaceSize = 0;
+            string actionSpaceMethod;
+            if (globalSetting.UseUnionActionSpace)
             {
-                MaxActionSpaceSize = Math.Max(actionSpace.Count, MaxActionSpaceSize);
+                var unionActionSpaceSize = 0;
+                foreach (var (_,actions) in AgentTypeActionSpaceOd.Values)
+                {
+                    actionSpaceSize += actions.Count;
+                }
+
+                actionSpaceMethod = "UNION";
             }
-            Debug.LogFormat("Max action space size is: {0}",MaxActionSpaceSize);
-            Debug.LogFormat("Goal sensor size should be: {0}",AgentTypeCount);
+            else
+            {
+                foreach (var (_,actionSpace) in AgentTypeActionSpaceOd.Values)
+                {
+                    actionSpaceSize = Math.Max(actionSpace.Count, actionSpaceSize);
+                }
+
+                actionSpaceMethod = "MAX";
+            }
+            
+            Debug.Log($"Using {actionSpaceMethod} action space, action space size should be: {actionSpaceSize}");
+            Debug.Log($"Goal sensor size should be: {AgentTypeCount}");
             // Verify all agent's behaviour parameter settings of action space. Should all be MaxActionSpaceSize
             foreach (var registeredAgent in AgentGroup.GetRegisteredAgents())
             {
-                var specSize = registeredAgent.GetComponent<BehaviorParameters>().BrainParameters.ActionSpec.BranchSizes[0];
-                if(specSize!=MaxActionSpaceSize)
-                    Debug.LogErrorFormat(
-                        "{0}: Action space size does not match, should be {1}, but set to {2}",
-                        registeredAgent.GetType().Name,
-                        MaxActionSpaceSize,specSize);
+                var brainParas = registeredAgent.GetComponent<BehaviorParameters>().BrainParameters;
+                var specSize = brainParas.ActionSpec.BranchSizes[0];
+                if(specSize!=actionSpaceSize)
+                    Debug.LogError(
+                        $"{registeredAgent.GetType().Name}: Action space size does not match, " +
+                        $"should be {actionSpaceSize}, but set to {specSize}");
             }
             // init productStockDict
             foreach (var itemState in _scenario.model.itemStates)
@@ -61,6 +81,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         [SerializeField]
         [InspectorUtil.DisplayOnly]
         private float lastOrderGenerateTime = 0f;
+
+        private int refreshTextCounter = 0;
+        public int textRefreshRate = 30;
         private void FixedUpdate()
         {
             // Check Whether episode is end and should reset plane
@@ -90,8 +113,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             {
                 orderSortedList.Remove(ddl);
             }
-            RefreshEpisodeInfoText(now);
-            RefreshTrainInfoText();
+
+            refreshTextCounter++;
+            if (refreshTextCounter > textRefreshRate)
+            {
+                RefreshEpisodeInfoText(now);
+                RefreshTrainInfoText();
+                refreshTextCounter = 0;
+            }
         }
         
         public TextMeshPro EpisodeInfoText;
@@ -182,6 +211,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             failedOrder = 0;
             episodeCumulativeReward = 0f;
             lastOrderGenerateTime = Time.fixedTime + startGenerateOrderTime;
+            RefreshPromptText("Plane has been reset","white");
         }
 
         public OrderedDictionary<GameObject, WorkstationController> WorkstationControllerOd;
@@ -287,11 +317,23 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 agent.ActionSpace = a;
                 AgentTypeActionSpaceOd.Add(typeName,(typeNum,a.Cast<object>().ToList()));
             }
-            AgentGroup.RegisterAgent(agent);
-            agent.typeNum = typeNum;
-        }
 
-        public static int MaxActionSpaceSize { get; private set; } = 0;
+            int offset = 0;
+            foreach (var (tName, (tNum,actions)) in AgentTypeActionSpaceOd)
+            {
+                if (tName != typeName)
+                {
+                    offset += actions.Count;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            agent.typeNum = typeNum;
+            agent.offset = offset;
+            AgentGroup.RegisterAgent(agent);
+        }
         public static int AgentTypeCount { get; private set; } = 0;
 
 
