@@ -15,8 +15,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class ScenarioGenerator : MonoBehaviour
     {
-        public string scenarioXmlPath;
-        public bool randomizeLayout = false;
+        public GlobalSetting globalSetting;
+        
         //TODO: Show only when randomizeLayout is set to true
         public float minGroundX = 40f, maxGroundX = 60f;
         public float minGroundY = 40f, maxGroundY = 60f;
@@ -45,11 +45,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void Start()
         {
-            ScenarioLoader.Load(scenarioXmlPath);
+            ScenarioLoader.Load(globalSetting.scenarioXmlPath);
             _scenario = ScenarioLoader.getScenario();
             Assert.IsNotNull(_scenario);
             InitLayout();
-            if (randomizeLayout)
+            if (globalSetting.randomizeLayout)
             {
                 RandomizeLayout();
             }

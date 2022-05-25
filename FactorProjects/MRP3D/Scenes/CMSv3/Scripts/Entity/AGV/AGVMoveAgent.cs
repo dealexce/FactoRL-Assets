@@ -5,6 +5,7 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
@@ -93,8 +94,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public override void Heuristic(in ActionBuffers actionsOut)
         {
-            if (trainingMode)
-                return;
+            // if (trainingMode)
+            //     return;
             var discreteActions = actionsOut.DiscreteActions;
             discreteActions[0] = Input.GetAxis("Vertical") switch
             {
@@ -108,6 +109,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 < 0 => 2,
                 _ => discreteActions[1]
             };
+            discreteActions[0] = Random.Range(0, 3);
+            discreteActions[1] = Random.Range(0, 3);
         }
         
 

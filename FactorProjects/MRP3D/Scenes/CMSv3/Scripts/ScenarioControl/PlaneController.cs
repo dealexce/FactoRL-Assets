@@ -16,7 +16,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
     public class PlaneController : ScenarioGenerator
     {
-        public GlobalSetting globalSetting;
+        
         public new void Start()
         {
             base.Start();
@@ -103,10 +103,14 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             var toRemove = new List<float>();
             foreach (var (ddl,order) in orderSortedList)
             {
-                if (now > ddl)
+                if (now > ddl && !order.IsDue)
+                {
+                    OrderFailed(order);
+                }
+
+                if (dumpOverDueOrderTime>=0 && now > ddl + dumpOverDueOrderTime)
                 {
                     toRemove.Add(ddl);
-                    OrderFailed(order);
                 }
             }
             foreach (var ddl in toRemove)
@@ -158,8 +162,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         //public static int _workstationMaskCount = 0, _workstationActionCount = 0;
         [NonSerialized]
         public static int _workstationStrangeMask = 0;
+        
+        public TextMeshPro countText;
         public void RefreshEpisodeInfoText(float now)
         {
+            if (countText != null)
+            {
+                countText.text = $"<color=white>method: {globalSetting.agvDecisionMethod}</color>\n" +
+                                 $"<color=green>complete: {finishedOrder}</color>\n" +
+                                 $"<color=red>timeout: {failedOrder}</color>";
+            }
             if(EpisodeInfoText==null)
                 return;
             StringBuilder sb = new StringBuilder();
@@ -192,7 +204,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         protected virtual void ResetPlane()
         {
             episodeCount++;
-            AgentGroup.EndGroupEpisode();
+            AgentGroup.GroupEpisodeInterrupted();
             foreach (var c in WorkstationControllerOd.Values)
             {
                 c.EpisodeReset();
@@ -355,12 +367,16 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         #region Order
 
+        /// <summary>
+        /// All orders at present, sorted by deadline
+        /// </summary>
         public SortedList<float,Order> orderSortedList = new SortedList<float,Order>();
         public float minDeadline = 60f;
         public float maxDeadline = 120f;
         public int initialOrderNum = 0;
         public float startGenerateOrderTime = 40f;
         public float orderGenerateInterval = 60f;
+        public float dumpOverDueOrderTime = 60f;
 
         private void GenerateOneRandomOrder()
         {
@@ -472,6 +488,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         protected virtual void OrderFailed(Order o)
         {
+            o.IsDue = true;
             failedOrder++;
             var r = OrderFailReward;
             AgentGroup.AddGroupReward(r);
@@ -483,7 +500,70 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
 
         #endregion
-        
-        
+        private Dictionary<string, List<WorkstationController>> processWorkstationsDict = new ();
+        private List<WorkstationController> GetProcessCandidateWorkstations(string pId)
+        {
+            if (!processWorkstationsDict.ContainsKey(pId))
+            {
+                var candidateWorkstations = WorkstationControllerOd.Values.Where(controller => controller.Workstation.supportProcessesRef.Any(pRef => pRef.idref == pId)).ToList();
+                // Find all workstations support this operation
+                if (candidateWorkstations.Count == 0)
+                {
+                    throw new Exception(
+                        "Find an operation with process that is not supported by any workstation");
+                }
+                processWorkstationsDict.Add(pId,candidateWorkstations);
+            }
+
+            return processWorkstationsDict[pId];
+        }
+
+        private Dictionary<string, float> estimateProcessCost = new();
+
+        public float GetEstimateProcessCost(string productId)
+        {
+            if (!estimateProcessCost.ContainsKey(productId))
+            {
+                float etc = 0.0f;
+                var processes = ScenarioLoader.GetDfsOperation(productId);
+                var importPosition = ImportControllerDict.Keys.Single().transform.position;
+                var exportPosition = ExportControllerDict.Keys.Single().transform.position;
+                foreach (var process in processes)
+                {
+                    var workstations = GetProcessCandidateWorkstations(process.id);
+                    // Sum up raw material deliver average distance
+                    foreach (var iRef in process.inputItemsRef)
+                    {
+                        if (ScenarioLoader.getItemState(iRef.idref).type == SpecialItemStateType.Raw)
+                        {
+                            etc+=workstations.Sum(ws =>
+                                Math.Abs((importPosition - ws.transform.position).magnitude) / workstations.Count);
+                        }
+                        else
+                        {
+                            // TODO: Should be length to previous workstation
+                            etc+=workstations.Sum(ws =>
+                                Math.Abs((transform.position - ws.transform.position).magnitude) / workstations.Count);
+                        }
+                    }
+
+                    foreach (var itemState in process.outputItemsRef.Select(iRef=>ScenarioLoader.getItemState(iRef.idref)))
+                    {
+                        if (itemState.type == SpecialItemStateType.Product)
+                        {
+                            etc+=workstations.Sum(ws =>
+                                Math.Abs((exportPosition - ws.transform.position).magnitude) / workstations.Count);
+                        }
+                    }
+
+                    etc += process.duration;
+                }
+
+                estimateProcessCost.Add(productId, etc);
+            }
+
+            return estimateProcessCost[productId];
+        }
+
     }
 }

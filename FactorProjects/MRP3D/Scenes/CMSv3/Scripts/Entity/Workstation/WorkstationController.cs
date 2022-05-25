@@ -21,6 +21,9 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public GameObject processPlateGameObject;
         public GameObject outputPlateGameObject;
         
+        public MeshRenderer processPlateMeshRenderer;
+        public Material originalMaterial;
+        public Material processingMaterial;
 
         public OrderedDictionary<string,List<Item>> InputBufferItemsDict;
         public OrderedDictionary<string,List<Item>> ProcessingInputItemsDict;
@@ -136,7 +139,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public void StartProcess(Process process)
         {
             ItemOdUtils.ClearLists(ProcessingInputItemsDict.Values);
-            CurrentProcess = process;
             if (process==null)
             {
                 currentProcessName = "Hold";
@@ -175,8 +177,6 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         }
         /// <summary>
         /// Check whether a process can be executed at present.
-        /// If true, load required input items into ProcessingInputItemsDict.
-        /// Else, clear the ProcessingInputItemsDict
         /// </summary>
         /// <param name="process"></param>
         /// <returns></returns>
@@ -215,8 +215,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         private IEnumerator ProcessItemToOutput([NotNull] Process p)
         {
+            CurrentProcess = p;
+            processPlateMeshRenderer.material = processingMaterial;
             // Simulate process time
             yield return new WaitForSeconds(p.duration);
+            processPlateMeshRenderer.material = originalMaterial;
             // Remove and destroy items in ProcessingInputItemsDict
             foreach (var list in ProcessingInputItemsDict.Values)
             {
@@ -258,7 +261,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                     var transform1 = item.transform;
                     transform1.rotation = Quaternion.identity;
                     transform1.position = transform1.parent.position+Vector3.up * itemInterval * i;
-                    i++;
+                    //i++;
                 }
             }
         }

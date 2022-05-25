@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -32,18 +33,20 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         /// </summary>
         protected override List<int> WriteDiscreteActionMaskProtected()
         {
+            
+            var mask = new List<int>();
             if(!useMask)
-                return null;
+                return mask;
             if (GetNotNullExecutableProcessIndexes().Count == 0)
             {
                 PlaneController._workstationStrangeMask++;
             }
-            var mask = new List<int>();
             for (int i = 0; i < ActionSpace.Count; i++)
             {
                 if (ActionSpace[i] == null)
                 {
                     // mask.Add(i);
+                    continue;
                 }
                 else if(workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
                 {
@@ -51,6 +54,10 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 }
             }
 
+            if (mask.Count >= ActionSpace.Count)
+            {
+                mask.Clear();
+            }
             return mask;
         }
         
@@ -61,7 +68,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         // }
         protected override void OnActionReceivedProtected(Process process)
         {
-            workstationController.StartProcess(process);
+            if(workstationController.CheckProcessIsExecutable(process)==WorkstationController.ProcessExecutableStatus.Ok)
+                workstationController.StartProcess(process);
         }
 
         /// <summary>
@@ -161,22 +169,81 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 
         public void DecideProcess()
         {
-            // If workstation only supports one process (null, p1),
-            // start the process as long as it can, no need for RL decision
-            var executables = GetNotNullExecutableProcessIndexes();
-            if (executables.Count == 0)
+            if (PlaneController.orderSortedList.Count == 0 &&
+                PlaneController.globalSetting.workstationDecisionMethod!=GlobalSetting.DecisionMethod.HETE)
             {
-                workstationController.StartProcess(null);
-            }else if (executables.Count == 1)
+                workstationController.StartProcess(GetRandomExecutableProcess());
+                return;
+            }
+            switch (PlaneController.globalSetting.workstationDecisionMethod)
             {
-                workstationController.StartProcess(ActionSpace[executables[0]]);
+                case GlobalSetting.DecisionMethod.HETE:
+                    // If workstation only supports one process (null, p1),
+                    // start the process as long as it can, no need for RL decision
+                    var executables = GetNotNullExecutableProcessIndexes();
+                    if (executables.Count == 0)
+                    {
+                        workstationController.StartProcess(null);
+                    }else if (executables.Count == 1)
+                    {
+                        workstationController.StartProcess(ActionSpace[executables[0]]);
+                    }
+                    else
+                    {
+                        RequestDecision();
+                        PlaneController.workstationDecisionCount++;
+                    }
+                    break;
+                case GlobalSetting.DecisionMethod.RVA:
+                    workstationController.StartProcess(GetRandomExecutableProcess());
+                    break;
+                case GlobalSetting.DecisionMethod.EDD:
+                    AssignProcessAccordOrder(PlaneController.orderSortedList.Values[0]);
+                    break;
+                case GlobalSetting.DecisionMethod.FCFS:
+                    AssignProcessAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>o1.GenerateTime<o2.GenerateTime?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.LCFS:
+                    AssignProcessAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>o1.GenerateTime>o2.GenerateTime?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.SET:
+                    // agvController.AssignNewTarget(
+                    //     GetRandomizedNotNullValidTargets().Aggregate((t1, t2) => 
+                    //         EstimateDistance(t1) < EstimateDistance(t2) ? t1 : t2)
+                    // );
+                    AssignProcessAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>
+                            PlaneController.GetEstimateProcessCost(o1.ProductId)<
+                            PlaneController.GetEstimateProcessCost(o2.ProductId)?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.LET:
+                    // agvController.AssignNewTarget(
+                    //     GetRandomizedNotNullValidTargets().Aggregate((t1, t2) => 
+                    //             EstimateDistance(t1) > EstimateDistance(t2) ? t1 : t2));
+                    AssignProcessAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>
+                            PlaneController.GetEstimateProcessCost(o1.ProductId)>
+                            PlaneController.GetEstimateProcessCost(o2.ProductId)?o1:o2));
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+        
+        private void AssignProcessAccordOrder(Order o)
+        {
+            var orderProcesses = ScenarioLoader.GetDfsOperation(o.ProductId);
+            List<Process> orderExePro;
+            if (GetNotNullExecutableProcessesIn(orderProcesses, out orderExePro))
+            {
+                workstationController.StartProcess(orderExePro[0]);
             }
             else
             {
-                RequestDecision();
-                PlaneController.workstationDecisionCount++;
+                workstationController.StartProcess(GetRandomExecutableProcess());
             }
-            
         }
 
         protected override int HeuristicProtected()
@@ -184,26 +251,25 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return GetRandomExecutableProcessIndex();
         }
 
-        /// <summary>
-        /// Return index of first executable process.
-        /// If none process in action space is executable, return 0
-        /// </summary>
-        /// <returns></returns>
-        private int GetFirstExecutableProcessIndex()
+
+        private bool GetNotNullExecutableProcessesIn(List<Process> all, out List<Process> res)
         {
-            for (int i = 0; i < ActionSpace.Count; i++)
+            List<Process> executables = new ();
+            bool found = false;
+            foreach (var p in all)
             {
-                if(ActionSpace[i]==null)
+                if(p==null)
                     continue;
-                if (workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
+                if (workstationController.CheckProcessIsExecutable(p)!=WorkstationController.ProcessExecutableStatus.Ok)
                 {
                     continue;
                 }
-                return i;
+                executables.Add(p);
+                found = true;
             }
-            return 0;
+            res = executables;
+            return found;
         }
-
         private List<int> GetNotNullExecutableProcessIndexes()
         {
             List<int> executables = new List<int>();
@@ -224,5 +290,55 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             var executables = GetNotNullExecutableProcessIndexes();
             return executables.Count > 0 ? executables[Random.Range(0, executables.Count)] : 0;
         }
+        /// <summary>
+        /// Return index of first executable process.
+        /// If none process in action space is executable, return 0
+        /// </summary>
+        /// <returns></returns>
+        private int GetFirstExecutableProcessIndex()
+        {
+            for (int i = 0; i < ActionSpace.Count; i++)
+            {
+                if(ActionSpace[i]==null)
+                    continue;
+                if (workstationController.CheckProcessIsExecutable(ActionSpace[i])!=WorkstationController.ProcessExecutableStatus.Ok)
+                {
+                    continue;
+                }
+                return i;
+            }
+            return 0;
+        }
+        
+        private List<Process> GetPriorNotNullRandomExecutableProcesses()
+        {
+            var executables = GetNotNullExecutableProcessIndexes().Select(i=>ActionSpace[i]).ToList();
+            return executables.Count > 0 ? executables : new List<Process> {null};
+        }
+        private Process GetRandomExecutableProcess()
+        {
+            return GetPriorNotNullRandomExecutableProcesses().GetRandomItem();
+        }
+
+        private Process GetFirstExecutableProcess()
+        {
+            return GetPriorNotNullRandomExecutableProcesses()[0];
+        }
+        
+        private Process GetAggregateExecutableProcess(Func<Process,Process,Process> selector)
+        {
+            var ps = GetPriorNotNullRandomExecutableProcesses();
+            Process res = null;
+            foreach (var p in ps)
+            {
+                if(p==null)
+                    continue;
+                res = res == null ? p : selector(res, p);
+            }
+
+            return res;
+        }
+        
+        
     }
 }

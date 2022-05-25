@@ -46,6 +46,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public string ProductId { get; }
         public float GenerateTime { get; }
         public float DeadLine { get; }
+        public bool IsDue = false;
     }
 
     #endregion

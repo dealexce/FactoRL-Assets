@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using JetBrains.Annotations;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
@@ -64,8 +66,11 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                         iId));
                 }
             }
+
+            //ScenarioLoader.InitProductRelateTargetsDict(agvDispatcherActionSpace);
             return agvDispatcherActionSpace;
         }
+        
         // public override void OnActionReceived(ActionBuffers actions)
         // {
         //     var action = actions.DiscreteActions[0];
@@ -76,11 +81,93 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             agvController.AssignNewTarget(target);
         }
 
+        private Target GetRelatedPriorestValidTarget(string productId)
+        {
+            int I(Dictionary<string, int> dictionary, Target t)
+            {
+                if(dictionary.ContainsKey(t.ItemStateId))
+                    return dictionary[t.ItemStateId];
+                return -1;
+            }
 
+            var targets = GetNotNullValidTargets();
+            if (targets.Count == 0) return null;
+            var pd = ScenarioLoader.ProductItemPriorityDict[productId];
+            var candidate = targets.Aggregate((t1,t2)=>I(pd, t1)>I(pd, t2)?t1:t2);
+            if (I(pd, candidate) > 0)
+                return candidate;
+            else
+            {
+                return targets.FindAll(t => I(pd, t) == 0).GetRandomItem();
+            }
+        }
         public void RequestTargetDecision()
         {
             PlaneController.agvDispatcherDecisionCount++;
-            RequestDecision();
+            if (PlaneController.orderSortedList.Count == 0&&
+                PlaneController.globalSetting.agvDecisionMethod!=GlobalSetting.DecisionMethod.HETE)
+            {
+                AssignTargetRandom();
+                return;
+            }
+            switch (PlaneController.globalSetting.agvDecisionMethod)
+            {
+                case GlobalSetting.DecisionMethod.HETE:
+                    RequestDecision();
+                    break;
+                case GlobalSetting.DecisionMethod.RVA:
+                    AssignTargetRandom();
+                    break;
+                case GlobalSetting.DecisionMethod.EDD:
+                    // var useful = GetNotNullValidTargets().FindAll(t =>
+                    //     !PlaneController.ImportControllerDict.ContainsKey(t.GameObject));
+                    // agvController.AssignNewTarget(useful.Count > 0 ? useful[0] : GetFirstValidTarget());
+                    AssignTargetAccordOrder(PlaneController.orderSortedList.Values[0]);
+                    break;
+                case GlobalSetting.DecisionMethod.FCFS:
+                    AssignTargetAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>o1.GenerateTime<o2.GenerateTime?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.LCFS:
+                    AssignTargetAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>o1.GenerateTime>o2.GenerateTime?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.SET:
+                    // agvController.AssignNewTarget(
+                    //     GetRandomizedNotNullValidTargets().Aggregate((t1, t2) => 
+                    //         EstimateDistance(t1) < EstimateDistance(t2) ? t1 : t2)
+                    // );
+                    AssignTargetAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>
+                            PlaneController.GetEstimateProcessCost(o1.ProductId)<
+                            PlaneController.GetEstimateProcessCost(o2.ProductId)?o1:o2));
+                    break;
+                case GlobalSetting.DecisionMethod.LET:
+                    // agvController.AssignNewTarget(
+                    //     GetRandomizedNotNullValidTargets().Aggregate((t1, t2) => 
+                    //             EstimateDistance(t1) > EstimateDistance(t2) ? t1 : t2));
+                    AssignTargetAccordOrder(PlaneController.orderSortedList.Values
+                        .Aggregate((o1,o2)=>
+                            PlaneController.GetEstimateProcessCost(o1.ProductId)>
+                            PlaneController.GetEstimateProcessCost(o2.ProductId)?o1:o2));
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private void AssignTargetAccordOrder(Order o)
+        {
+            var priorTarget = GetRelatedPriorestValidTarget(o.ProductId);
+            if(priorTarget==null)
+                AssignTargetRandom();
+            else
+                agvController.AssignNewTarget(priorTarget);
+        }
+
+        private void AssignTargetRandom()
+        {
+            agvController.AssignNewTarget(ActionSpace[GetRandomValidTargetIndex()]);
         }
 
         public bool useMask = false;
@@ -94,8 +181,8 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
                 var target = ActionSpace[i];
                 if (target == null)
                 {
-                    // // Mask null target action
-                    // mask.Add(i);
+                    // Mask null target action
+                    mask.Add(i);
                     continue;
                 }
                 var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
@@ -197,7 +284,7 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             int orderCount = 0;
             foreach (var (_,order) in PlaneController.orderSortedList)
             {
-                sensor.AddObservation(1.0f-(order.DeadLine-Time.fixedTime)/NormValues.OrderTimeMaxValue);
+                sensor.AddObservation(1.0f-Math.Clamp(order.DeadLine-Time.fixedTime,0f,NormValues.OrderTimeMaxValue)/NormValues.OrderTimeMaxValue);
                 foreach (var itemState in ScenarioLoader.ProductItemStates)
                 {
                     sensor.AddObservation(itemState.id == order.ProductId ? 1.0f : 0.0f);
@@ -218,78 +305,81 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             return GetRandomValidTargetIndex();
         }
         //give a random valid currentTarget
-        public int GetRandomValidTargetIndex()
+        private int GetRandomValidTargetIndex()
         {
-            var validTargets = new List<int>();
-            for (int i = 0; i < ActionSpace.Count; i++)
-            {
-                var target = ActionSpace[i];
-                if(target==null)
-                    continue;
-                var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
-                switch (target.TargetAction)
-                {
-                    case TargetAction.Get:
-                    {
-                        var item = other.GetItem(target.ItemStateId);
-                        // Disable action if other is not givable or this is not receivable
-                        if (other.CheckGivable(agvController, item) == ExchangeMessage.Ok
-                            && agvController.CheckReceivable(other, item) == ExchangeMessage.Ok)
-                        {
-                            validTargets.Add(i);
-                        }
-                        break;
-                    }
-                    case TargetAction.Give:
-                    {
-                        var item = agvController.GetItem(target.ItemStateId);
-                        // Disable action if other is not receivable or this is not givable
-                        if (other.CheckReceivable(agvController, item) == ExchangeMessage.Ok
-                            && agvController.CheckGivable(other, item) == ExchangeMessage.Ok)
-                        {
-                            validTargets.Add(i);
-                        }
-                        break;
-                    }
-                }
-            }
+            var validTargets = GetNotNullValidTargetIndexes();
             return validTargets.Count > 0 ? validTargets[Random.Range(0, validTargets.Count)] : 0;
         }
-        private int GetFirstValidTargetIndex()
+        private Target GetFirstValidTarget()
         {
+            var validTargets = GetNotNullValidTargetIndexes();
+            var index= validTargets.Count > 0 ? validTargets[0] : 0;
+            return ActionSpace[index];
+        }
+
+        private List<int> GetNotNullValidTargetIndexes()
+        {
+            List<int> valids = new ();
             for (int i = 0; i < ActionSpace.Count; i++)
             {
                 var target = ActionSpace[i];
                 if(target==null)
                     continue;
-                var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
-                switch (target.TargetAction)
+                if (CheckTargetValid(target)) valids.Add(i);
+            }
+
+            return valids;
+        }
+        private List<Target> GetNotNullValidTargets()
+        {
+            return GetNotNullValidTargetIndexes().Select(i => ActionSpace[i]).ToList();
+        }
+
+        private List<Target> GetRandomizedNotNullValidTargets()
+        {
+            var targets = GetNotNullValidTargets();
+            targets.Shuffle();
+            return targets;
+        }
+
+        private bool CheckTargetValid([NotNull] Target target)
+        {
+            var other = PlaneController.GameObjectExchangeableDict[target.GameObject];
+            switch (target.TargetAction)
+            {
+                case TargetAction.Get:
                 {
-                    case TargetAction.Get:
+                    var item = other.GetItem(target.ItemStateId);
+                    // Disable action if other is not givable or this is not receivable
+                    if (other.CheckGivable(agvController, item) == ExchangeMessage.Ok
+                        && agvController.CheckReceivable(other, item) == ExchangeMessage.Ok)
                     {
-                        var item = other.GetItem(target.ItemStateId);
-                        // Disable action if other is not givable or this is not receivable
-                        if (other.CheckGivable(agvController, item) == ExchangeMessage.Ok
-                            && agvController.CheckReceivable(other, item) == ExchangeMessage.Ok)
-                        {
-                            return i;
-                        }
-                        break;
+                        return true;
                     }
-                    case TargetAction.Give:
+                    break;
+                }
+                case TargetAction.Give:
+                {
+                    var item = agvController.GetItem(target.ItemStateId);
+                    // Disable action if other is not receivable or this is not givable
+                    if (other.CheckReceivable(agvController, item) == ExchangeMessage.Ok
+                        && agvController.CheckGivable(other, item) == ExchangeMessage.Ok)
                     {
-                        var item = agvController.GetItem(target.ItemStateId);
-                        // Disable action if other is not receivable or this is not givable
-                        if (other.CheckReceivable(agvController, item) == ExchangeMessage.Ok
-                            && agvController.CheckGivable(other, item) == ExchangeMessage.Ok)
-                        {
-                            return i;
-                        }
-                        break;
+                        return true;
                     }
+                    break;
                 }
             }
-            return 0;
+
+            return false;
         }
+        
+        private float EstimateDistance(Target target)
+        {
+            // Calculate the direct distance from AGV's last transport put position to new transport's pick position
+            return (transform.position - target.GameObject.transform.position)
+                .magnitude;
+        }
+        
     }
 }

@@ -58,7 +58,25 @@ MonoBehaviour:
   agvPrefab: {fileID: 3138914704657889545, guid: 623571eb11eae324da33cfaa25fe9708, type: 3}
   importStationPrefab: {fileID: 7451406427367902720, guid: e6f8ba7f618fb284ea9fa983a1e9f825, type: 3}
   exportStationPrefab: {fileID: 6420293301762786809, guid: b103863232be6b04bba20a508eed256d, type: 3}
+  globalSetting: {fileID: 0}
+  EpisodeDuration: 1000
+  currentEpisodeStart: 0
+  lastOrderGenerateTime: 0
+  textRefreshRate: 30
+  EpisodeInfoText: {fileID: 0}
+  TrainInfoText: {fileID: 0}
   itemPrefab: {fileID: 7580886048584861730, guid: afb6a562965d18144a8762b182d26255, type: 3}
+  minDeadline: 60
+  maxDeadline: 120
+  initialOrderNum: 0
+  startGenerateOrderTime: 40
+  orderGenerateInterval: 60
+  dumpOverDueOrderTime: 60
+  PromptText: {fileID: 0}
+  OrderFailReward: -0.1
+  StockFinishNewOrderReward: 0.02
+  OrderFinishReward: 0.1
+  FinishOrderTimeCostRewardFactor: -0.1
 --- !u!1001 &4244360550561491112
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -66,6 +84,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5398576832236666973}
     m_Modifications:
+    - target: {fileID: 517769798603499203, guid: 8351609a99e03a24b8f2c9b7f953287b, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 6623291110514311090, guid: 8351609a99e03a24b8f2c9b7f953287b, type: 3}
       propertyPath: m_Name
       value: Ground

@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
 {
-    public class Utils
+    public static class Utils
     {
         public static Dictionary<T,int> ToIndexDict<T>(List<T> list)
         {
@@ -89,6 +90,31 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
         public static float NormalizeValue(float value, float minValue, float maxValue)
         {
             return (Math.Clamp(value, minValue, maxValue) - minValue) / (maxValue - minValue);
+        }
+        public static void Shuffle<T>(this IList<T> list) {
+            int n = list.Count;
+            System.Random rnd = new System.Random();
+            while (n > 1) {
+                int k = (rnd.Next(0, n) % n);
+                n--;
+                (list[k], list[n]) = (list[n], list[k]);
+            }
+        }
+        public static T GetRandomItem<T>(this IList<T> list)
+        {
+            return list.Count == 0 ? default : list[Random.Range(0, list.Count)];
+        }
+
+        public static void AddOrUpdate<TK, TV>(this Dictionary<TK, TV> dict, TK key, TV value, Func<TV, TV, TV> selector)
+        {
+            if (dict.ContainsKey(key))
+            {
+                dict[key] = selector(dict[key], value);
+            }
+            else
+            {
+                dict.Add(key, value);
+            }
         }
     }
 }

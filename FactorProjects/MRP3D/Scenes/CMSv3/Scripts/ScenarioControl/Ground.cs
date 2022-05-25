@@ -73,13 +73,13 @@ namespace FactorProjects.MRP3D.Scenes.CMSv3.Scripts
             switch (color)
             {
                 case GroundSwitchColor.Green:
-                    StartCoroutine(ProductReceivedSwapMaterial(1f,_successMaterial));
+                    StartCoroutine(ProductReceivedSwapMaterial(2f,_successMaterial));
                     break;
                 case GroundSwitchColor.Red:
-                    StartCoroutine(ProductReceivedSwapMaterial(1f, _failedMaterial));
+                    StartCoroutine(ProductReceivedSwapMaterial(5f, _failedMaterial));
                     break;
                 case GroundSwitchColor.Yellow:
-                    StartCoroutine(ProductReceivedSwapMaterial(1f, _stockSuccessMaterial));
+                    StartCoroutine(ProductReceivedSwapMaterial(2f, _stockSuccessMaterial));
                     break;
             }
         }
